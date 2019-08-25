@@ -22,7 +22,6 @@ package com.simiacryptus.mindseye.art.examples
 import java.awt.image.BufferedImage
 import java.awt.{Font, Graphics2D}
 import java.net.URI
-import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 
 import com.simiacryptus.mindseye.art.models.VGG16
@@ -49,17 +48,21 @@ class TextureGrowth extends ArtSetup[Object] {
 
   val styleUrl = "upload:Style"
   val initUrl: String = "50 + plasma * 0.5"
-  val s3bucket: String = "examples.deepart.studio"
+  val s3bucket: String = "examples.deepartist.org"
   val maxResolution = 800
   val animationDelay = 1000
   val magnification = 4
   val minResolution = 200
+  override def indexStr = "103"
 
-  override def description = """Demonstrates the effect of iteratively repainting while magnifying an image."""
+  override def description =
+    """
+      |Demonstrates the effect of iteratively repainting while magnifying an image.
+      |""".stripMargin.trim
 
-  override def inputTimeoutSeconds = 5
+  override def inputTimeoutSeconds = 3600
 
-  override def postConfigure(log: NotebookOutput) = {
+  override def postConfigure(log: NotebookOutput) = log.eval { () => () => {
     implicit val _ = log
     log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/"))
     log.onComplete(() => upload(log): Unit)
@@ -74,7 +77,7 @@ class TextureGrowth extends ArtSetup[Object] {
         import scala.collection.JavaConverters._
         for (layer <- pipeline.getLayers.asScala.keys) {
           log.h1(layer.name())
-          for (numberOfSteps <- List(1,2,3)) {
+          for (numberOfSteps <- List(1, 2, 3)) {
             log.h2(s"$numberOfSteps steps")
             val canvas = new AtomicReference[Tensor](null)
             renderedCanvases += (() => {
@@ -90,18 +93,16 @@ class TextureGrowth extends ArtSetup[Object] {
             withMonitoredJpg(() => Option(canvas.get()).map(_.toRgbImage).orNull) {
               var steps = 0
               Try {
-                log.subreport(UUID.randomUUID().toString, (sub: NotebookOutput) => {
-                  paint(styleUrl, initUrl, canvas, sub.eval(() => {
-                    new VisualStyleNetwork(
-                      styleLayers = List(layer),
-                      styleModifiers = List(
-                        new GramMatrixEnhancer(),
-                        new MomentMatcher()
-                      ),
-                      styleUrl = List(styleUrl),
-                      magnification = magnification
-                    )
-                  }), new BasicOptimizer {
+                log.subreport("Painting", (sub: NotebookOutput) => {
+                  paint(styleUrl, initUrl, canvas, new VisualStyleNetwork(
+                    styleLayers = List(layer),
+                    styleModifiers = List(
+                      new GramMatrixEnhancer(),
+                      new MomentMatcher()
+                    ),
+                    styleUrl = List(styleUrl),
+                    magnification = magnification
+                  ), new BasicOptimizer {
                     override val trainingMinutes: Int = 60 / numberOfSteps
                     override val trainingIterations: Int = 30
                     override val maxRate = 1e9
@@ -114,7 +115,7 @@ class TextureGrowth extends ArtSetup[Object] {
                     override val min: Double = minResolution
                     override val max: Double = maxResolution
                     override val steps = numberOfSteps
-                  }.toStream: _*)(sub)
+                  }.toStream.map(_.round.toDouble): _*)(sub)
                   null
                 })
               }
@@ -130,5 +131,5 @@ class TextureGrowth extends ArtSetup[Object] {
         registration.foreach(_.stop()(s3client, ec2client))
       }
     }
-  }
+  }}()
 }

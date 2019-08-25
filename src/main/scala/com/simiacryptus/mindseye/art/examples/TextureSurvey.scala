@@ -22,10 +22,9 @@ package com.simiacryptus.mindseye.art.examples
 import java.awt.image.BufferedImage
 import java.awt.{Font, Graphics2D}
 import java.net.URI
-import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 
-import com.simiacryptus.mindseye.art.models.{Inception5H, VGG16, VGG19}
+import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
@@ -47,15 +46,20 @@ class TextureSurvey extends ArtSetup[Object] {
 
   val styleUrl = "upload:Style"
   val initUrl: String = "50 + noise * 0.5"
-  val s3bucket: String = "examples.deepart.studio"
+  val s3bucket: String = "examples.deepartist.org"
   val resolution = 400
   val animationDelay = 1000
   val magnification = 4
+  override def indexStr = "101"
 
-  override def description = "Reconstructs an example image's texture into free-form content via each layer of the VGG19 network."
-  override def inputTimeoutSeconds = 5
+  override def description =
+    """
+      |Reconstructs an example image's texture into free-form content via each layer of the VGG19 network.
+      |""".stripMargin.trim
 
-  override def postConfigure(log: NotebookOutput) = {
+  override def inputTimeoutSeconds = 3600
+
+  override def postConfigure(log: NotebookOutput) = log.eval { () => () => {
     implicit val _ = log
     log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/"))
     log.onComplete(() => upload(log): Unit)
@@ -85,18 +89,16 @@ class TextureSurvey extends ArtSetup[Object] {
             withMonitoredJpg(() => Option(canvas.get()).map(_.toRgbImage).orNull) {
               var steps = 0
               Try {
-                log.subreport(UUID.randomUUID().toString, (sub: NotebookOutput) => {
-                  paint(styleUrl, initUrl, canvas, sub.eval(() => {
-                    new VisualStyleNetwork(
-                      styleLayers = List(layer),
-                      styleModifiers = List(
-                        new GramMatrixEnhancer(),
-                        new MomentMatcher()
-                      ),
-                      styleUrl = List(styleUrl),
-                      magnification = magnification
-                    )
-                  }), new BasicOptimizer {
+                log.subreport("Painting", (sub: NotebookOutput) => {
+                  paint(styleUrl, initUrl, canvas, new VisualStyleNetwork(
+                    styleLayers = List(layer),
+                    styleModifiers = List(
+                      new GramMatrixEnhancer(),
+                      new MomentMatcher()
+                    ),
+                    styleUrl = List(styleUrl),
+                    magnification = magnification
+                  ), new BasicOptimizer {
                     override val trainingMinutes: Int = 60
                     override val trainingIterations: Int = 50
                     override val maxRate = 1e9
@@ -109,7 +111,7 @@ class TextureSurvey extends ArtSetup[Object] {
                     override val min: Double = resolution
                     override val max: Double = resolution
                     override val steps = 1
-                  }.toStream: _*)(sub)
+                  }.toStream.map(_.round.toDouble): _*)(sub)
                   null
                 })
               }
@@ -125,5 +127,5 @@ class TextureSurvey extends ArtSetup[Object] {
         registration.foreach(_.stop()(s3client, ec2client))
       }
     }
-  }
+  }}()
 }

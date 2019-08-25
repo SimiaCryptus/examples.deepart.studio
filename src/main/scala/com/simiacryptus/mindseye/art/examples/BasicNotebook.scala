@@ -35,24 +35,35 @@ object BasicNotebook extends BasicNotebook with LocalRunner[Object] with Noteboo
 class BasicNotebook extends ArtSetup[Object] {
 
   val styleUrl = "upload:Image"
-  val s3bucket: String = "examples.deepart.studio"
+  val s3bucket: String = "examples.deepartist.org"
+  val message = "Hello World!"
   val resolution = 400
 
-  override def description = "Basic testing notebook that says hi."
-  override def inputTimeoutSeconds = 5
+  override def indexStr = "000"
 
-  override def postConfigure(log: NotebookOutput) = {
+  override def description =
+    """
+      |A very basic notebook that says displays a message on a background.
+      |No AI code, just a demo of the publishing system used.
+      |""".stripMargin.trim
+
+  override def inputTimeoutSeconds = 3600
+
+  override def postConfigure(log: NotebookOutput) = log.eval { () =>() => {
     implicit val _ = log
+    // First, basic configuration so we publish to our s3 site
     log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/"))
     log.onComplete(() => upload(log): Unit)
-    val canvas = log.eval(()=>{
+    // Now we evaluate the drawing code inside a logged eval block.
+    // This will publish the code, the result, any logs, the duration, and also link to github.
+    val canvas = log.eval(() => {
       val canvas = ImageArtUtil.load(log, styleUrl, resolution.toInt)
       val graphics = canvas.getGraphics.asInstanceOf[Graphics2D]
       graphics.setFont(new Font("Calibri", Font.BOLD, 42))
-      graphics.drawString("Hello World!", 10, 50)
+      graphics.drawString(message, 10, 50)
       canvas
     })
+    // Usually not on one line, this code publishes our result to the site's index so it is linked from the homepage.
     registerWithIndexJPG(Tensor.fromRGB(canvas)).foreach(_.stop()(s3client, ec2client))
-    null
-  }
+  }}()
 }

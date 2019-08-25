@@ -29,6 +29,7 @@ import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.eval.Trainable
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.mindseye.layers.java.{ImgTileAssemblyLayer, ImgViewLayer}
+import com.simiacryptus.mindseye.network.PipelineNetwork
 import com.simiacryptus.mindseye.opt.Step
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.sparkbook.NotebookRunner.withMonitoredJpg
@@ -38,35 +39,46 @@ import com.simiacryptus.sparkbook.util.LocalRunner
 
 import scala.util.Try
 
-object TextureTiled extends TextureTiled with LocalRunner[Object] with NotebookRunner[Object]
+object TextureTiledRotor extends TextureTiledRotor with LocalRunner[Object] with NotebookRunner[Object]
 
-class TextureTiled extends ArtSetup[Object] {
+class TextureTiledRotor extends RotorArt {
 
+  override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
   val styleUrl = "upload:Style"
-  val initUrl: String = "50 + plasma * 0.5"
+  val initUrl: String = "50 + noise * 0.5"
   val s3bucket: String = "examples.deepartist.org"
-  val minResolution = 200
-  val maxResolution = 512
+  val minResolution = 128
+  val maxResolution = 400
   val magnification = 4
   val rowsAndCols = 3
-  override def indexStr = "201"
+  val steps = 3
+  override def indexStr = "202"
 
   override def description =
     """
-      |Creates a tiled texture based on a style.
+      |Creates a tiled and rotationally symmetric texture based on a style.
       |""".stripMargin.trim
 
   override def inputTimeoutSeconds = 3600
 
+
   override def postConfigure(log: NotebookOutput) = log.eval { () => () => {
       implicit val _ = log
-      log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/"))
+      log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
-      log.out(log.jpg(ImageArtUtil.load(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
+      log.p(log.jpg(ImageArtUtil.load(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
       val canvas = new AtomicReference[Tensor](null)
 
+      def rotatedCanvas = {
+        var input = canvas.get()
+        if (null == input) input else {
+          val viewLayer = getKaleidoscope(input.getDimensions)
+          viewLayer.eval(input).getDataAndFree.getAndFree(0)
+        }
+      }
+
       def tiledCanvas = {
-        val input = canvas.get()
+        var input = rotatedCanvas
         if (null == input) input else {
           val layer = new ImgTileAssemblyLayer(rowsAndCols, rowsAndCols)
           val tensor = layer.eval((1 to (rowsAndCols * rowsAndCols)).map(_ => input): _*).getDataAndFree.getAndFree(0)
@@ -77,18 +89,21 @@ class TextureTiled extends ArtSetup[Object] {
 
       def calcFn(dims: Seq[Int]) = {
         val padding = Math.min(256, Math.max(16, dims(0) / 2))
-        new ImgViewLayer(dims(0) + padding, dims(1) + padding, true)
+        val viewLayer = getKaleidoscope(dims.toArray).copyPipeline()
+        viewLayer.wrap(new ImgViewLayer(dims(0) + padding, dims(1) + padding, true)
           .setOffsetX(-padding / 2).setOffsetY(-padding / 2)
+        ).freeRef()
+        viewLayer
       }
 
       val registration = registerWithIndexJPG(tiledCanvas)
       NotebookRunner.withMonitoredJpg(() => tiledCanvas.toImage) {
         try {
-          withMonitoredJpg(() => Option(canvas.get()).map(_.toRgbImage).orNull) {
+          withMonitoredJpg(() => Option(rotatedCanvas).map(_.toRgbImage).orNull) {
             var steps = 0
             Try {
               log.subreport("Painting", (sub: NotebookOutput) => {
-                paint(styleUrl, initUrl, canvas, new VisualStyleNetwork(
+                paint(initUrl, initUrl, canvas, new VisualStyleNetwork(
                   styleLayers = List(
                     VGG16.VGG16_0,
                     VGG16.VGG16_1a,
@@ -106,18 +121,20 @@ class TextureTiled extends ArtSetup[Object] {
                   magnification = magnification,
                   viewLayer = calcFn
                 ), new BasicOptimizer {
-                  override val trainingMinutes: Int = 60
-                  override val trainingIterations: Int = 30
+                  override val trainingMinutes: Int = 30
+                  override val trainingIterations: Int = 10
                   override val maxRate = 1e9
 
                   override def onStepComplete(trainable: Trainable, currentPoint: Step): Boolean = {
                     steps = steps + 1
                     super.onStepComplete(trainable, currentPoint)
                   }
+
+                  override def renderingNetwork(dims: Seq[Int]): PipelineNetwork = getKaleidoscope(dims.toArray).copyPipeline()
                 }, new GeometricSequence {
                   override val min: Double = minResolution
                   override val max: Double = maxResolution
-                  override val steps = 2
+                  override val steps = TextureTiledRotor.this.steps
                 }.toStream.map(_.round.toDouble): _*)(sub)
                 null
               })
