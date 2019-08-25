@@ -40,10 +40,10 @@ object TiledTexture extends TiledTexture with LocalRunner[Object] with NotebookR
 class TiledTexture extends ArtSetup[Object] {
 
   val styleUrl = "upload:Style"
-  val initUrl: String = "50 + noise * 0.5"
+  val initUrl: String = "50 + plasma * 0.5"
   val s3bucket: String = "examples.deepartist.org"
-  val minResolution = 128
-  val maxResolution = 400
+  val minResolution = 320
+  val maxResolution = 640
   val magnification = 9
   val rowsAndCols = 3
 
@@ -53,7 +53,7 @@ class TiledTexture extends ArtSetup[Object] {
     """
       |Creates a simple tiled texture based on a style using:
       |<ol>
-      |<li>Random noise initialization</li>
+      |<li>Random plasma initialization</li>
       |<li>Standard VGG16 layers</li>
       |<li>Operators constraining and enhancing style</li>
       |<li>Progressive resolution increase</li>
