@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicReference
 import com.simiacryptus.mindseye.art.models.VGG16
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
+import com.simiacryptus.mindseye.art.util.ImageArtUtil._
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.mindseye.layers.java.{ImgTileAssemblyLayer, ImgViewLayer}
@@ -64,9 +65,11 @@ class TiledTexture extends ArtSetup[Object] {
 
   override def postConfigure(log: NotebookOutput) = log.eval { () => () => {
       implicit val _ = log
+      // First, basic configuration so we publish to our s3 site
       log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
-      log.out(log.jpg(ImageArtUtil.load(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
+      // Fetch image (user upload prompt) and display a rescaled copy
+      log.p(log.jpg(load(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
       val canvas = new AtomicReference[Tensor](null)
 
       // Generates a pretiled image (e.g. 3x3) to display
@@ -98,6 +101,7 @@ class TiledTexture extends ArtSetup[Object] {
             log.subreport("Painting", (sub: NotebookOutput) => {
               paint(styleUrl, initUrl, canvas, new VisualStyleNetwork(
                 styleLayers = List(
+                  // We select all the lower-level layers to achieve a good balance between speed and accuracy.
                   VGG16.VGG16_0,
                   VGG16.VGG16_1a,
                   VGG16.VGG16_1b1,
@@ -107,6 +111,7 @@ class TiledTexture extends ArtSetup[Object] {
                   VGG16.VGG16_1c3
                 ),
                 styleModifiers = List(
+                  // These two operators are a good combination for a vivid yet accurate style
                   new GramMatrixEnhancer(),
                   new MomentMatcher()
                 ),
