@@ -28,8 +28,8 @@
         <relativePath>../scala-parent</relativePath>
     </parent>
 
-    <artifactId>examples.deepart.studio</artifactId>
-    <description>deepart.studio Examples</description>
+    <artifactId>examples.deepartist.org</artifactId>
+    <description>DeepArtist.org Example Jobs</description>
     <url>https://simiacryptus.github.io/${github.project}/</url>
 
     <properties>
@@ -101,7 +101,7 @@
         </dependency>
         <dependency>
             <groupId>com.simiacryptus</groupId>
-            <artifactId>deepart.studio</artifactId>
+            <artifactId>deepartist.org</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
