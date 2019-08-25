@@ -26,10 +26,9 @@ import com.simiacryptus.mindseye.art.models.VGG16
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
-import com.simiacryptus.mindseye.eval.Trainable
 import com.simiacryptus.mindseye.lang.Tensor
-import com.simiacryptus.mindseye.opt.Step
 import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.sparkbook.NotebookRunner._
 import com.simiacryptus.sparkbook._
 import com.simiacryptus.sparkbook.util.Java8Util._
 import com.simiacryptus.sparkbook.util.LocalRunner
@@ -43,15 +42,21 @@ class StyleTransfer extends ArtSetup[Object] {
   val styleUrl = "upload:Style"
   val initUrl: String = "50 + noise * 0.5"
   val s3bucket: String = "examples.deepartist.org"
-  val minResolution = 600
-  val maxResolution = 1024
+  val minResolution = 320
+  val maxResolution = 1200
   val magnification = 2
   val steps = 3
   override def indexStr = "301"
 
   override def description =
     """
-      |Paints an image to reproduce the content of one image using the style of another reference image.
+      |Paints an image in the style of another using:
+      |<ol>
+      |<li>Random plasma initialization</li>
+      |<li>Standard VGG16 layers</li>
+      |<li>Operators to match content and constrain and enhance style</li>
+      |<li>Progressive resolution increase</li>
+      |</ol>
       |""".stripMargin.trim
 
   override def inputTimeoutSeconds = 3600
@@ -59,16 +64,21 @@ class StyleTransfer extends ArtSetup[Object] {
 
   override def postConfigure(log: NotebookOutput) = log.eval { () => () => {
     implicit val _ = log
+    // First, basic configuration so we publish to our s3 site
     log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
     log.onComplete(() => upload(log): Unit)
+    // Fetch input images (user upload prompts) and display a rescaled copies
     log.p(log.jpg(ImageArtUtil.load(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
     log.p(log.jpg(ImageArtUtil.load(log, contentUrl, maxResolution), "Input Content"))
     val canvas = new AtomicReference[Tensor](null)
+    // Execute the main process while registered with the site index
     val registration = registerWithIndexJPG(canvas.get())
-    NotebookRunner.withMonitoredJpg(() => canvas.get().toImage) {
-      try {
+    try {
+      // Display an additional image inside the report itself
+      withMonitoredJpg(() => canvas.get().toImage) {
         paint(contentUrl, initUrl, canvas, new VisualStyleContentNetwork(
           styleLayers = List(
+            // We select all the lower-level layers to achieve a good balance between speed and accuracy.
             VGG16.VGG16_0,
             VGG16.VGG16_1a,
             VGG16.VGG16_1b1,
@@ -78,34 +88,35 @@ class StyleTransfer extends ArtSetup[Object] {
             VGG16.VGG16_1c3
           ),
           styleModifiers = List(
+            // These two operators are a good combination for a vivid yet accurate style
             new GramMatrixEnhancer(),
             new MomentMatcher()
           ),
           styleUrl = List(styleUrl),
           contentLayers = List(
+            // We use fewer layer to be a constraint, since the ContentMatcher operation defines
+            // a stronger operation. Picking a mid-level layer ensures the match is somewhat
+            // faithful to color, contains detail, and still accomidates local changes for style.
             VGG16.VGG16_1b2
           ),
           contentModifiers = List(
+            // Standard content matching operator
             new ContentMatcher()
           ),
           magnification = magnification
         ), new BasicOptimizer {
           override val trainingMinutes: Int = 60
-          override val trainingIterations: Int = 30
+          override val trainingIterations: Int = 20
           override val maxRate = 1e9
-
-          override def onStepComplete(trainable: Trainable, currentPoint: Step): Boolean = {
-            super.onStepComplete(trainable, currentPoint)
-          }
         }, new GeometricSequence {
           override val min: Double = minResolution
           override val max: Double = maxResolution
           override val steps = StyleTransfer.this.steps
         }.toStream.map(_.round.toDouble): _*)
-        null
-      } finally {
-        registration.foreach(_.stop()(s3client, ec2client))
       }
+      null
+    } finally {
+      registration.foreach(_.stop()(s3client, ec2client))
     }
   }}()
 }
