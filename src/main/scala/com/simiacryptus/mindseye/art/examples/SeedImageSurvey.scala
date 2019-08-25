@@ -60,7 +60,7 @@ class SeedImageSurvey extends ArtSetup[Object] {
 
   override def postConfigure(log: NotebookOutput) = log.eval { () => () => {
     implicit val _ = log
-    log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/"))
+    log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
     log.onComplete(() => upload(log): Unit)
     log.p(log.jpg(ImageArtUtil.load(log, styleUrl, (resolution * Math.sqrt(magnification)).toInt), "Input Style"))
     val contentUrl = "upload:Content"
