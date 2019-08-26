@@ -32,7 +32,7 @@ import com.simiacryptus.mindseye.eval.Trainable
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.mindseye.opt.Step
 import com.simiacryptus.notebook.NotebookOutput
-import com.simiacryptus.sparkbook.NotebookRunner.withMonitoredJpg
+import com.simiacryptus.sparkbook.NotebookRunner._
 import com.simiacryptus.sparkbook._
 import com.simiacryptus.sparkbook.util.Java8Util._
 import com.simiacryptus.sparkbook.util.LocalRunner
@@ -53,15 +53,24 @@ class SeedImageSurvey extends ArtSetup[Object] {
 
   override def description =
     """
-      |Reconstructs a style texture using a variety of seed images.
+      |Reconstructs a style texture using a variety of seed images but each having:
+      |<ol>
+      |<li>A single input image to define style</li>
+      |<li>Standard VGG16 layers to define the style</li>
+      |<li>Operators to match content and constrain and enhance style</li>
+      |<li>A single resolution</li>
+      |</ol>
+      |It demonstrates the variety of effects that can be obtained using varied starting canvas seeds.
       |""".stripMargin.trim
 
   override def inputTimeoutSeconds = 3600
 
   override def postConfigure(log: NotebookOutput) = log.eval { () => () => {
     implicit val _ = log
+    // First, basic configuration so we publish to our s3 site
     log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
     log.onComplete(() => upload(log): Unit)
+    // Fetch input images (user upload prompts) and display rescaled copies
     log.p(log.jpg(ImageArtUtil.load(log, styleUrl, (resolution * Math.sqrt(magnification)).toInt), "Input Style"))
     val contentUrl = "upload:Content"
     val seeds = Array(
@@ -71,10 +80,9 @@ class SeedImageSurvey extends ArtSetup[Object] {
     )
     for (seed <- seeds) log.p(log.jpg(ImageArtUtil.load(log, seed, (resolution * Math.sqrt(magnification)).toInt), "Seed"))
     val renderedCanvases = new ArrayBuffer[() => BufferedImage]
+    // Execute the main process while registered with the site index
     val registration = registerWithIndexGIF(renderedCanvases.map(_ ()), delay = animationDelay)
-    NotebookRunner.withMonitoredGif(() => {
-      renderedCanvases.map(_ ())
-    }, delay = animationDelay) {
+    withMonitoredGif(() => renderedCanvases.map(_ ()), delay = animationDelay) {
       try {
         for (seed <- seeds) {
           val canvas = new AtomicReference[Tensor](null)
@@ -94,6 +102,7 @@ class SeedImageSurvey extends ArtSetup[Object] {
                 canvas.set(null)
                 paint(contentUrl, seed, canvas, new VisualStyleNetwork(
                   styleLayers = List(
+                    // We select all the lower-level layers to achieve a good balance between speed and accuracy.
                     VGG16.VGG16_0,
                     VGG16.VGG16_1a,
                     VGG16.VGG16_1b1,
@@ -103,6 +112,7 @@ class SeedImageSurvey extends ArtSetup[Object] {
                     VGG16.VGG16_1c3
                   ),
                   styleModifiers = List(
+                    // These two operators are a good combination for a vivid yet accurate style
                     new GramMatrixEnhancer(),
                     new MomentMatcher()
                   ),

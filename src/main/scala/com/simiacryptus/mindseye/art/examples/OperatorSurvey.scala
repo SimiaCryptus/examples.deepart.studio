@@ -32,7 +32,7 @@ import com.simiacryptus.mindseye.eval.Trainable
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.mindseye.opt.Step
 import com.simiacryptus.notebook.NotebookOutput
-import com.simiacryptus.sparkbook.NotebookRunner.withMonitoredJpg
+import com.simiacryptus.sparkbook.NotebookRunner._
 import com.simiacryptus.sparkbook._
 import com.simiacryptus.sparkbook.util.Java8Util._
 import com.simiacryptus.sparkbook.util.LocalRunner
@@ -54,21 +54,29 @@ class OperatorSurvey extends ArtSetup[Object] {
 
   override def description =
     """
-      |Reconstructs an example image's texture using a variety of combinations of signal operators
+      |Paints a texture using a variety of signal operators but each having:
+      |<ol>
+      |<li>A single input image to define style</li>
+      |<li>Random noise initialization</li>
+      |<li>Standard VGG16 layers to define the style</li>
+      |<li>A single resolution</li>
+      |</ol>
+      |It demonstrates the variety of effects that can be obtained using varied operators.
       |""".stripMargin.trim
 
   override def inputTimeoutSeconds = 3600
 
   override def postConfigure(log: NotebookOutput) = log.eval { () => () => {
     implicit val _ = log
+    // First, basic configuration so we publish to our s3 site
     log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
     log.onComplete(() => upload(log): Unit)
+    // Fetch input images (user upload prompts) and display rescaled copies
     log.out(log.jpg(ImageArtUtil.load(log, styleUrl, (resolution * Math.sqrt(magnification)).toInt), "Input Style"))
     val renderedCanvases = new ArrayBuffer[() => BufferedImage]
+    // Execute the main process while registered with the site index
     val registration = registerWithIndexGIF(renderedCanvases.map(_ ()), delay = animationDelay)
-    NotebookRunner.withMonitoredGif(() => {
-      renderedCanvases.map(_ ())
-    }, delay = animationDelay) {
+    withMonitoredGif(() => renderedCanvases.map(_ ()), delay = animationDelay) {
       try {
         val operatorMap = Map(
           "GramMatrixEnhancer" -> new GramMatrixEnhancer(),
@@ -102,6 +110,7 @@ class OperatorSurvey extends ArtSetup[Object] {
               log.subreport("Painting", (sub: NotebookOutput) => {
                 paint(styleUrl, initUrl, canvas, new VisualStyleNetwork(
                   styleLayers = List(
+                    // We select all the lower-level layers to achieve a good balance between speed and accuracy.
                     VGG16.VGG16_0,
                     VGG16.VGG16_1a,
                     VGG16.VGG16_1b1,

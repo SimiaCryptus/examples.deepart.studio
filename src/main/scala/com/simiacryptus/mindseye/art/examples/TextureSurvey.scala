@@ -32,7 +32,7 @@ import com.simiacryptus.mindseye.eval.Trainable
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.mindseye.opt.Step
 import com.simiacryptus.notebook.NotebookOutput
-import com.simiacryptus.sparkbook.NotebookRunner.withMonitoredJpg
+import com.simiacryptus.sparkbook.NotebookRunner._
 import com.simiacryptus.sparkbook._
 import com.simiacryptus.sparkbook.util.Java8Util._
 import com.simiacryptus.sparkbook.util.LocalRunner
@@ -55,20 +55,30 @@ class TextureSurvey extends ArtSetup[Object] {
   override def description =
     """
       |Reconstructs an example image's texture into free-form content via each layer of the VGG19 network.
+      |Paints a texture using a variety of layers but each having:
+      |<ol>
+      |<li>A single input image to define style</li>
+      |<li>Random noise initialization</li>
+      |<li>Operators to match content and constrain and enhance style</li>
+      |<li>A single resolution</li>
+      |</ol>
+      |It demonstrates the variety of effects that can be obtained using varied layers.
+      |
       |""".stripMargin.trim
 
   override def inputTimeoutSeconds = 3600
 
   override def postConfigure(log: NotebookOutput) = log.eval { () => () => {
     implicit val _ = log
+    // First, basic configuration so we publish to our s3 site
     log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
     log.onComplete(() => upload(log): Unit)
+    // Fetch image (user upload prompt) and display a rescaled copy
     log.out(log.jpg(ImageArtUtil.load(log, styleUrl, (resolution * Math.sqrt(magnification)).toInt), "Input Style"))
     val renderedCanvases = new ArrayBuffer[() => BufferedImage]
+    // Execute the main process while registered with the site index
     val registration = registerWithIndexGIF(renderedCanvases.map(_ ()), delay = animationDelay)
-    NotebookRunner.withMonitoredGif(() => {
-      renderedCanvases.map(_ ())
-    }, delay = animationDelay) {
+    withMonitoredGif(() => renderedCanvases.map(_ ()), delay = animationDelay) {
       try {
         for (pipeline <- List(
           VGG19.getVisionPipeline
@@ -93,6 +103,7 @@ class TextureSurvey extends ArtSetup[Object] {
                   paint(styleUrl, initUrl, canvas, new VisualStyleNetwork(
                     styleLayers = List(layer),
                     styleModifiers = List(
+                      // These two operators are a good combination for a vivid yet accurate style
                       new GramMatrixEnhancer(),
                       new MomentMatcher()
                     ),

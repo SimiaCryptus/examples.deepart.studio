@@ -29,17 +29,13 @@ import com.simiacryptus.mindseye.art.models.VGG16
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
-import com.simiacryptus.mindseye.eval.Trainable
 import com.simiacryptus.mindseye.lang.{Coordinate, Tensor}
 import com.simiacryptus.mindseye.layers.java.ImgViewLayer
-import com.simiacryptus.mindseye.opt.Step
 import com.simiacryptus.notebook.NotebookOutput
-import com.simiacryptus.sparkbook.NotebookRunner.withMonitoredJpg
+import com.simiacryptus.sparkbook.NotebookRunner._
 import com.simiacryptus.sparkbook._
 import com.simiacryptus.sparkbook.util.Java8Util._
 import com.simiacryptus.sparkbook.util.LocalRunner
-
-import scala.util.Try
 
 object TextureStereogram extends TextureStereogram with LocalRunner[Object] with NotebookRunner[Object]
 
@@ -48,58 +44,74 @@ class TextureStereogram extends ArtSetup[Object] {
   val styleUrl = "upload:Style"
   val text =
     """
-      |deepart
-      |.studio
+      |DeepArtist
     """.stripMargin.trim
   val initUrl: String = "50 + plasma * 0.5"
   val s3bucket: String = "examples.deepartist.org"
-  val minWidth = 64
-  val maxWidth = 128
+  val minWidth = 50
+  val maxWidth = 100
   val maxHeight = 1200
   val magnification = 4
-  val depthFactor = 8
-  val maxAspect = 3.5
+  val depthFactor = 10
+  val maxAspect = 2
   val text_padding = 256
+
   override def indexStr = "203"
 
   override def description =
     """
-      |Creates a very tall tiled texture based on a style, then uses it to render a simple stereogram.
+      |Creates simple stereogram based on a very tall tiled texture rendered using:
+      |<ol>
+      |<li>Random plasma initialization</li>
+      |<li>Standard VGG16 layers</li>
+      |<li>Operators constraining and enhancing style</li>
+      |<li>Progressive resolution increase</li>
+      |<li>View layer to enforce tiling</li>
+      |<li>Final rendering process combining the texture with a depth map to produce a stereogram</li>
+      |</ol>
       |""".stripMargin.trim
 
   override def inputTimeoutSeconds = 3600
 
   override def postConfigure(log: NotebookOutput) = log.eval { () => () => {
-    implicit val _ = log
-    log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
-    log.onComplete(() => upload(log): Unit)
-    log.out(log.jpg(ImageArtUtil.load(log, styleUrl, (maxWidth * Math.sqrt(magnification)).toInt), "Input Style"))
-    val depthImage = depthMap((maxHeight * maxAspect).toInt, maxHeight, text)
-    log.out(log.jpg(depthImage.toImage, "Depth Map"))
-    val canvas = new AtomicReference[Tensor](null)
+      implicit val _ = log
+      // First, basic configuration so we publish to our s3 site
+      log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
+      log.onComplete(() => upload(log): Unit)
+      // Fetch image (user upload prompt) and display a rescaled copy
+      log.out(log.jpg(ImageArtUtil.load(log, styleUrl, (maxWidth * Math.sqrt(magnification)).toInt), "Input Style"))
+      // Render and display the depth map
+      val depthImage = depthMap((maxHeight * maxAspect).toInt, maxHeight, text)
+      log.out(log.jpg(depthImage.toImage, "Depth Map"))
+      val canvas = new AtomicReference[Tensor](null)
 
-    def rendered = {
-      val input = canvas.get()
-      if (null == input) input else {
-        Tensor.fromRGB(stereoImage(depthImage, input, depthFactor))
+      // Renders the sterogram
+      def rendered = {
+        val input = canvas.get()
+        if (null == input) input else {
+          Tensor.fromRGB(stereoImage(depthImage, input, depthFactor))
+        }
       }
-    }
 
-    def tiled(dims: Seq[Int]) = {
-      val padding = Math.min(256, Math.max(16, dims(0) / 2))
-      new ImgViewLayer(dims(0) + padding, dims(1) + padding, true)
-        .setOffsetX(-padding / 2).setOffsetY(-padding / 2)
-    }
+      // Tiling layer used by the optimization engine.
+      // Expands the canvas by a small amount, using tile wrap to draw in the expanded boundary.
+      def tiled(dims: Seq[Int]) = {
+        val padding = Math.min(256, Math.max(16, dims(0) / 2))
+        new ImgViewLayer(dims(0) + padding, dims(1) + padding, true)
+          .setOffsetX(-padding / 2).setOffsetY(-padding / 2)
+      }
 
-    val registration = registerWithIndexJPG(rendered)
-    NotebookRunner.withMonitoredJpg(() => rendered.toImage) {
+      // Execute the main process while registered with the site index
+      val registration = registerWithIndexJPG(rendered)
       try {
-        withMonitoredJpg(() => Option(canvas.get()).map(_.toRgbImage).orNull) {
-          var steps = 0
-          Try {
+        // Display the stereogram
+        withMonitoredJpg(() => rendered.toImage) {
+          // Display an additional single tile of the texture canvas
+          withMonitoredJpg(() => Option(canvas.get()).map(_.toRgbImage).orNull) {
             log.subreport("Painting", (sub: NotebookOutput) => {
               texture(maxHeight.toDouble / maxWidth, initUrl, canvas, new VisualStyleNetwork(
                 styleLayers = List(
+                  // We select all the lower-level layers to achieve a good balance between speed and accuracy.
                   VGG16.VGG16_0,
                   VGG16.VGG16_1a,
                   VGG16.VGG16_1b1,
@@ -109,6 +121,7 @@ class TextureStereogram extends ArtSetup[Object] {
                   VGG16.VGG16_1c3
                 ),
                 styleModifiers = List(
+                  // These two operators are a good combination for a vivid yet accurate style
                   new GramMatrixEnhancer(),
                   new MomentMatcher()
                 ),
@@ -119,11 +132,6 @@ class TextureStereogram extends ArtSetup[Object] {
                 override val trainingMinutes: Int = 60
                 override val trainingIterations: Int = 30
                 override val maxRate = 1e9
-
-                override def onStepComplete(trainable: Trainable, currentPoint: Step): Boolean = {
-                  steps = steps + 1
-                  super.onStepComplete(trainable, currentPoint)
-                }
               }, new GeometricSequence {
                 override val min: Double = minWidth
                 override val max: Double = maxWidth
@@ -131,24 +139,19 @@ class TextureStereogram extends ArtSetup[Object] {
               }.toStream.map(_.round.toDouble))(sub)
               null
             })
-          }
-          uploadAsync(log)
-        }(log)
+            uploadAsync(log)
+          }(log)
+        }
         null
       } finally {
         registration.foreach(_.stop()(s3client, ec2client))
       }
     }
-  }}()
+  }()
 
   def depthMap(width: Int, height: Int, text: String, fontName: String = "Calibri")(implicit log: NotebookOutput): Tensor = {
-    val font = log.eval(() => {
-      TextUtil.fit(text, width, height, text_padding, fontName, Font.BOLD | Font.CENTER_BASELINE)
-
-    })
-    val bounds: Rectangle2D = log.eval(() => {
-      TextUtil.measure(font, text)
-    })
+    val font = TextUtil.fit(text, width, height, text_padding, fontName, Font.BOLD | Font.CENTER_BASELINE)
+    val bounds: Rectangle2D = TextUtil.measure(font, text)
     Tensor.fromRGB(TextUtil.draw(text,
       (bounds.getWidth + 2.0 * text_padding).toInt,
       Math.max((bounds.getHeight + 2.0 * text_padding).toInt, height),

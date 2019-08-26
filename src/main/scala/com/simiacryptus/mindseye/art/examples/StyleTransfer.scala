@@ -52,7 +52,7 @@ class StyleTransfer extends ArtSetup[Object] {
     """
       |Paints an image in the style of another using:
       |<ol>
-      |<li>Random plasma initialization</li>
+      |<li>Random noise initialization</li>
       |<li>Standard VGG16 layers</li>
       |<li>Operators to match content and constrain and enhance style</li>
       |<li>Progressive resolution increase</li>

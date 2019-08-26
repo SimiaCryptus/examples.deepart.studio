@@ -54,20 +54,32 @@ class StyleTransferSweep extends ArtSetup[Object] {
 
   override def description =
     """
-      |Paints a series of images, each to reproduce the content of one image using the style of another reference image.
-      |Combines them into a single animation.
+      |Paints a series of images, each to match the content of one while using:
+      |<ol>
+      |<li>A linear combination of two styles</li>
+      |<li>Random noise initialization</li>
+      |<li>Standard VGG16 layers</li>
+      |<li>Operators to match content and constrain and enhance style</li>
+      |<li>Progressive resolution increase</li>
+      |</ol>
+      |
+      |The parameters for each frame are fixed and randomly initialized,
+      |but the style used sweeps between two reference images over the animation.
     """.stripMargin.trim
 
   override def inputTimeoutSeconds = 3600
 
   override def postConfigure(log: NotebookOutput) = log.eval { () => () => {
     implicit val _ = log
+    // First, basic configuration so we publish to our s3 site
     log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
     log.onComplete(() => upload(log): Unit)
+    // Fetch input images (user upload prompts) and display rescaled copies
     log.p(log.jpg(ImageArtUtil.load(log, contentUrl, maxResolution), "Input Content"))
     log.p(log.jpg(ImageArtUtil.load(log, styleAUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style A"))
     log.p(log.jpg(ImageArtUtil.load(log, styleBUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style B"))
     val canvases = (1 to frames).map(_ => new AtomicReference[Tensor](null)).toList
+    // Execute the main process while registered with the site index
     val registration = registerWithIndexGIF2(canvases.map(_.get()))
     try {
       animate(contentUrl, initUrl, canvases, log.eval(() => (1 to frames).map(f => f.toString -> {
@@ -77,6 +89,7 @@ class StyleTransferSweep extends ArtSetup[Object] {
         coeffA = coeffA / mag
         coeffB = coeffB / mag
         val styleLayers = List(
+          // We select all the lower-level layers to achieve a good balance between speed and accuracy.
           VGG16.VGG16_0,
           VGG16.VGG16_1a,
           VGG16.VGG16_1b1,
@@ -86,8 +99,10 @@ class StyleTransferSweep extends ArtSetup[Object] {
           VGG16.VGG16_1c3
         )
         new VisualStyleNetwork(
+          // This primary component accounts for style A
           styleLayers = styleLayers,
           styleModifiers = List(
+            // These two operators are a good combination for a vivid yet accurate style
             new GramMatrixEnhancer().scale(coeffA),
             new MomentMatcher().scale(coeffA)
           ),
@@ -96,6 +111,7 @@ class StyleTransferSweep extends ArtSetup[Object] {
         ) + new VisualStyleNetwork(
           styleLayers = styleLayers,
           styleModifiers = List(
+            // We use the same two operators in the alternate component, which calculates the style B
             new GramMatrixEnhancer().scale(coeffB),
             new MomentMatcher().scale(coeffB)
           ),
@@ -112,10 +128,6 @@ class StyleTransferSweep extends ArtSetup[Object] {
         override val trainingMinutes: Int = 60
         override val trainingIterations: Int = 30
         override val maxRate = 1e9
-
-        override def onStepComplete(trainable: Trainable, currentPoint: Step): Boolean = {
-          super.onStepComplete(trainable, currentPoint)
-        }
       }, new GeometricSequence {
         override val min: Double = minResolution
         override val max: Double = maxResolution

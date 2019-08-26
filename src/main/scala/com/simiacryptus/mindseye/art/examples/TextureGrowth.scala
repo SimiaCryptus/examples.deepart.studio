@@ -57,7 +57,16 @@ class TextureGrowth extends ArtSetup[Object] {
 
   override def description =
     """
+      |
+      |Paints a texture using a variety of resolution schedules, each with:
+      |<ol>
+      |<li>A single input image to define style</li>
+      |<li>Random noise initialization</li>
+      |<li>Standard VGG16 layers to define the style</li>
+      |<li>Operators to match content and constrain and enhance style</li>
+      |</ol>
       |Demonstrates the effect of iteratively repainting while magnifying an image.
+      |
       |""".stripMargin.trim
 
   override def inputTimeoutSeconds = 3600
