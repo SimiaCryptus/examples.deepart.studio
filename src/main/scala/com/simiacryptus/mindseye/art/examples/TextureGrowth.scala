@@ -53,92 +53,91 @@ class TextureGrowth extends ArtSetup[Object] {
   val animationDelay = 1000
   val magnification = 4
   val minResolution = 200
+
   override def indexStr = "103"
 
-  override def description =
-    """
-      |
-      |Paints a texture using a variety of resolution schedules, each with:
-      |<ol>
-      |<li>A single input image to define style</li>
-      |<li>Random noise initialization</li>
-      |<li>Standard VGG16 layers to define the style</li>
-      |<li>Operators to match content and constrain and enhance style</li>
-      |</ol>
-      |Demonstrates the effect of iteratively repainting while magnifying an image.
-      |
-      |""".stripMargin.trim
+  override def description = <div>
+    Paints a texture using a variety of resolution schedules, each with:
+    <ol>
+      <li>A single input image to define style</li>
+      <li>Random noise initialization</li>
+      <li>Standard VGG16 layers to define the style</li>
+      <li>Operators to match content and constrain and enhance style</li>
+    </ol>
+    Demonstrates the effect of iteratively repainting while magnifying an image.
+  </div>.toString.trim
 
   override def inputTimeoutSeconds = 3600
 
   override def postConfigure(log: NotebookOutput) = log.eval { () => () => {
-    implicit val _ = log
-    log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
-    log.onComplete(() => upload(log): Unit)
-    log.out(log.jpg(ImageArtUtil.load(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
-    val renderedCanvases = new ArrayBuffer[() => BufferedImage]
-    val registration = registerWithIndexGIF(renderedCanvases.map(_ ()), delay = animationDelay)
-    NotebookRunner.withMonitoredGif(() => {
-      renderedCanvases.map(_ ())
-    }, delay = animationDelay) {
-      try {
-        val pipeline = VGG16.getVisionPipeline
-        import scala.collection.JavaConverters._
-        for (layer <- pipeline.getLayers.asScala.keys) {
-          log.h1(layer.name())
-          for (numberOfSteps <- List(1, 2, 3)) {
-            log.h2(s"$numberOfSteps steps")
-            val canvas = new AtomicReference[Tensor](null)
-            renderedCanvases += (() => {
-              val image = ImageUtil.resize(canvas.get().toImage, maxResolution)
-              if (null == image) image else {
-                val graphics = image.getGraphics.asInstanceOf[Graphics2D]
-                graphics.setFont(new Font("Calibri", Font.BOLD, 24))
-                graphics.drawString(layer.name(), 10, 25)
-                graphics.drawString(s"$numberOfSteps steps", 10, image.getHeight - 10)
-                image
-              }
-            })
-            withMonitoredJpg(() => Option(canvas.get()).map(_.toRgbImage).orNull) {
-              var steps = 0
-              Try {
-                log.subreport("Painting", (sub: NotebookOutput) => {
-                  paint(styleUrl, initUrl, canvas, new VisualStyleNetwork(
-                    styleLayers = List(layer),
-                    styleModifiers = List(
-                      new GramMatrixEnhancer(),
-                      new MomentMatcher()
-                    ),
-                    styleUrl = List(styleUrl),
-                    magnification = magnification
-                  ), new BasicOptimizer {
-                    override val trainingMinutes: Int = 60 / numberOfSteps
-                    override val trainingIterations: Int = 30
-                    override val maxRate = 1e9
+      implicit val _ = log
+      log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
+      log.onComplete(() => upload(log): Unit)
+      log.out(log.jpg(ImageArtUtil.load(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
+      val renderedCanvases = new ArrayBuffer[() => BufferedImage]
+      val registration = registerWithIndexGIF(renderedCanvases.map(_ ()), delay = animationDelay)
+      NotebookRunner.withMonitoredGif(() => {
+        renderedCanvases.map(_ ())
+      }, delay = animationDelay) {
+        try {
+          val pipeline = VGG16.getVisionPipeline
+          import scala.collection.JavaConverters._
+          for (layer <- pipeline.getLayers.asScala.keys) {
+            log.h1(layer.name())
+            for (numberOfSteps <- List(1, 2, 3)) {
+              log.h2(s"$numberOfSteps steps")
+              val canvas = new AtomicReference[Tensor](null)
+              renderedCanvases += (() => {
+                val image = ImageUtil.resize(canvas.get().toImage, maxResolution)
+                if (null == image) image else {
+                  val graphics = image.getGraphics.asInstanceOf[Graphics2D]
+                  graphics.setFont(new Font("Calibri", Font.BOLD, 24))
+                  graphics.drawString(layer.name(), 10, 25)
+                  graphics.drawString(s"$numberOfSteps steps", 10, image.getHeight - 10)
+                  image
+                }
+              })
+              withMonitoredJpg(() => Option(canvas.get()).map(_.toRgbImage).orNull) {
+                var steps = 0
+                Try {
+                  log.subreport("Painting", (sub: NotebookOutput) => {
+                    paint(styleUrl, initUrl, canvas, new VisualStyleNetwork(
+                      styleLayers = List(layer),
+                      styleModifiers = List(
+                        new GramMatrixEnhancer(),
+                        new MomentMatcher()
+                      ),
+                      styleUrl = List(styleUrl),
+                      magnification = magnification
+                    ), new BasicOptimizer {
+                      override val trainingMinutes: Int = 60 / numberOfSteps
+                      override val trainingIterations: Int = 30
+                      override val maxRate = 1e9
 
-                    override def onStepComplete(trainable: Trainable, currentPoint: Step): Boolean = {
-                      steps = steps + 1
-                      super.onStepComplete(trainable, currentPoint)
-                    }
-                  }, new GeometricSequence {
-                    override val min: Double = minResolution
-                    override val max: Double = maxResolution
-                    override val steps = numberOfSteps
-                  }.toStream.map(_.round.toDouble): _*)(sub)
-                  null
-                })
-              }
-              if (steps < 3 && !renderedCanvases.isEmpty) {
-                renderedCanvases.remove(renderedCanvases.size - 1)
-              }
-              uploadAsync(log)
-            }(log)
+                      override def onStepComplete(trainable: Trainable, currentPoint: Step): Boolean = {
+                        steps = steps + 1
+                        super.onStepComplete(trainable, currentPoint)
+                      }
+                    }, new GeometricSequence {
+                      override val min: Double = minResolution
+                      override val max: Double = maxResolution
+                      override val steps = numberOfSteps
+                    }.toStream.map(_.round.toDouble): _*)(sub)
+                    null
+                  })
+                }
+                if (steps < 3 && !renderedCanvases.isEmpty) {
+                  renderedCanvases.remove(renderedCanvases.size - 1)
+                }
+                uploadAsync(log)
+              }(log)
+            }
           }
+          null
+        } finally {
+          registration.foreach(_.stop()(s3client, ec2client))
         }
-        null
-      } finally {
-        registration.foreach(_.stop()(s3client, ec2client))
       }
     }
-  }}()
+  }()
 }

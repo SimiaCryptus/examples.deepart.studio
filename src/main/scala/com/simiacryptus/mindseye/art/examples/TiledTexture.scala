@@ -49,17 +49,16 @@ class TiledTexture extends ArtSetup[Object] {
 
   override def indexStr = "201"
 
-  override def description =
-    """
-      |Creates a simple tiled texture based on a style using:
-      |<ol>
-      |<li>Random plasma initialization</li>
-      |<li>Standard VGG16 layers</li>
-      |<li>Operators constraining and enhancing style</li>
-      |<li>Progressive resolution increase</li>
-      |<li>View layer to enforce tiling</li>
-      |</ol>
-      |""".stripMargin.trim
+  override def description = <div>
+    Creates a simple tiled texture based on a style using:
+    <ol>
+      <li>Random plasma initialization</li>
+      <li>Standard VGG16 layers</li>
+      <li>Operators constraining and enhancing style</li>
+      <li>Progressive resolution increase</li>
+      <li>View layer to enforce tiling</li>
+    </ol>
+  </div>.toString.trim
 
   override def inputTimeoutSeconds = 3600
 

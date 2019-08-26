@@ -47,19 +47,19 @@ class TextureTiledRotor extends RotorArt {
   val magnification = 4
   val rowsAndCols = 3
   val steps = 3
+
   override def indexStr = "202"
 
-  override def description =
-    """
-      |Creates a tiled and rotationally symmetric texture based on a style using:
-      |<ol>
-      |<li>Random noise initialization</li>
-      |<li>Standard VGG16 layers</li>
-      |<li>Operators constraining and enhancing style</li>
-      |<li>Progressive resolution increase</li>
-      |<li>Kaleidoscopic view layer in addition to tiling layer</li>
-      |</ol>
-      |""".stripMargin.trim
+  override def description = <div>
+    Creates a tiled and rotationally symmetric texture based on a style using:
+    <ol>
+      <li>Random noise initialization</li>
+      <li>Standard VGG16 layers</li>
+      <li>Operators constraining and enhancing style</li>
+      <li>Progressive resolution increase</li>
+      <li>Kaleidoscopic view layer in addition to tiling layer</li>
+    </ol>
+  </div>.toString.trim
 
   override def inputTimeoutSeconds = 3600
 
@@ -133,6 +133,7 @@ class TextureTiledRotor extends RotorArt {
                 override val trainingMinutes: Int = 30
                 override val trainingIterations: Int = 10
                 override val maxRate = 1e9
+
                 override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray).copyPipeline()
               }, new GeometricSequence {
                 override val min: Double = minResolution

@@ -46,77 +46,78 @@ class StyleTransfer extends ArtSetup[Object] {
   val maxResolution = 1200
   val magnification = 2
   val steps = 3
+
   override def indexStr = "301"
 
-  override def description =
-    """
-      |Paints an image in the style of another using:
-      |<ol>
-      |<li>Random noise initialization</li>
-      |<li>Standard VGG16 layers</li>
-      |<li>Operators to match content and constrain and enhance style</li>
-      |<li>Progressive resolution increase</li>
-      |</ol>
-      |""".stripMargin.trim
+  override def description = <div>
+    Paints an image in the style of another using:
+    <ol>
+      <li>Random noise initialization</li>
+      <li>Standard VGG16 layers</li>
+      <li>Operators to match content and constrain and enhance style</li>
+      <li>Progressive resolution increase</li>
+    </ol>
+  </div>.toString.trim
 
   override def inputTimeoutSeconds = 3600
 
 
   override def postConfigure(log: NotebookOutput) = log.eval { () => () => {
-    implicit val _ = log
-    // First, basic configuration so we publish to our s3 site
-    log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
-    log.onComplete(() => upload(log): Unit)
-    // Fetch input images (user upload prompts) and display a rescaled copies
-    log.p(log.jpg(ImageArtUtil.load(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
-    log.p(log.jpg(ImageArtUtil.load(log, contentUrl, maxResolution), "Input Content"))
-    val canvas = new AtomicReference[Tensor](null)
-    // Execute the main process while registered with the site index
-    val registration = registerWithIndexJPG(canvas.get())
-    try {
-      // Display an additional image inside the report itself
-      withMonitoredJpg(() => canvas.get().toImage) {
-        paint(contentUrl, initUrl, canvas, new VisualStyleContentNetwork(
-          styleLayers = List(
-            // We select all the lower-level layers to achieve a good balance between speed and accuracy.
-            VGG16.VGG16_0,
-            VGG16.VGG16_1a,
-            VGG16.VGG16_1b1,
-            VGG16.VGG16_1b2,
-            VGG16.VGG16_1c1,
-            VGG16.VGG16_1c2,
-            VGG16.VGG16_1c3
-          ),
-          styleModifiers = List(
-            // These two operators are a good combination for a vivid yet accurate style
-            new GramMatrixEnhancer(),
-            new MomentMatcher()
-          ),
-          styleUrl = List(styleUrl),
-          contentLayers = List(
-            // We use fewer layer to be a constraint, since the ContentMatcher operation defines
-            // a stronger operation. Picking a mid-level layer ensures the match is somewhat
-            // faithful to color, contains detail, and still accomidates local changes for style.
-            VGG16.VGG16_1b2
-          ),
-          contentModifiers = List(
-            // Standard content matching operator
-            new ContentMatcher()
-          ),
-          magnification = magnification
-        ), new BasicOptimizer {
-          override val trainingMinutes: Int = 60
-          override val trainingIterations: Int = 20
-          override val maxRate = 1e9
-        }, new GeometricSequence {
-          override val min: Double = minResolution
-          override val max: Double = maxResolution
-          override val steps = StyleTransfer.this.steps
-        }.toStream.map(_.round.toDouble): _*)
+      implicit val _ = log
+      // First, basic configuration so we publish to our s3 site
+      log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
+      log.onComplete(() => upload(log): Unit)
+      // Fetch input images (user upload prompts) and display a rescaled copies
+      log.p(log.jpg(ImageArtUtil.load(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
+      log.p(log.jpg(ImageArtUtil.load(log, contentUrl, maxResolution), "Input Content"))
+      val canvas = new AtomicReference[Tensor](null)
+      // Execute the main process while registered with the site index
+      val registration = registerWithIndexJPG(canvas.get())
+      try {
+        // Display an additional image inside the report itself
+        withMonitoredJpg(() => canvas.get().toImage) {
+          paint(contentUrl, initUrl, canvas, new VisualStyleContentNetwork(
+            styleLayers = List(
+              // We select all the lower-level layers to achieve a good balance between speed and accuracy.
+              VGG16.VGG16_0,
+              VGG16.VGG16_1a,
+              VGG16.VGG16_1b1,
+              VGG16.VGG16_1b2,
+              VGG16.VGG16_1c1,
+              VGG16.VGG16_1c2,
+              VGG16.VGG16_1c3
+            ),
+            styleModifiers = List(
+              // These two operators are a good combination for a vivid yet accurate style
+              new GramMatrixEnhancer(),
+              new MomentMatcher()
+            ),
+            styleUrl = List(styleUrl),
+            contentLayers = List(
+              // We use fewer layer to be a constraint, since the ContentMatcher operation defines
+              // a stronger operation. Picking a mid-level layer ensures the match is somewhat
+              // faithful to color, contains detail, and still accomidates local changes for style.
+              VGG16.VGG16_1b2
+            ),
+            contentModifiers = List(
+              // Standard content matching operator
+              new ContentMatcher()
+            ),
+            magnification = magnification
+          ), new BasicOptimizer {
+            override val trainingMinutes: Int = 60
+            override val trainingIterations: Int = 20
+            override val maxRate = 1e9
+          }, new GeometricSequence {
+            override val min: Double = minResolution
+            override val max: Double = maxResolution
+            override val steps = StyleTransfer.this.steps
+          }.toStream.map(_.round.toDouble): _*)
+        }
+        null
+      } finally {
+        registration.foreach(_.stop()(s3client, ec2client))
       }
-      null
-    } finally {
-      registration.foreach(_.stop()(s3client, ec2client))
     }
-  }}()
+  }()
 }

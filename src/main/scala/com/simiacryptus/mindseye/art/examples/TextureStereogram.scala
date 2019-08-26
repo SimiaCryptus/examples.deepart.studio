@@ -58,18 +58,17 @@ class TextureStereogram extends ArtSetup[Object] {
 
   override def indexStr = "203"
 
-  override def description =
-    """
-      |Creates simple stereogram based on a very tall tiled texture rendered using:
-      |<ol>
-      |<li>Random plasma initialization</li>
-      |<li>Standard VGG16 layers</li>
-      |<li>Operators constraining and enhancing style</li>
-      |<li>Progressive resolution increase</li>
-      |<li>View layer to enforce tiling</li>
-      |<li>Final rendering process combining the texture with a depth map to produce a stereogram</li>
-      |</ol>
-      |""".stripMargin.trim
+  override def description = <div>
+    Creates simple stereogram based on a very tall tiled texture rendered using:
+    <ol>
+      <li>Random plasma initialization</li>
+      <li>Standard VGG16 layers</li>
+      <li>Operators constraining and enhancing style</li>
+      <li>Progressive resolution increase</li>
+      <li>View layer to enforce tiling</li>
+      <li>Final rendering process combining the texture with a depth map to produce a stereogram</li>
+    </ol>
+  </div>.toString.trim
 
   override def inputTimeoutSeconds = 3600
 

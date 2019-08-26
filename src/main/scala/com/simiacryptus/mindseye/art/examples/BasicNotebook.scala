@@ -41,31 +41,31 @@ class BasicNotebook extends ArtSetup[Object] {
 
   override def indexStr = "000"
 
-  override def description =
-    """
-      |A very basic notebook that displays a message.
-      |No AI code, just a demo of the publishing system used.
-      |It first prompts the user to upload an image, then resizes it and draws some text.
-      |""".stripMargin.trim
+  override def description = <div>
+    A very basic notebook that displays a message.
+    No AI code, just a demo of the publishing system used.
+    It first prompts the user to upload an image, then resizes it and draws some text.
+  </div>.toString.trim
 
   override def inputTimeoutSeconds = 3600
 
-  override def postConfigure(log: NotebookOutput) = log.eval { () =>() => {
-    implicit val _ = log
-    // First, basic configuration so we publish to our s3 site
-    log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
-    log.onComplete(() => upload(log): Unit)
-    // Now we evaluate the drawing code inside a logged eval block.
-    // This will publish the code, the result, any logs, the duration, and also link to github.
-    val canvas = log.eval(() => {
-      val canvas = ImageArtUtil.load(log, styleUrl, resolution.toInt)
-      val graphics = canvas.getGraphics.asInstanceOf[Graphics2D]
-      graphics.setFont(new Font("Calibri", Font.BOLD, 42))
-      graphics.drawString(message, 10, 50)
-      canvas
-    })
-    // Usually not on one line, this code publishes our result to the site's index so it is linked from the homepage.
-    registerWithIndexJPG(Tensor.fromRGB(canvas)).foreach(_.stop()(s3client, ec2client))
-    null
-  }}()
+  override def postConfigure(log: NotebookOutput) = log.eval { () => () => {
+      implicit val _ = log
+      // First, basic configuration so we publish to our s3 site
+      log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
+      log.onComplete(() => upload(log): Unit)
+      // Now we evaluate the drawing code inside a logged eval block.
+      // This will publish the code, the result, any logs, the duration, and also link to github.
+      val canvas = log.eval(() => {
+        val canvas = ImageArtUtil.load(log, styleUrl, resolution.toInt)
+        val graphics = canvas.getGraphics.asInstanceOf[Graphics2D]
+        graphics.setFont(new Font("Calibri", Font.BOLD, 42))
+        graphics.drawString(message, 10, 50)
+        canvas
+      })
+      // Usually not on one line, this code publishes our result to the site's index so it is linked from the homepage.
+      registerWithIndexJPG(Tensor.fromRGB(canvas)).foreach(_.stop()(s3client, ec2client))
+      null
+    }
+  }()
 }
