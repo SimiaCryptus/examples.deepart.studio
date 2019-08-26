@@ -45,7 +45,7 @@ object SeedImageSurvey extends SeedImageSurvey with LocalRunner[Object] with Not
 class SeedImageSurvey extends ArtSetup[Object] {
 
   val styleUrl = "upload:Style"
-  val s3bucket: String = "examples.deepart.studio"
+  val s3bucket: String = "examples.deepartist.org"
   val resolution = 800
   val animationDelay = 1000
   val magnification = 4

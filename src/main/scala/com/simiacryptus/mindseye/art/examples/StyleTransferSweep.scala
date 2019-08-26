@@ -77,7 +77,7 @@ class StyleTransferSweep extends ArtSetup[Object] {
       log.p(log.jpg(ImageArtUtil.load(log, styleBUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style B"))
       val canvases = (1 to frames).map(_ => new AtomicReference[Tensor](null)).toList
       // Execute the main process while registered with the site index
-      val registration = registerWithIndexGIF2(canvases.map(_.get()))
+      val registration = registerWithIndexGIF_Cyclic(canvases.map(_.get()))
       try {
         animate(contentUrl, initUrl, canvases, log.eval(() => (1 to frames).map(f => f.toString -> {
           var coeffA = Math.pow(separation, (f.toDouble / frames) - 0.5)

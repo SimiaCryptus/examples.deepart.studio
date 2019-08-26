@@ -74,7 +74,7 @@ class AnimatedStyleTransfer extends ArtSetup[Object] {
       log.p(log.jpg(ImageArtUtil.load(log, contentUrl, maxResolution), "Input Content"))
       val canvases = (1 to frames).map(_ => new AtomicReference[Tensor](null)).toList
       // Execute the main process while registered with the site index
-      val registration = registerWithIndexGIF2(canvases.map(_.get()))
+      val registration = registerWithIndexGIF_Cyclic(canvases.map(_.get()))
       try {
         paintBisection(contentUrl, initUrl, canvases, (1 to frames).map(f => f.toString -> {
           new VisualStyleContentNetwork(
