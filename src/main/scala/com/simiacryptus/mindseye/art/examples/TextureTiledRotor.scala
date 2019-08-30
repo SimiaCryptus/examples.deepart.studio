@@ -26,8 +26,9 @@ import com.simiacryptus.mindseye.art.models.VGG16
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
-import com.simiacryptus.mindseye.lang.Tensor
+import com.simiacryptus.mindseye.lang.{Layer, Tensor}
 import com.simiacryptus.mindseye.layers.java.{ImgTileAssemblyLayer, ImgViewLayer}
+import com.simiacryptus.mindseye.opt.region.TrustRegion
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.sparkbook.NotebookRunner._
 import com.simiacryptus.sparkbook._
@@ -133,7 +134,7 @@ class TextureTiledRotor extends RotorArt {
                 override val trainingMinutes: Int = 30
                 override val trainingIterations: Int = 10
                 override val maxRate = 1e9
-
+                override def trustRegion(layer: Layer): TrustRegion = null
                 override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray).copyPipeline()
               }, new GeometricSequence {
                 override val min: Double = minResolution

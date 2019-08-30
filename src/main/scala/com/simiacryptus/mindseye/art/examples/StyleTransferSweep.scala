@@ -121,7 +121,7 @@ class StyleTransferSweep extends ArtSetup[Object] {
             contentModifiers = List(
               new ContentMatcher()
             ))
-        })), new BasicOptimizer {
+        }).toList), new BasicOptimizer {
           override val trainingMinutes: Int = 60
           override val trainingIterations: Int = 30
           override val maxRate = 1e9

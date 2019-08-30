@@ -120,7 +120,7 @@ class SeedImageSurvey extends ArtSetup[Object] {
                     magnification = magnification
                   ), new BasicOptimizer {
                     override val trainingMinutes: Int = 60
-                    override val trainingIterations: Int = 50
+                    override val trainingIterations: Int = 30
                     override val maxRate = 1e9
 
                     override def onStepComplete(trainable: Trainable, currentPoint: Step): Boolean = {

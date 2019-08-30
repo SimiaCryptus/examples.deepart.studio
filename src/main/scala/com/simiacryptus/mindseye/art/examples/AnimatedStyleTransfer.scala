@@ -45,7 +45,7 @@ class AnimatedStyleTransfer extends ArtSetup[Object] {
   val maxResolution = 800
   val magnification = 2
   val steps = 3
-  val frames = keyframes * 2 - 1
+  def frames = keyframes * 2 - 1
   val keyframes = 3
 
   override def indexStr = "302"
@@ -76,7 +76,7 @@ class AnimatedStyleTransfer extends ArtSetup[Object] {
       // Execute the main process while registered with the site index
       val registration = registerWithIndexGIF_Cyclic(canvases.map(_.get()))
       try {
-        paintBisection(contentUrl, initUrl, canvases, (1 to frames).map(f => f.toString -> {
+        paintEveryOther(contentUrl, initUrl, canvases, (1 to frames).map(f => f.toString -> {
           new VisualStyleContentNetwork(
             styleLayers = List(
               // We select all the lower-level layers to achieve a good balance between speed and accuracy.
@@ -102,11 +102,11 @@ class AnimatedStyleTransfer extends ArtSetup[Object] {
             ),
             magnification = magnification
           )
-        }), new BasicOptimizer {
+        }).toList, new BasicOptimizer {
           override val trainingMinutes: Int = 60
           override val trainingIterations: Int = 30
           override val maxRate = 1e9
-        }, x => new PipelineNetwork(1), keyframes, new GeometricSequence {
+        }, x => new PipelineNetwork(1), new GeometricSequence {
           override val min: Double = minResolution
           override val max: Double = maxResolution
           override val steps = AnimatedStyleTransfer.this.steps

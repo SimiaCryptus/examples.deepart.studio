@@ -47,7 +47,7 @@ class OperatorSurvey extends ArtSetup[Object] {
   val styleUrl = "upload:Style"
   val initUrl: String = "50 + noise * 0.5"
   val s3bucket: String = "examples.deepartist.org"
-  val resolution = 400
+  val resolution = 800
   val animationDelay = 1000
   val magnification = 4
 
@@ -80,12 +80,13 @@ class OperatorSurvey extends ArtSetup[Object] {
         try {
           val operatorMap = Map(
             "GramMatrixEnhancer" -> new GramMatrixEnhancer(),
-            "GramMatrixEnhancer (10)" -> new GramMatrixEnhancer().setMinMax(-10, 10),
+            "GramMatrixEnhancer (100)" -> new GramMatrixEnhancer().setMinMax(-100, 100),
             "ChannelMeanMatcher" -> new ChannelMeanMatcher(),
-            "PatternPCAMatcher" -> new PatternPCAMatcher(),
+            "MomentMatcher" -> new MomentMatcher(),
             "MomentMatcher (no-cov)" -> new MomentMatcher().setCovCoeff(0.0),
             "MomentMatcher (no-pos)" -> new MomentMatcher().setPosCoeff(0.0),
-            "MomentMatcher" -> new MomentMatcher()
+            "GramMatrixMatcher" -> new GramMatrixMatcher(),
+            "ChannelPowerEnhancer" -> new ChannelPowerEnhancer()
           )
           for (modifiers <- oneAtATime(operatorMap)) {
             val canvas = new AtomicReference[Tensor](null)
@@ -124,7 +125,7 @@ class OperatorSurvey extends ArtSetup[Object] {
                     magnification = magnification
                   ), new BasicOptimizer {
                     override val trainingMinutes: Int = 60
-                    override val trainingIterations: Int = 50
+                    override val trainingIterations: Int = 20
                     override val maxRate = 1e9
 
                     override def onStepComplete(trainable: Trainable, currentPoint: Step): Boolean = {
@@ -147,7 +148,9 @@ class OperatorSurvey extends ArtSetup[Object] {
           }
           null
         } finally {
-          registration.foreach(_.stop()(s3client, ec2client))
+          Try {
+            registration.foreach(_.stop()(s3client, ec2client))
+          }
         }
       }
     }

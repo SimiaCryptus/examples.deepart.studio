@@ -98,7 +98,7 @@ class TextureSurvey extends ArtSetup[Object] {
               withMonitoredJpg(() => Option(canvas.get()).map(_.toRgbImage).orNull) {
                 var steps = 0
                 Try {
-                  log.subreport("Painting", (sub: NotebookOutput) => {
+                  log.subreport(layer.name(), (sub: NotebookOutput) => {
                     paint(styleUrl, initUrl, canvas, new VisualStyleNetwork(
                       styleLayers = List(layer),
                       styleModifiers = List(
@@ -110,7 +110,7 @@ class TextureSurvey extends ArtSetup[Object] {
                       magnification = magnification
                     ), new BasicOptimizer {
                       override val trainingMinutes: Int = 60
-                      override val trainingIterations: Int = 50
+                      override val trainingIterations: Int = 25
                       override val maxRate = 1e9
 
                       override def onStepComplete(trainable: Trainable, currentPoint: Step): Boolean = {

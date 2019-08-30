@@ -49,10 +49,10 @@ class TextureGrowth extends ArtSetup[Object] {
   val styleUrl = "upload:Style"
   val initUrl: String = "50 + plasma * 0.5"
   val s3bucket: String = "examples.deepartist.org"
+  val minResolution = 200
   val maxResolution = 800
   val animationDelay = 1000
   val magnification = 4
-  val minResolution = 200
 
   override def indexStr = "103"
 
@@ -84,7 +84,7 @@ class TextureGrowth extends ArtSetup[Object] {
           import scala.collection.JavaConverters._
           for (layer <- pipeline.getLayers.asScala.keys) {
             log.h1(layer.name())
-            for (numberOfSteps <- List(1, 2, 3)) {
+            for (numberOfSteps <- List(1, 2, 5)) {
               log.h2(s"$numberOfSteps steps")
               val canvas = new AtomicReference[Tensor](null)
               renderedCanvases += (() => {
@@ -100,7 +100,7 @@ class TextureGrowth extends ArtSetup[Object] {
               withMonitoredJpg(() => Option(canvas.get()).map(_.toRgbImage).orNull) {
                 var steps = 0
                 Try {
-                  log.subreport("Painting", (sub: NotebookOutput) => {
+                  log.subreport(s"$numberOfSteps steps", (sub: NotebookOutput) => {
                     paint(styleUrl, initUrl, canvas, new VisualStyleNetwork(
                       styleLayers = List(layer),
                       styleModifiers = List(
@@ -111,7 +111,7 @@ class TextureGrowth extends ArtSetup[Object] {
                       magnification = magnification
                     ), new BasicOptimizer {
                       override val trainingMinutes: Int = 60 / numberOfSteps
-                      override val trainingIterations: Int = 30
+                      override val trainingIterations: Int = 30 / numberOfSteps
                       override val maxRate = 1e9
 
                       override def onStepComplete(trainable: Trainable, currentPoint: Step): Boolean = {
