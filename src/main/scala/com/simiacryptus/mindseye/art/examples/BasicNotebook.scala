@@ -22,11 +22,9 @@ package com.simiacryptus.mindseye.art.examples
 import java.awt.{Font, Graphics2D}
 import java.net.URI
 
-import com.simiacryptus.aws.exe.EC2NodeSettings
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util._
 import com.simiacryptus.mindseye.lang.Tensor
-import com.simiacryptus.mindseye.lang.cudnn.CudaMemory
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.sparkbook._
 import com.simiacryptus.sparkbook.util.Java8Util._

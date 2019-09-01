@@ -24,17 +24,16 @@ import java.awt.{Font, Graphics2D}
 import java.net.URI
 import java.util.concurrent.atomic.AtomicReference
 
-import com.simiacryptus.aws.exe.EC2NodeSettings
 import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.eval.Trainable
 import com.simiacryptus.mindseye.lang.Tensor
-import com.simiacryptus.mindseye.lang.cudnn.{CudaMemory, Precision}
+import com.simiacryptus.mindseye.lang.cudnn.Precision
 import com.simiacryptus.mindseye.opt.Step
 import com.simiacryptus.notebook.NotebookOutput
-import com.simiacryptus.sparkbook.{AWSNotebookRunner, EC2Runner, NotebookRunner}
+import com.simiacryptus.sparkbook.NotebookRunner
 import com.simiacryptus.sparkbook.NotebookRunner._
 import com.simiacryptus.sparkbook.util.Java8Util._
 import com.simiacryptus.sparkbook.util.LocalRunner
