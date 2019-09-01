@@ -51,7 +51,7 @@ class ContentReconstructionSurvey extends ArtSetup[Object] {
   val resolution = 800
   val animationDelay = 1000
 
-  override def indexStr = "101"
+  override def indexStr = "205"
 
   override def description = <div>
     Reconstructs an example image's content via each layer of the VGG19 network.
