@@ -22,7 +22,7 @@ package com.simiacryptus.mindseye.art.examples
 import java.net.URI
 import java.util.concurrent.atomic.AtomicReference
 
-import com.simiacryptus.mindseye.art.models.{Inception5H, VGG16}
+import com.simiacryptus.mindseye.art.models.VGG16
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
@@ -40,7 +40,7 @@ class DeepDream extends ArtSetup[Object] {
 
   val contentUrl = "upload:Content"
   val s3bucket: String = "examples.deepartist.org"
-  val resolution = 1200
+  val resolution = 800
 
   override def indexStr = "204"
 
@@ -82,8 +82,8 @@ class DeepDream extends ArtSetup[Object] {
             ),
             styleUrl = List(contentUrl)
           ), new BasicOptimizer {
-            override val trainingMinutes: Int = 120
-            override val trainingIterations: Int = 100
+            override val trainingMinutes: Int = 180
+            override val trainingIterations: Int = 200
             override val maxRate = 1e9
           }, new GeometricSequence {
             override val min: Double = resolution

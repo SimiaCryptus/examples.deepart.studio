@@ -42,10 +42,11 @@ class TiledTexture extends ArtSetup[Object] {
   val styleUrl = "upload:Style"
   val initUrl: String = "50 + plasma * 0.5"
   val s3bucket: String = "examples.deepartist.org"
-  val minResolution = 320
-  val maxResolution = 640
+  val minResolution = 120
+  val maxResolution = 400
   val magnification = 9
   val rowsAndCols = 3
+  val steps = 3
 
   override def indexStr = "201"
 
@@ -62,7 +63,8 @@ class TiledTexture extends ArtSetup[Object] {
 
   override def inputTimeoutSeconds = 3600
 
-  override def postConfigure(log: NotebookOutput) = log.eval { () => () => {
+
+  override def postConfigure(log: NotebookOutput) = log.eval { () =>() => {
       implicit val _ = log
       // First, basic configuration so we publish to our s3 site
       log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
@@ -124,7 +126,7 @@ class TiledTexture extends ArtSetup[Object] {
               }, new GeometricSequence {
                 override val min: Double = minResolution
                 override val max: Double = maxResolution
-                override val steps = 2
+                override val steps = TiledTexture.this.steps
               }.toStream.map(_.round.toDouble): _*)(sub)
               null
             })

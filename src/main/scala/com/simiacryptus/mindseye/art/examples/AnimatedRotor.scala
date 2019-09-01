@@ -46,9 +46,6 @@ class AnimatedRotor extends RotorArt {
   val maxResolution = 800
   val magnification = 2
   val steps = 3
-
-  def frames = keyframes * 2 - 1
-
   val keyframes = 3
   override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
   override val rotationalSegments: Int = 3
@@ -79,6 +76,7 @@ class AnimatedRotor extends RotorArt {
       // Fetch input images (user upload prompts) and display rescaled copies
       log.p(log.jpg(ImageArtUtil.load(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
       log.p(log.jpg(ImageArtUtil.load(log, contentUrl, maxResolution), "Input Content"))
+      def frames = keyframes * 2 - 1
       val canvases = (1 to frames).map(_ => new AtomicReference[Tensor](null)).toList
       // Execute the main process while registered with the site index
       val registration = registerWithIndexGIF_Cyclic(canvases.map(_.get()).map(t=>{

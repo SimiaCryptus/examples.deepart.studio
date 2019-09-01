@@ -38,8 +38,8 @@ import com.simiacryptus.sparkbook.util.LocalRunner
 object TextureTiledRotor extends TextureTiledRotor with LocalRunner[Object] with NotebookRunner[Object]
 
 class TextureTiledRotor extends RotorArt {
-
-  override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
+  override val rotationalSegments = 6
+  override val rotationalChannelPermutation: Array[Int] = Array(2, 1, 3)
   val styleUrl = "upload:Style"
   val initUrl: String = "50 + noise * 0.5"
   val s3bucket: String = "examples.deepartist.org"
