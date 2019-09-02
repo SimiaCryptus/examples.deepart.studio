@@ -34,7 +34,9 @@ import com.simiacryptus.sparkbook.util.Java8Util._
 import com.simiacryptus.sparkbook.util.LocalRunner
 
 
-object HighResStyleTransfer extends HighResStyleTransfer with LocalRunner[Object] with NotebookRunner[Object]
+object HighResStyleTransfer extends HighResStyleTransfer with LocalRunner[Object] with NotebookRunner[Object] {
+  override def http_port: Int = 8080
+}
 
 class HighResStyleTransfer extends ArtSetup[Object] {
 
