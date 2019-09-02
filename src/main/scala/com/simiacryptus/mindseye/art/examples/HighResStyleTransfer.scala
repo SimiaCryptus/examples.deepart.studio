@@ -34,9 +34,7 @@ import com.simiacryptus.sparkbook.util.Java8Util._
 import com.simiacryptus.sparkbook.util.LocalRunner
 
 
-object HighResStyleTransfer extends HighResStyleTransfer with LocalRunner[Object] with NotebookRunner[Object] {
-  override def http_port: Int = 8080
-}
+object HighResStyleTransfer extends HighResStyleTransfer with LocalRunner[Object] with NotebookRunner[Object]
 
 class HighResStyleTransfer extends ArtSetup[Object] {
 
@@ -121,8 +119,7 @@ class HighResStyleTransfer extends ArtSetup[Object] {
               VGG16.VGG16_1e1,
               VGG16.VGG16_1e2,
               VGG16.VGG16_1e3,
-              VGG16.VGG16_2,
-              VGG16.VGG16_3a
+              VGG16.VGG16_2
             ),
             styleModifiers = List(
               // These two operators are a good combination for a vivid yet accurate style
@@ -139,7 +136,8 @@ class HighResStyleTransfer extends ArtSetup[Object] {
             contentModifiers = List(
               // Standard content matching operator
               new ContentMatcher().scale(5)
-            )
+            ),
+            magnification = 4
           ), new BasicOptimizer {
             override val trainingMinutes: Int = 60
             override val trainingIterations: Int = 20
@@ -175,14 +173,14 @@ class HighResStyleTransfer extends ArtSetup[Object] {
               // We use fewer layer to be a constraint, since the ContentMatcher operation defines
               // a stronger operation. Picking a mid-level layer ensures the match is somewhat
               // faithful to color, contains detail, and still accomidates local changes for style.
-              VGG16.VGG16_1b2.prependAvgPool(2)
+              VGG16.VGG16_1b2.prependAvgPool(4)
             ),
             contentModifiers = List(
               // Standard content matching operator
               new ContentMatcher().scale(5)
             )
           ), new BasicOptimizer {
-            override val trainingMinutes: Int = 60
+            override val trainingMinutes: Int = 90
             override val trainingIterations: Int = 20
             override val maxRate = 1e9
           }, new GeometricSequence {
@@ -199,7 +197,7 @@ class HighResStyleTransfer extends ArtSetup[Object] {
             ),
             styleModifiers = List(
               // These two operators are a good combination for a vivid yet accurate style
-              new GramMatrixEnhancer(),
+              new GramMatrixEnhancer().setMinMax(-5,5),
               new MomentMatcher()
             ),
             styleUrl = List(styleUrl),
@@ -207,14 +205,14 @@ class HighResStyleTransfer extends ArtSetup[Object] {
               // We use fewer layer to be a constraint, since the ContentMatcher operation defines
               // a stronger operation. Picking a mid-level layer ensures the match is somewhat
               // faithful to color, contains detail, and still accomidates local changes for style.
-              VGG16.VGG16_1b2.prependAvgPool(3)
+              VGG16.VGG16_1b2.prependAvgPool(8).appendMaxPool(2)
             ),
             contentModifiers = List(
               // Standard content matching operator
               new ContentMatcher().scale(1e1)
             )
           ), new BasicOptimizer {
-            override val trainingMinutes: Int = 60
+            override val trainingMinutes: Int = 120
             override val trainingIterations: Int = 20
             override val maxRate = 1e9
           }, new GeometricSequence {

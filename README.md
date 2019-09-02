@@ -5,7 +5,7 @@ There are a number of examples released with deepartist.org which attempt to ill
 The basic setup for a deep painting is that you have a canvas, which can be modified at will by the AI process, to match a particular signal. This signal matching network consists of a filter, which modifies the image into more abstract data, and then a loss function which measures how close that data signal is to a reference (i.e. style) signal. These filters and operators can then be scaled and combined to form a limitless variety.
 
 ### Pipelines and Layers
-A pipeline is a pre-trained deep vision network which is loaded and made available as a series of image processing layers. Each layer builds on the last to extract higher-level details from the source image. This can be illustrated by this example which surveys the sequence of layers in the VGG16 pipeline, using each layer to reconstruct a target signal.
+A pipeline is a pre-trained deep vision network which is loaded and made available as a series of image processing layers. Each layer builds on the last to extract higher-level details from the source image. This can be illustrated by this example which surveys the sequence of layers in the VGG19 pipeline, using each layer to reconstruct a target signal.
 
 [![](http://examples.deepartist.org/img/df7795a9-c896-4d46-bef4-81cca8333d40.gif)](http://examples.deepartist.org/TextureSurvey/9e77dac3-fec8-4c7b-8be6-9df57044ec58/9e77dac3-fec8-4c7b-8be6-9df57044ec58.html)
 
