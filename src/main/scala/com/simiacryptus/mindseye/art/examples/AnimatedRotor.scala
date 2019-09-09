@@ -38,6 +38,8 @@ object AnimatedRotor extends AnimatedRotor with LocalRunner[Object] with Noteboo
 
 class AnimatedRotor extends RotorArt {
 
+  override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
+  override val rotationalSegments: Int = 3
   val contentUrl = "upload:Content"
   val styleUrl = "upload:Style"
   val initUrl: String = "50 + noise * 0.5"
@@ -47,8 +49,6 @@ class AnimatedRotor extends RotorArt {
   val magnification = 2
   val steps = 3
   val keyframes = 3
-  override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
-  override val rotationalSegments: Int = 3
 
   override def indexStr = "303"
 
@@ -76,10 +76,12 @@ class AnimatedRotor extends RotorArt {
       // Fetch input images (user upload prompts) and display rescaled copies
       log.p(log.jpg(ImageArtUtil.load(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
       log.p(log.jpg(ImageArtUtil.load(log, contentUrl, maxResolution), "Input Content"))
+
       def frames = keyframes * 2 - 1
+
       val canvases = (1 to frames).map(_ => new AtomicReference[Tensor](null)).toList
       // Execute the main process while registered with the site index
-      val registration = registerWithIndexGIF_Cyclic(canvases.map(_.get()).map(t=>{
+      val registration = registerWithIndexGIF_Cyclic(canvases.map(_.get()).map(t => {
         val kaleidoscope = getKaleidoscope(t.getDimensions)
         val transformed = kaleidoscope.eval(t).getDataAndFree.getAndFree(0)
         kaleidoscope.freeRef()
@@ -94,7 +96,7 @@ class AnimatedRotor extends RotorArt {
             new VisualStyleNetwork(
               styleLayers = List(
                 // We select all the lower-level layers to achieve a good balance between speed and accuracy.
-                VGG16.VGG16_0,
+                VGG16.VGG16_0b,
                 VGG16.VGG16_1a,
                 VGG16.VGG16_1b1,
                 VGG16.VGG16_1b2,

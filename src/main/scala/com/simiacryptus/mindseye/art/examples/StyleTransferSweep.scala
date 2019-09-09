@@ -47,7 +47,9 @@ class StyleTransferSweep extends ArtSetup[Object] {
   val magnification = 2
   val steps = 3
   val separation = 10
-  val frames = 1+6
+  val frames = 1 + 6
+  val delay = 1000
+
   override def indexStr = "303"
 
   override def description = <div>
@@ -65,8 +67,6 @@ class StyleTransferSweep extends ArtSetup[Object] {
 
   override def inputTimeoutSeconds = 3600
 
-  val delay = 1000
-
   override def postConfigure(log: NotebookOutput) = log.eval { () =>
     () => {
       implicit val _ = log
@@ -79,12 +79,11 @@ class StyleTransferSweep extends ArtSetup[Object] {
       log.p(log.jpg(ImageArtUtil.load(log, styleBUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style B"))
 
 
-
       val canvases = (1 to frames).map(_ => new AtomicReference[Tensor](null)).toList
       // Execute the main process while registered with the site index
       val registration = registerWithIndexGIF_Cyclic(canvases.map(_.get()), delay = delay)
       try {
-        animate(contentUrl, initUrl, canvases, log.eval(() => (0 to frames- 1).map(f => {
+        animate(contentUrl, initUrl, canvases, log.eval(() => (0 to frames - 1).map(f => {
           var coeffA = Math.pow(separation, (f.toDouble / frames) - 0.5)
           var coeffB = 1.0 / coeffA
           val mag = coeffA + coeffB
@@ -93,7 +92,7 @@ class StyleTransferSweep extends ArtSetup[Object] {
           f"${coeffA * 100}%.3f - ${coeffB * 100}%.3f" -> {
             val styleLayers = List(
               // We select all the lower-level layers to achieve a good balance between speed and accuracy.
-              VGG16.VGG16_0,
+              VGG16.VGG16_0b,
               VGG16.VGG16_1a,
               VGG16.VGG16_1b1,
               VGG16.VGG16_1b2,

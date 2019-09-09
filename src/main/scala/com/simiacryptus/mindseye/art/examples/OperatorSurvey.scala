@@ -66,7 +66,8 @@ class OperatorSurvey extends ArtSetup[Object] {
 
   override def inputTimeoutSeconds = 3600
 
-  override def postConfigure(log: NotebookOutput) = log.eval { () => () => {
+  override def postConfigure(log: NotebookOutput) = log.eval { () =>
+    () => {
       implicit val _ = log
       // First, basic configuration so we publish to our s3 site
       log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
@@ -112,7 +113,7 @@ class OperatorSurvey extends ArtSetup[Object] {
                   paint(styleUrl, initUrl, canvas, new VisualStyleNetwork(
                     styleLayers = List(
                       // We select all the lower-level layers to achieve a good balance between speed and accuracy.
-                      VGG16.VGG16_0,
+                      VGG16.VGG16_0b,
                       VGG16.VGG16_1a,
                       VGG16.VGG16_1b1,
                       VGG16.VGG16_1b2,
@@ -156,6 +157,10 @@ class OperatorSurvey extends ArtSetup[Object] {
     }
   }()
 
+  def oneAtATime[T](map: Map[String, T]): List[Map[String, T]] = {
+    map.toList.map(Map(_))
+  }
+
   /**
     * Full expansion of sets containing one or more element of the source set
     *
@@ -165,10 +170,6 @@ class OperatorSurvey extends ArtSetup[Object] {
     */
   def submaps[T](map: Map[String, T]): List[Map[String, T]] = {
     subsets(map.toList).sortBy(_.toList.sortBy(_._1).mkString("")).map(_.toMap)
-  }
-
-  def oneAtATime[T](map: Map[String, T]): List[Map[String, T]] = {
-    map.toList.map(Map(_))
   }
 
   def subsets[T](map: Seq[T]) = {

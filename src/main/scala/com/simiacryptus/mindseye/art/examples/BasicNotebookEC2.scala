@@ -26,9 +26,12 @@ import com.simiacryptus.sparkbook.util.Java8Util._
 
 
 object BasicNotebookEC2 extends BasicNotebook with EC2Runner[Object] with AWSNotebookRunner[Object] {
-  override def className: String = "BasicNotebook"
   override val s3bucket: String = "examples.deepartist.org"
+
+  override def className: String = "BasicNotebook"
+
   override def nodeSettings: EC2NodeSettings = EC2NodeSettings.T2_L
+
   override def maxHeap: Option[String] = Option("4g")
 
   override def javaProperties: Map[String, String] = super.javaProperties ++ Map(

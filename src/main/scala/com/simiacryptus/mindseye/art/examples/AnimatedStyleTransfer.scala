@@ -63,7 +63,8 @@ class AnimatedStyleTransfer extends ArtSetup[Object] {
 
   override def inputTimeoutSeconds = 3600
 
-  override def postConfigure(log: NotebookOutput) = log.eval { () => () => {
+  override def postConfigure(log: NotebookOutput) = log.eval { () =>
+    () => {
       implicit val _ = log
       // First, basic configuration so we publish to our s3 site
       log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
@@ -71,7 +72,9 @@ class AnimatedStyleTransfer extends ArtSetup[Object] {
       // Fetch input images (user upload prompts) and display rescaled copies
       log.p(log.jpg(ImageArtUtil.load(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
       log.p(log.jpg(ImageArtUtil.load(log, contentUrl, maxResolution), "Input Content"))
+
       def frames = keyframes * 2 - 1
+
       val canvases = (1 to frames).map(_ => new AtomicReference[Tensor](null)).toList
       // Execute the main process while registered with the site index
       val registration = registerWithIndexGIF_Cyclic(canvases.map(_.get()))
@@ -80,7 +83,7 @@ class AnimatedStyleTransfer extends ArtSetup[Object] {
           new VisualStyleContentNetwork(
             styleLayers = List(
               // We select all the lower-level layers to achieve a good balance between speed and accuracy.
-              VGG16.VGG16_0,
+              VGG16.VGG16_0b,
               VGG16.VGG16_1a,
               VGG16.VGG16_1b1,
               VGG16.VGG16_1b2,

@@ -26,10 +26,13 @@ import com.simiacryptus.sparkbook.{AWSNotebookRunner, EC2Runner}
 
 
 object ContentReconstructionSurveyEC2 extends ContentReconstructionSurvey with EC2Runner[Object] with AWSNotebookRunner[Object] {
-  override def nodeSettings: EC2NodeSettings = EC2NodeSettings.P3_2XL
-  override def maxHeap: Option[String] = Option("50g")
-  override def className: String = "ContentReconstructionSurvey"
   override val s3bucket: String = "examples.deepartist.org"
+
+  override def nodeSettings: EC2NodeSettings = EC2NodeSettings.P3_2XL
+
+  override def maxHeap: Option[String] = Option("50g")
+
+  override def className: String = "ContentReconstructionSurvey"
 
   override def javaProperties: Map[String, String] = super.javaProperties ++ Map(
     "MAX_TOTAL_MEMORY" -> (15 * CudaMemory.GiB).toString,
