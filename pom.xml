@@ -163,6 +163,51 @@
             <artifactId>hadoop-aws</artifactId>
             <scope>compile</scope>
         </dependency>
+
+
+
+
+        <dependency>
+            <groupId>org.jcuda</groupId>
+            <artifactId>jcusparse-natives</artifactId>
+            <classifier>windows-x86_64</classifier>
+            <version>${jcudnn.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jcuda</groupId>
+            <artifactId>jcusolver-natives</artifactId>
+            <classifier>windows-x86_64</classifier>
+            <version>${jcudnn.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jcuda</groupId>
+            <artifactId>jcusparse-natives</artifactId>
+            <classifier>linux-x86_64</classifier>
+            <version>${jcudnn.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jcuda</groupId>
+            <artifactId>jcusolver-natives</artifactId>
+            <classifier>linux-x86_64</classifier>
+            <version>${jcudnn.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jcuda</groupId>
+            <artifactId>jcudnn-natives</artifactId>
+            <classifier>linux-x86_64</classifier>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jcuda</groupId>
+            <artifactId>jcuda-natives</artifactId>
+            <classifier>linux-x86_64</classifier>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
 </project>
