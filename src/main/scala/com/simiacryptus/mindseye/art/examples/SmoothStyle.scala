@@ -112,15 +112,16 @@ class SmoothStyle extends ArtSetup[Object] {
               new ContentMatcher().scale(1e0)
             ),
             magnification = 2
-          ), new BasicOptimizer {
-            override val trainingMinutes: Int = 90
-            override val trainingIterations: Int = 50
-            override val maxRate = 1e8
-          }, new GeometricSequence {
-            override val min: Double = 800
-            override val max: Double = 1400
-            override val steps = 2
-          }.toStream.map(_.round.toDouble))
+          ),
+            new BasicOptimizer {
+              override val trainingMinutes: Int = 90
+              override val trainingIterations: Int = 50
+              override val maxRate = 1e8
+            }, new GeometricSequence {
+              override val min: Double = 800
+              override val max: Double = 1400
+              override val steps = 2
+            }.toStream.map(_.round.toDouble))
           paint(contentUrl, x => x, canvas, new VisualStyleContentNetwork(
             styleLayers = List(
               VGG16.VGG16_1a,
