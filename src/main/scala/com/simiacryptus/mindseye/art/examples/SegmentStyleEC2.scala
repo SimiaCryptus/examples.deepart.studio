@@ -20,7 +20,6 @@
 package com.simiacryptus.mindseye.art.examples
 
 import com.simiacryptus.aws.exe.EC2NodeSettings
-import com.simiacryptus.mindseye.art.photo.cuda.SmoothSolver_Cuda
 import com.simiacryptus.mindseye.art.photo.{SmoothSolver, SmoothSolver_EJML}
 import com.simiacryptus.mindseye.lang.cudnn.CudaMemory
 import com.simiacryptus.sparkbook.{AWSNotebookRunner, EC2Runner}
