@@ -18,7 +18,7 @@ You can also configure operators, which define how close a signal is to the obje
 ### Seed Canvas - Noise, Plasma, Image
 When a painting process is begun, there must be some data on the canvas to start with. Interestingly, a completely blank canvas produces poor results, due to something called “symmetry breaking”. There are three main types of seed used in deepartist.org: Noise, Plasma, or Image. Noise is simple random white noise, which can be scaled and offset. (For that matter, scaling and offset syntax is available for all image input urls) Plasma is a simple algorithmic texture that resembles a randomly-colored cloud. An actual image can also be given, either as an upload or as a literal url. This example displays a survey of these seed types when used to paint with the same texture parameters:
 
-As you may note, starting from the image results in something that looks like style transfer. This isn’t so much style transfer as warping the content image until it resembles the desired style. Among other differences, it tends to be deterministic - if you run it 3 times, you get nearly the same 3 results.
+As you may note, starting from the image results in something that looks like style transfer. This isn’t so much style transfer as warping the mask image until it resembles the desired style. Among other differences, it tends to be deterministic - if you run it 3 times, you get nearly the same 3 results.
 
 [![](http://examples.deepartist.org/img/57ebe4bf-192c-4d98-8199-1f113089d053.gif)](http://examples.deepartist.org/SeedImageSurvey/09a31f87-1322-42df-b06e-f02334275329/09a31f87-1322-42df-b06e-f02334275329.html)
 
@@ -42,15 +42,15 @@ Additionally, the resulting canvas can be post-processed by any other function. 
 [![](http://examples.deepartist.org/img/6d1e04c3-13d0-458a-af7c-cea5c851af10.jpg)](http://examples.deepartist.org/TextureStereogram/48a3b281-c959-4406-aafa-003863226f66/48a3b281-c959-4406-aafa-003863226f66.html)
 
 ## Style Transfer
-Depending on your religion, you may wish to paint a painting to resemble some object or scene. If you insist on your graven images, you can use the content matching operators. These are handled slightly differently than the style operators, but are fully illustrated by the following examples.
+Depending on your religion, you may wish to paint a painting to resemble some object or scene. If you insist on your graven images, you can use the mask matching operators. These are handled slightly differently than the style operators, but are fully illustrated by the following examples.
 
 ### Content Reconstruction Survey
-Content images can be reconstructed by signal matching using any vision layer, in the same manner as style matching. Each level higher conveys less local information, such as color, and more higher-level information such as patterns. You can see this in the following survey, which uses each layer in a pipeline to reconstruct target content without any further modifiers.
+Content images can be reconstructed by signal matching using any vision layer, in the same manner as style matching. Each level higher conveys less local information, such as color, and more higher-level information such as patterns. You can see this in the following survey, which uses each layer in a pipeline to reconstruct target mask without any further modifiers.
 
 [![](http://examples.deepartist.org/img/678936dc-a71d-4cce-b4c6-90f43482c852.gif)](http://examples.deepartist.org/ContentReconstructionSurveyEC2/259d1a46-4a18-43d9-bf06-e8f07b45c6ac/259d1a46-4a18-43d9-bf06-e8f07b45c6ac.html)
 
 ### Simple Style Transfer
-When these content operators are combined with style operators, we can demonstrate classic deep style transfer, such as in this example:
+When these mask operators are combined with style operators, we can demonstrate classic deep style transfer, such as in this example:
 
 [![](http://examples.deepartist.org/img/cab5c532-4dac-46a1-bb67-02bd154ea837.jpg)](http://examples.deepartist.org/StyleTransfer/333d3514-d2a9-467e-b157-6d9d20969bb6/333d3514-d2a9-467e-b157-6d9d20969bb6.html)
 
@@ -71,7 +71,7 @@ Another type of animation is to sweep a range of parameters. One example provide
 [![](http://examples.deepartist.org/img/1ffd8be3-baaa-47a0-b400-17c0a359e324.gif)](http://examples.deepartist.org/StyleTransferSweep/51a88a4d-70c2-4687-8bd8-fd3abed2be07/51a88a4d-70c2-4687-8bd8-fd3abed2be07.html)
 
 ### Determinism and Jitter
-Why start with white noise when we do a style transfer? Wouldn’t it be faster to start with the content image itself and change it to match the desired style? One reason is that this heavily biases the result in a way you will have trouble controlling, but another is that the result is deterministic. If we start with noise, there is an inherent randomness to our resulting image that makes it unique. If we use this randomness to produce an animation, we get a unique jittery effect:
+Why start with white noise when we do a style transfer? Wouldn’t it be faster to start with the mask image itself and change it to match the desired style? One reason is that this heavily biases the result in a way you will have trouble controlling, but another is that the result is deterministic. If we start with noise, there is an inherent randomness to our resulting image that makes it unique. If we use this randomness to produce an animation, we get a unique jittery effect:
 
 [![](http://examples.deepartist.org/img/3be18c8e-308e-4fc3-9a99-2f520c303504.gif)](http://examples.deepartist.org/AnimatedStyleTransfer/8cc2213a-47e2-4f66-aba2-94c445b61efc/8cc2213a-47e2-4f66-aba2-94c445b61efc.html)
 

@@ -22,16 +22,16 @@ package com.simiacryptus.mindseye.art.examples
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.net.URI
-import java.util
 import java.util.stream.{Collectors, DoubleStream, IntStream}
 import java.util.zip.ZipFile
+import java.{lang, util}
 
 import com.simiacryptus.mindseye.art.photo.SegmentUtil.{paintWithRandomColors, removeTinyInclusions}
+import com.simiacryptus.mindseye.art.photo._
 import com.simiacryptus.mindseye.art.photo.affinity.RasterAffinity.{adjust, degree}
 import com.simiacryptus.mindseye.art.photo.affinity.RelativeAffinity
-import com.simiacryptus.mindseye.art.photo.cuda.SmoothSolver_Cuda
-import com.simiacryptus.mindseye.art.photo.topology.{SearchRadiusTopology, SimpleRasterTopology}
-import com.simiacryptus.mindseye.art.photo.{FastPhotoStyleTransfer, RegionAssembler, SegmentUtil, SmoothSolver}
+import com.simiacryptus.mindseye.art.photo.cuda.{SmoothSolver_Cuda, SparseMatrixFloat}
+import com.simiacryptus.mindseye.art.photo.topology.{RadiusRasterTopology, SearchRadiusTopology}
 import com.simiacryptus.mindseye.art.util.ArtSetup
 import com.simiacryptus.mindseye.lang.{Coordinate, Tensor}
 import com.simiacryptus.notebook.{EditImageQuery, NotebookOutput, UploadImageQuery}
@@ -67,27 +67,27 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
     val image_tensor: Tensor = Tensor.fromRGB(content)
     val dimensions: Array[Int] = image_tensor.getDimensions
     val pixels: Int = dimensions(0) * dimensions(1)
-    val topology = new SimpleRasterTopology(image_tensor.getDimensions).cached()
 
     log.h1("Image Region Decomposition")
     log.h2("Flattened Image")
-    //val topology = new SimpleRasterTopology(image_tensor.getDimensions).cached()
+    val topology = new RadiusRasterTopology(image_tensor.getDimensions, RadiusRasterTopology.getRadius(1, 1), 0).cached()
+    //new SimpleRasterTopology(image_tensor.getDimensions).cached()
     val topology_analysis = new SearchRadiusTopology(image_tensor)
       .setInitialRadius(1)
-      .setMaxSpatialDist(32)
-      .setMaxChromaDist(0.2)
-      .setNeighborhoodSize(4)
+      .setMaxSpatialDist(8)
+      .setMaxChromaDist(0.1)
+      .setNeighborhoodSize(5)
       .setSelfRef(true)
       .setVerbose(true)
       .cached()
-    val affinity = new RelativeAffinity(image_tensor, topology_analysis)
-      .setContrast(50)
+    val affinity_regions = new RelativeAffinity(image_tensor, topology_analysis)
+      .setContrast(25)
       .setGraphPower1(2)
-      .setMixing(0.5)
+      .setMixing(0.2)
     val flattenedColors = log.eval(() => {
       SegmentUtil.flattenColors(image_tensor,
         topology_analysis,
-        affinity.wrap((graphEdges: util.List[Array[Int]], innerResult: util.List[Array[Double]]) =>
+        affinity_regions.wrap((graphEdges: util.List[Array[Int]], innerResult: util.List[Array[Double]]) =>
           adjust(graphEdges, innerResult, degree(innerResult), 0.5)), 3, solver)
     })
     val flattenedTensor = Tensor.fromRGB(flattenedColors)
@@ -96,15 +96,19 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
       (x: Array[Int]) => flattenedTensor.getPixel(x: _*),
       (a: Array[Double], b: Array[Double]) => IntStream.range(0, a.length)
         .mapToDouble((i: Int) => a(i) - b(i))
-        .map((x: Double) => x * x).average.getAsDouble < 0.5,
-      128,
+        .map((x: Double) => x * x).average.getAsDouble < 0.2,
+      64,
       pixels
     )
-    var graph = SmoothSolver_Cuda.laplacian(affinity, topology).matrix.project(pixelMap)
+    val affinity_graph = new RelativeAffinity(image_tensor, topology_analysis)
+      .setContrast(50)
+      .setGraphPower1(2)
+      .setMixing(0.5)
+    var graph = SmoothSolver_Cuda.laplacian(affinity_graph, topology).matrix.project(pixelMap)
 
     log.h2("Basic Regions")
     log.eval(() => {
-      paintWithRandomColors(topology, image_tensor, pixelMap, graph)
+      paintWithRandomColors(topology, pixelMap, graph)
     })
 
     log.h2("Remove tiny islands")
@@ -116,54 +120,117 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
       graph = graph.select(activeRows).assertSymmetric()
       var projection2 = activeRows.zipWithIndex.toMap
       pixelMap = pixelMap.map(projection2.get(_).getOrElse(0))
-      paintWithRandomColors(topology, image_tensor, pixelMap, graph)
+      paintWithRandomColors(topology, pixelMap, graph)
     })
 
     log.h2("Reduced Regions")
     log.eval(() => {
       val regionAssembler = RegionAssembler.volumeEntropy(graph, pixelMap, image_tensor, topology)
-        .reduceTo(10000)
+        .reduceTo(5000)
       graph = graph.project(regionAssembler.getProjection)
       pixelMap = regionAssembler.getPixelMap
-      val activeRows = graph.activeRows()
-      graph = graph.select(activeRows).assertSymmetric()
-      val projection = activeRows.zipWithIndex.toMap
-      pixelMap = pixelMap.map(projection.get(_).getOrElse(0))
-      paintWithRandomColors(topology, image_tensor, pixelMap, graph)
+
+      val denseProjection = graph.getDenseProjection
+      graph = graph.project(denseProjection)
+      pixelMap = pixelMap.map(denseProjection.apply(_))
+      paintWithRandomColors(topology, pixelMap, graph)
     })
 
+    graph = graph.filterDiagonal().sortAndPrune()
+    val islandDistributions = (0 until pixelMap.length).groupBy(pixelMap(_)).mapValues(pixelIndex => {
+      val pixels = pixelIndex.map(i => image_tensor.getPixel(topology.getCoordsFromIndex(i): _*)).toList
+      new MultivariateFrameOfReference(() => pixels.asJava.stream(), 3)
+    })
+    graph = new SparseMatrixFloat(
+      graph.rowIndices,
+      graph.colIndices,
+      (0 until graph.rowIndices.length).map(i=>{
+        val dist = islandDistributions(graph.rowIndices(i)).dist(islandDistributions(graph.colIndices(i)))
+        if(java.lang.Double.isFinite(dist)) {
+          (1.0 / Math.max(dist,1e-3))
+        } else {
+          1e-8
+        }
+      }.floatValue()).toArray,
+      graph.rows,
+      graph.cols
+    ).sortAndPrune()
+
+    log.eval(() => {
+      val regionAssembler = RegionAssembler.volumeEntropy(graph, pixelMap, image_tensor, topology)
+        .reduceTo(1000)
+      graph = graph.project(regionAssembler.getProjection)
+      pixelMap = regionAssembler.getPixelMap
+
+      val denseProjection = graph.getDenseProjection
+      graph = graph.project(denseProjection)
+      pixelMap = pixelMap.map(denseProjection.apply(_))
+      paintWithRandomColors(topology, pixelMap, graph)
+    })
+
+    //val sortedValues = SparseMatrixFloat.toDouble(graph.values).toStream.sorted.toArray
     val selection = select(log, content, colors: _*)
-    val seedMarks: Map[Int, Int] = log.eval(() => {
+    val eigenSystem: util.Map[Array[Float], lang.Float] = log.eval(() => {
+      graph.dense_graph_eigensys()
+    })
+    val seedVectors: List[Array[Double]] = log.eval(() => {
       val seedMarks = (for (
         x <- 0 until dimensions(0);
         y <- 0 until dimensions(1);
         color <- selection(x, y)
       ) yield pixelMap(topology.getIndexFromCoords(x, y)) -> color).groupBy(_._1).mapValues(_.head._2)
-      RegionAssembler.epidemic(graph, pixelMap, image_tensor, topology,
-        seedMarks.map(t => t._1.asInstanceOf[Integer] -> t._2.asInstanceOf[Integer]).asJava
-      ).reduceTo(1).regions.asScala.flatMap((region) =>
-        region.original_regions.asScala.map(_.toInt -> region.marks)
-      ).toMap.filter(_._2.size() == 1).mapValues(_.asScala.head.toInt)
+      for (markColor <- seedMarks.values.toList.distinct.sorted) yield {
+        val array = (0 until graph.rows).map(elementIndex => if (seedMarks.get(elementIndex).filter(_ == markColor).isDefined) 1.0 else 0.0).toArray
+        val mag = Math.sqrt(array.map(x => x * x).sum)
+        array.map(_ / mag)
+      }
     })
 
-    log.h2("Final Markup")
-    log.eval(() => {
-      SegmentUtil.paint(topology, image_tensor, pixelMap, (for (
-        (pixelAssignment, marking) <- seedMarks
-      ) yield {
-        val color = colors(marking)
-        pixelAssignment.asInstanceOf[Integer] -> Array(
-          color.getBlue.toDouble,
-          color.getGreen.toDouble,
-          color.getRed.toDouble
-        )
-      }).asJava)
-    })
+    var finalPartitioning: Map[Int, Int] = Map.empty
+    for (eigenLimit <- List(10, 20, 30, 40, 50, 60, 80, 100, 200, 500, 750, 1000, 50)) {
+      log.h2("Eigenvalue selection: " + eigenLimit)
+      finalPartitioning = log.eval(() => {
+        val projectedSelection = seedVectors.map(seedVector => {
+          eigenSystem.asScala.toList.sortBy(_._2).take(eigenLimit).map(eigenEntry => {
+            val eigenVector = eigenEntry._1
+            val mag = Math.sqrt(eigenVector.map(x => x * x).sum)
+            val dot = eigenVector.map(_ / mag).zip(seedVector).map(x => x._1 * x._2).sum
+            eigenVector.map(_ * dot)
+          }).reduce(_.zip(_).map(x => x._1 + x._2))
+        })
+        (0 until graph.rows).map(elementIndex => elementIndex -> projectedSelection.zipWithIndex.maxBy(_._1(elementIndex))._2).toMap
+      })
+      log.eval(() => {
+        val colorMap = colors.zipWithIndex.map(tuple => {
+          val (color, index) = tuple
+          index.asInstanceOf[Integer] -> Array(color.getRed.toDouble, color.getGreen.toDouble, color.getBlue.toDouble)
+        }).toMap
+        SegmentUtil.paint(topology, pixelMap.map(finalPartitioning(_)), colorMap.asJava)
+      })
+      for (clr <- 0 until colors.size) yield {
+        log.eval(() => {
+          image_tensor.mapCoords((coordinate: Coordinate) => {
+            val coords = coordinate.getCoords()
+            if (finalPartitioning.get(pixelMap(topology.getIndexFromCoords(coords(0), coords(1)))).map(_ == clr).getOrElse(false)) {
+              image_tensor.get(coordinate)
+            } else {
+              0.0
+            }
+          }).toImage
+        })
+      }
+    }
+
+    //      val finalPartitioning = RegionAssembler.epidemic(graph, pixelMap, image_tensor, topology,
+    //        seedMarks.map(t => t._1.asInstanceOf[Integer] -> t._2.asInstanceOf[Integer]).asJava
+    //      ).reduceTo(1).regions.asScala.flatMap((region) =>
+    //        region.original_regions.asScala.map(_.toInt -> region.marks)
+    //      ).toMap.filter(_._2.size() == 1).mapValues(_.asScala.head.toInt)
 
     for (clr <- 0 until colors.size) yield {
       image_tensor.mapCoords((coordinate: Coordinate) => {
         val coords = coordinate.getCoords()
-        if (seedMarks.get(pixelMap(topology.getIndexFromCoords(coords(0), coords(1)))).map(_ == clr).getOrElse(false)) {
+        if (finalPartitioning.get(pixelMap(topology.getIndexFromCoords(coords(0), coords(1)))).map(_ == clr).getOrElse(false)) {
           image_tensor.get(coordinate)
         } else {
           0.0

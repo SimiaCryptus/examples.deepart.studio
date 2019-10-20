@@ -13,3 +13,4 @@ buildNumber.properties
 report/
 *.h5
 *.zip
+*.hprof

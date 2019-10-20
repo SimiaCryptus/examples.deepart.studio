@@ -70,7 +70,7 @@ class DeepDream extends ArtSetup[Object] {
       val registration = registerWithIndexJPG(canvas.get())
       try {
         // In contrast to other uses, in this painting operation we are enhancing
-        // an input image (content) only, with no other inputs or canvas preparation.
+        // an input image (mask) only, with no other inputs or canvas preparation.
         withMonitoredJpg(() => canvas.get().toImage) {
           paint(contentUrl, contentUrl, canvas, new VisualStyleNetwork(
             styleLayers = List(

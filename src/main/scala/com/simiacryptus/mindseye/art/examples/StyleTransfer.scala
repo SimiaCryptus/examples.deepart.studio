@@ -101,7 +101,7 @@ class StyleTransfer extends ArtSetup[Object] {
               VGG16.VGG16_1b2
             ),
             contentModifiers = List(
-              // Standard content matching operator
+              // Standard mask matching operator
               new ContentMatcher()
             ),
             magnification = magnification

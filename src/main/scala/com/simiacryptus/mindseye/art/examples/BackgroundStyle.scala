@@ -37,9 +37,10 @@ import com.simiacryptus.sparkbook.NotebookRunner.withMonitoredJpg
 import com.simiacryptus.sparkbook.util.Java8Util._
 import com.simiacryptus.sparkbook.util.LocalRunner
 
-object SegmentStyle extends SegmentStyle with LocalRunner[Object] with NotebookRunner[Object]
 
-class SegmentStyle extends SegmentingSetup {
+object BackgroundStyle extends BackgroundStyle with LocalRunner[Object] with NotebookRunner[Object]
+
+class BackgroundStyle extends SegmentingSetup {
 
   val s3bucket: String = ""
   val contentUrl = "upload:Content"
@@ -71,7 +72,7 @@ class SegmentStyle extends SegmentingSetup {
         })
         val canvas = new AtomicReference[Tensor](null)
         val registration = registerWithIndexJPG(canvas.get())
-        try {
+        try
           withMonitoredJpg(() => canvas.get().toImage) {
             val initFn: Tensor => Tensor = content => {
               val image = foreground.toImage
@@ -82,116 +83,121 @@ class SegmentStyle extends SegmentingSetup {
                 contentMask = mask)
             }
 
-            paint(contentUrl, initFn, canvas, new VisualStyleContentNetwork(
-              styleLayers = List(
-                VGG16.VGG16_0b,
-                VGG16.VGG16_1a,
-                VGG16.VGG16_1b1,
-                VGG16.VGG16_1b2,
-                VGG16.VGG16_1c1,
-                VGG16.VGG16_1c2,
-                VGG16.VGG16_1c3,
-                VGG16.VGG16_1d1,
-                VGG16.VGG16_1d2,
-                VGG16.VGG16_1d3
+            paint(
+              contentUrl = contentUrl,
+              initFn = initFn,
+              canvas = canvas,
+              network = new VisualStyleContentNetwork(
+                styleLayers = List(
+                  VGG16.VGG16_0b,
+                  VGG16.VGG16_1a,
+                  VGG16.VGG16_1b1,
+                  VGG16.VGG16_1b2,
+                  VGG16.VGG16_1c1,
+                  VGG16.VGG16_1c2,
+                  VGG16.VGG16_1c3,
+                  VGG16.VGG16_1d1,
+                  VGG16.VGG16_1d2,
+                  VGG16.VGG16_1d3
+                ),
+                styleModifiers = List(
+                  new GramMatrixEnhancer().setMinMax(-.5, 5),
+                  new MomentMatcher()
+                ).map(_.withMask(foreground)),
+                styleUrl = List(styleUrl),
+                contentLayers = List(
+                  VGG16.VGG16_1a
+                ),
+                contentModifiers = List(
+                  new ContentMatcher().scale(1e2)
+                ).map(_.withMask(background)),
+                magnification = 2
               ),
-              styleModifiers = List(
-                new GramMatrixEnhancer().setMinMax(-.5, 5),
-                new MomentMatcher()
-              ).map(_.withMask(foreground)),
-              styleUrl = List(styleUrl),
-              contentLayers = List(
-                VGG16.VGG16_1a
-              ),
-              contentModifiers = List(
-                new ContentMatcher().scale(1e2)
-              ).map(_.withMask(background)),
-              magnification = 2
-            ),
-              new BasicOptimizer {
-                override val trainingMinutes: Int = 30
+              optimizer = new BasicOptimizer {
+                override val trainingMinutes: Int = 60
                 override val trainingIterations: Int = 20
                 override val maxRate = 1e9
-              }, new GeometricSequence {
+              }, resolutions = new GeometricSequence {
                 override val min: Double = 400
                 override val max: Double = 800
                 override val steps = 2
               }.toStream.map(_.round.toDouble))
 
-            paint(contentUrl, tensor => tensor, canvas, new VisualStyleContentNetwork(
-              styleLayers = List(
-                VGG16.VGG16_0b,
-                VGG16.VGG16_1a,
-                VGG16.VGG16_1b1,
-                VGG16.VGG16_1b2,
-                VGG16.VGG16_1c1,
-                VGG16.VGG16_1c2,
-                VGG16.VGG16_1c3,
-                VGG16.VGG16_1d1,
-                VGG16.VGG16_1d2,
-                VGG16.VGG16_1d3
+            paint_single(
+              contentUrl = contentUrl,
+              initFn = tensor => tensor,
+              canvas = canvas,
+              network = new VisualStyleContentNetwork(
+                styleLayers = List(
+                  VGG16.VGG16_0b,
+                  VGG16.VGG16_1a,
+                  VGG16.VGG16_1b1,
+                  VGG16.VGG16_1b2,
+                  VGG16.VGG16_1c1,
+                  VGG16.VGG16_1c2,
+                  VGG16.VGG16_1c3,
+                  VGG16.VGG16_1d1,
+                  VGG16.VGG16_1d2,
+                  VGG16.VGG16_1d3
+                ),
+                styleModifiers = List(
+                  new GramMatrixEnhancer().setMinMax(-.5, 5),
+                  new GramMatrixMatcher()
+                ).map(_.withMask(foreground)),
+                styleUrl = List(styleUrl),
+                contentLayers = List(
+                  VGG16.VGG16_0b.prependAvgPool(2),
+                  VGG16.VGG16_1c3
+                ),
+                contentModifiers = List(
+                  new ContentMatcher().scale(1e1)
+                ).map(_.withMask(background)),
+                maxWidth = 2400,
+                magnification = 1
               ),
-              styleModifiers = List(
-                new GramMatrixEnhancer().setMinMax(-.5, 5),
-                new GramMatrixMatcher()
-              ).map(_.withMask(foreground)),
-              styleUrl = List(styleUrl),
-              contentLayers = List(
-                VGG16.VGG16_1b1.prependAvgPool(2).appendMaxPool(1),
-                VGG16.VGG16_1c1.prependAvgPool(2)
-              ),
-              contentModifiers = List(
-                new ContentMatcher().scale(1e1)
-              ).map(_.withMask(background)),
-              maxWidth = 2400,
-              magnification = 1
-            ),
-              new BasicOptimizer {
+              optimizer = new BasicOptimizer {
                 override val trainingMinutes: Int = 180
                 override val trainingIterations: Int = 20
                 override val maxRate = 1e9
-              }, new GeometricSequence {
-                override val min: Double = 1200
-                override val max: Double = 1800
-                override val steps = 2
-              }.toStream.map(_.round.toDouble))
+              }, 1800)
 
-            paint(contentUrl, tensor => tensor, canvas, new VisualStyleContentNetwork(
-              styleLayers = List(
-                VGG16.VGG16_0b,
-                VGG16.VGG16_1a,
-                VGG16.VGG16_1b1,
-                VGG16.VGG16_1b2,
-                VGG16.VGG16_1c1,
-                VGG16.VGG16_1c2,
-                VGG16.VGG16_1c3
+            paint_single(
+              contentUrl = contentUrl,
+              initFn = tensor => tensor,
+              canvas = canvas,
+              network = new VisualStyleContentNetwork(
+                styleLayers = List(
+                  VGG16.VGG16_0b,
+                  VGG16.VGG16_1a,
+                  VGG16.VGG16_1b1,
+                  VGG16.VGG16_1b2,
+                  VGG16.VGG16_1c1,
+                  VGG16.VGG16_1c2,
+                  VGG16.VGG16_1c3
+                ),
+                styleModifiers = List(
+                  new GramMatrixEnhancer().setMinMax(-.5, 5),
+                  new GramMatrixMatcher()
+                ).map(_.withMask(foreground)),
+                styleUrl = List(styleUrl),
+                contentLayers = List(
+                  VGG16.VGG16_0b.prependAvgPool(4)
+                ),
+                contentModifiers = List(
+                  new ContentMatcher().scale(1e1)
+                ).map(_.withMask(background)),
+                magnification = 1,
+                maxWidth = 4000,
+                maxPixels = 1e8
               ),
-              styleModifiers = List(
-                new GramMatrixEnhancer().setMinMax(-.5, 5),
-                new GramMatrixMatcher()
-              ).map(_.withMask(foreground)),
-              styleUrl = List(styleUrl),
-              contentLayers = List(
-                VGG16.VGG16_0b.prependAvgPool(4)
-              ),
-              contentModifiers = List(
-                new ContentMatcher().scale(1e1)
-              ).map(_.withMask(background)),
-              magnification = 1,
-              maxWidth = 4000,
-              maxPixels = 1e8
-            ),
-              new BasicOptimizer {
+              optimizer = new BasicOptimizer {
                 override val trainingMinutes: Int = 180
                 override val trainingIterations: Int = 10
                 override val maxRate = 1e9
-              }, new GeometricSequence {
-                override val min: Double = 2600
-                override val max: Double = 4000
-                override val steps = 2
-              }.toStream.map(_.round.toDouble))
+              }, 3000)
+
           }
-        } finally {
+        finally {
           registration.foreach(_.stop()(s3client, ec2client))
         }
       }))
@@ -201,13 +207,13 @@ class SegmentStyle extends SegmentingSetup {
 
   def partition(contentImage: BufferedImage)(implicit log: NotebookOutput) = {
     maskUrl match {
-      case maskUrl if maskUrl.startsWith("mask") =>
+      case maskUrl if maskUrl.startsWith("mask:") =>
         log.subreport("Partition_Input", (subreport: NotebookOutput) => {
           val Seq(foreground, background) = drawMask(contentImage, RED, GREEN)(subreport)
           subreport.p(subreport.jpg(foreground.toImage, "Selection mask"))
           (foreground, background)
         })
-      case maskUrl if maskUrl.startsWith("upload") =>
+      case maskUrl if maskUrl.startsWith("upload:") =>
         val Seq(foreground, background) = uploadMask(contentImage, RED, GREEN)
         (foreground, background)
     }
