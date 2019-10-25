@@ -26,14 +26,16 @@ import java.util.stream.{Collectors, DoubleStream, IntStream}
 import java.util.zip.ZipFile
 import java.{lang, util}
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.simiacryptus.mindseye.art.photo.SegmentUtil.{paintWithRandomColors, removeTinyInclusions}
 import com.simiacryptus.mindseye.art.photo._
 import com.simiacryptus.mindseye.art.photo.affinity.RasterAffinity.{adjust, degree}
 import com.simiacryptus.mindseye.art.photo.affinity.RelativeAffinity
-import com.simiacryptus.mindseye.art.photo.cuda.{SmoothSolver_Cuda, SparseMatrixFloat}
+import com.simiacryptus.mindseye.art.photo.cuda.SmoothSolver_Cuda
 import com.simiacryptus.mindseye.art.photo.topology.{RadiusRasterTopology, SearchRadiusTopology}
 import com.simiacryptus.mindseye.art.util.ArtSetup
 import com.simiacryptus.mindseye.lang.{Coordinate, Tensor}
+import com.simiacryptus.mindseye.util.ImageUtil
 import com.simiacryptus.notebook.{EditImageQuery, NotebookOutput, UploadImageQuery}
 import com.simiacryptus.sparkbook.util.Java8Util._
 import com.simiacryptus.util.Util
@@ -44,21 +46,32 @@ import scala.collection.mutable
 
 abstract class SegmentingSetup extends ArtSetup[Object] {
 
-  def smoothStyle(content: Tensor, style: Tensor, contentMask: Tensor)(implicit log: NotebookOutput) = {
-    val contentDensity = DoubleStream.of(contentMask.getData: _*).average().getAsDouble
-    val fastPhotoStyleTransfer = FastPhotoStyleTransfer.fromZip(new ZipFile(Util.cacheFile(new URI(
-      "https://simiacryptus.s3-us-west-2.amazonaws.com/photo_wct.zip"))))
-    val wctRestyled = fastPhotoStyleTransfer.photoWCT(style, content, contentDensity, 1.0)
-    fastPhotoStyleTransfer.freeRef()
-    val topology = new SearchRadiusTopology(content).setSelfRef(true).setVerbose(true)
-    var affinity = new RelativeAffinity(content, topology).setContrast(10).setGraphPower1(2).setMixing(0.5)
-      .wrap((graphEdges: util.List[Array[Int]], innerResult: util.List[Array[Double]]) => adjust(graphEdges, innerResult, degree(innerResult), 0.2))
-    val smoothed = solver.solve(topology, affinity, 1e-4).apply(wctRestyled)
-    smoothed.mapCoordsAndFree((c: Coordinate) => {
-      val bg = contentMask.get(c)
-      if (bg == 1) smoothed.get(c)
-      else content.get(c)
+  @JsonIgnore lazy val fastPhotoStyleTransfer = FastPhotoStyleTransfer.fromZip(new ZipFile(Util.cacheFile(new URI(
+    "https://simiacryptus.s3-us-west-2.amazonaws.com/photo_wct.zip"))))
+
+  def smoothStyle(content: Tensor, style: Tensor, mask: Tensor)(implicit log: NotebookOutput) = {
+    maskedDelta(mask, content, smoother(content)(wct(content, style, mask)))
+  }
+
+  def maskedDelta(mask: Tensor, base: Tensor, changed: Tensor) = {
+    changed.mapCoordsAndFree((c: Coordinate) => {
+      val bg = mask.get(c)
+      if (bg == 1) changed.get(c)
+      else base.get(c)
     })
+  }
+
+  def wct(content: Tensor, style: Tensor, mask: Tensor) = {
+    val wctRestyled = fastPhotoStyleTransfer.photoWCT(style, content, DoubleStream.of(mask.getData: _*).average().getAsDouble, 1.0)
+    maskedDelta(mask, content, wctRestyled)
+  }
+
+  def smoother(content: Tensor) = {
+    val topology = new SearchRadiusTopology(content).setSelfRef(true)
+    //.setVerbose(true)
+    var affinity = new RelativeAffinity(content, topology).setContrast(10).setGraphPower1(2).setMixing(0.2)
+      .wrap((graphEdges: util.List[Array[Int]], innerResult: util.List[Array[Double]]) => adjust(graphEdges, innerResult, degree(innerResult), 0.5))
+    solver.solve(topology, affinity, 1e-4)
   }
 
   def solver: SmoothSolver = new SmoothSolver_Cuda()
@@ -136,25 +149,14 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
       paintWithRandomColors(topology, pixelMap, graph)
     })
 
-    graph = graph.filterDiagonal().sortAndPrune()
-    val islandDistributions = (0 until pixelMap.length).groupBy(pixelMap(_)).mapValues(pixelIndex => {
-      val pixels = pixelIndex.map(i => image_tensor.getPixel(topology.getCoordsFromIndex(i): _*)).toList
-      new MultivariateFrameOfReference(() => pixels.asJava.stream(), 3)
+    log.eval(() => {
+      graph = graph.filterDiagonal().sortAndPrune().recalculateConnectionWeights(topology, image_tensor, pixelMap, 1e-3, 0.5, 1e-9).sortAndPrune()
+      val denseProjection = graph.getDenseProjection
+      graph = graph.project(denseProjection)
+      pixelMap = pixelMap.map(denseProjection.apply(_))
+      paintWithRandomColors(topology, pixelMap, graph)
+      null
     })
-    graph = new SparseMatrixFloat(
-      graph.rowIndices,
-      graph.colIndices,
-      (0 until graph.rowIndices.length).map(i=>{
-        val dist = islandDistributions(graph.rowIndices(i)).dist(islandDistributions(graph.colIndices(i)))
-        if(java.lang.Double.isFinite(dist)) {
-          (1.0 / Math.max(dist,1e-3))
-        } else {
-          1e-8
-        }
-      }.floatValue()).toArray,
-      graph.rows,
-      graph.cols
-    ).sortAndPrune()
 
     log.eval(() => {
       val regionAssembler = RegionAssembler.volumeEntropy(graph, pixelMap, image_tensor, topology)
@@ -166,6 +168,15 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
       graph = graph.project(denseProjection)
       pixelMap = pixelMap.map(denseProjection.apply(_))
       paintWithRandomColors(topology, pixelMap, graph)
+    })
+
+    log.eval(() => {
+      graph = graph.filterDiagonal().sortAndPrune().recalculateConnectionWeights(topology, image_tensor, pixelMap, 1e-3, 0.5, 1e-9).sortAndPrune()
+      val denseProjection = graph.getDenseProjection
+      graph = graph.project(denseProjection)
+      pixelMap = pixelMap.map(denseProjection.apply(_))
+      paintWithRandomColors(topology, pixelMap, graph)
+      null
     })
 
     //val sortedValues = SparseMatrixFloat.toDouble(graph.values).toStream.sorted.toArray
@@ -251,43 +262,22 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
 
     val selectionIndexToColorIndex = colors.zipWithIndex.map(tuple => {
       val (color, index) = tuple
-      colorList.zipWithIndex.sortBy(x => -dist(color, x._1)).head._2 -> index
+      colorList.zipWithIndex.sortBy(x => dist(color, x._1.map(_.doubleValue()))).head._2 -> index
     }).toArray.toMap
     val colorsMap = colorList.zipWithIndex.toMap
     (x: Int, y: Int) => colorsMap.get(apxColor(diff_tensor.getPixel(x, y))).flatMap(selectionIndexToColorIndex.get(_))
   }
 
-  def diff(image_tensor: Tensor, edit_tensor: Tensor): Tensor = {
-    edit_tensor.mapCoords((c: Coordinate) => {
-      val val_tensor = image_tensor.get(c.getIndex)
-      val val_edit = edit_tensor.get(c.getIndex)
-      if (Math.abs(val_edit - val_tensor) > 1) {
-        val_edit
-      } else {
-        0
-      }
-    })
-  }
-
   def uploadMask(content: BufferedImage, colors: Color*)(implicit log: NotebookOutput) = {
     val maskFile = new UploadImageQuery("Upload Mask", log).print().get()
-    val maskTensor = Tensor.fromRGB(ImageIO.read(maskFile))
-
-    def apxColor(a: Array[Double]): List[Int] = a.map(x => x.toInt).toList
-
-    val colorList = maskTensor.getPixelStream.collect(Collectors.toList())
-      .asScala.map(apxColor).filter(_.sum != 0).groupBy(x => x).mapValues(_.size)
-      .toList.sortBy(-_._2).take(colors.size).map(_._1).toArray
-    val selectionIndexToColorIndex = colors.zipWithIndex.map(tuple => {
-      val (color, index) = tuple
-      colorList.zipWithIndex.sortBy(x => -dist(color, x._1)).head._2 -> index
-    }).toArray.toMap
-    val colorsMap = colorList.zipWithIndex.toMap.mapValues(selectionIndexToColorIndex(_))
+    val maskTensor = Tensor.fromRGB(ImageUtil.resize(ImageIO.read(maskFile), content.getWidth, content.getHeight))
     val tensor = Tensor.fromRGB(content)
     val tensors = for (clr <- 0 until colors.size) yield {
       tensor.mapCoords((coordinate: Coordinate) => {
         val Array(x, y, c) = coordinate.getCoords()
-        if (colorsMap(apxColor(maskTensor.getPixel(x, y))) == clr) {
+        val pixelColor = maskTensor.getPixel(x, y)
+        val closestColor = colors.zipWithIndex.sortBy(x => dist(x._1, pixelColor)).head
+        if (closestColor._2 == clr) {
           tensor.get(coordinate)
         } else {
           0.0
@@ -298,7 +288,7 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
     tensors
   }
 
-  def dist(color: Color, x: Seq[Int]) = {
+  def dist(color: Color, x: Seq[Double]) = {
     List(
       color.getRed - x(2).doubleValue(),
       color.getGreen - x(1).doubleValue(),
@@ -317,6 +307,18 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
       .asScala.map(apxColor).filter(_.sum != 0).groupBy(x => x).mapValues(_.size)
       .toList.sortBy(-_._2).take(partitions).map(_._1).toArray.zipWithIndex.toMap
     (x: Int, y: Int) => colors.get(apxColor(diff_tensor.getPixel(x, y)))
+  }
+
+  def diff(image_tensor: Tensor, edit_tensor: Tensor): Tensor = {
+    edit_tensor.mapCoords((c: Coordinate) => {
+      val val_tensor = image_tensor.get(c.getIndex)
+      val val_edit = edit_tensor.get(c.getIndex)
+      if (Math.abs(val_edit - val_tensor) > 1) {
+        val_edit
+      } else {
+        0
+      }
+    })
   }
 
   def expand(tree: RegionAssembler.RegionTree, markup: Map[Int, Set[Int]], recursion: Int = 0): Map[Int, Int] = {

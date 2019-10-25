@@ -80,7 +80,7 @@ class BackgroundStyle extends SegmentingSetup {
               val mask = MomentMatcher.toMask(Tensor.fromRGB(ImageUtil.resize(image, dims(0), dims(1))))
               smoothStyle(content = content,
                 style = Tensor.fromRGB(styleImage),
-                contentMask = mask)
+                mask = mask)
             }
 
             paint(
