@@ -68,19 +68,19 @@ class SegmentStyle extends SegmentingSetup {
         // First, basic configuration so we publish to our s3 site
         log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
         log.onComplete(() => upload(log): Unit)
-        val initialResolution = 600
         var magnification = 8
         val contentCoeff = 5e0
+        val displayRes = 500
         // Fetch input images (user upload prompts) and display a rescaled copies
         val contentImage = log.eval(() => {
-          ImageArtUtil.load(log, contentUrl, initialResolution)
+          ImageArtUtil.load(log, contentUrl, displayRes)
         })
         val (foreground: Tensor, background: Tensor) = partition(contentImage)
         val styleImage_background = Tensor.fromRGB(log.eval(() => {
-          ImageArtUtil.load(log, styleUrl_background, (initialResolution * Math.sqrt(magnification)).toInt)
+          ImageArtUtil.load(log, styleUrl_background, (displayRes * Math.sqrt(magnification)).toInt)
         }))
         val styleImage_foreground = Tensor.fromRGB(log.eval(() => {
-          ImageArtUtil.load(log, styleUrl_foreground, (initialResolution * Math.sqrt(magnification)).toInt)
+          ImageArtUtil.load(log, styleUrl_foreground, (displayRes * Math.sqrt(magnification)).toInt)
         }))
         magnification = 32
         val canvas = new AtomicReference[Tensor](null)
@@ -88,16 +88,32 @@ class SegmentStyle extends SegmentingSetup {
         try {
           withMonitoredJpg(() => canvas.get().toImage) {
             val initFn: Tensor => Tensor = content => {
-              smoother(content)(wct(content = content,
+              val dimensions = content.getDimensions
+              val aspect = dimensions(1).toDouble / dimensions(0)
+              val wctSize = (Math.sqrt(320000 / (dimensions(0)*dimensions(1))) * dimensions(0)).toInt
+              val resizedDims = Array(wctSize, (wctSize * aspect).toInt)
+              val resizedContent = resize(content, resizedDims)
+              resize(smoother(resizedContent)(wct(
+                content = wct(
+                  content = resizedContent,
+                  style = styleImage_foreground,
+                  mask = MomentMatcher.toMask(resize(foreground, resizedDims))),
                 style = styleImage_background,
-                mask = MomentMatcher.toMask(resize(background, content.getDimensions()))))
+                mask = MomentMatcher.toMask(resize(background, resizedDims)))
+              ), dimensions)
                 .map((x: Double) => if (java.lang.Double.isFinite(x)) x else 0)
             }
             paint(contentUrl, initFn, canvas, new VisualStyleContentNetwork(
               styleLayers = List(
                 VGG19.VGG19_1a,
-                VGG19.VGG19_1b2,
-                VGG19.VGG19_1c3
+                VGG19.VGG19_1b1,
+                //VGG19.VGG19_1b2,
+                VGG19.VGG19_1c1,
+                VGG19.VGG19_1c2,
+                VGG19.VGG19_1c3,
+                VGG19.VGG19_1d1,
+                VGG19.VGG19_1d2,
+                VGG19.VGG19_1d3
               ),
               styleModifiers = List(
                 new GramMatrixEnhancer().setMinMax(-.125, .125),
@@ -108,8 +124,13 @@ class SegmentStyle extends SegmentingSetup {
             ) + new VisualStyleContentNetwork(
               styleLayers = List(
                 VGG19.VGG19_1a,
-                VGG19.VGG19_1b2,
+                VGG19.VGG19_1b1,
+                //VGG19.VGG19_1b2,
+                VGG19.VGG19_1c1,
+                VGG19.VGG19_1c2,
                 VGG19.VGG19_1c3,
+                VGG19.VGG19_1d1,
+                VGG19.VGG19_1d2,
                 VGG19.VGG19_1d3
               ),
               styleModifiers = List(
@@ -130,61 +151,72 @@ class SegmentStyle extends SegmentingSetup {
                 override val trainingIterations: Int = 20
                 override val maxRate = 1e9
               }, new GeometricSequence {
-                override val min: Double = 800
-                override val max: Double = 800
-                override val steps = 1
+                override val min: Double = 400
+                override val max: Double = 600
+                override val steps = 2
               }.toStream.map(_.round.toDouble))
 
-            magnification = 2
-            //            paint(contentUrl, tensor => tensor, canvas, new VisualStyleContentNetwork(
-            //              styleLayers = List(
-            //                VGG19.VGG19_1a,
-            //                VGG19.VGG19_1b2,
-            //                VGG19.VGG19_1c3,
-            //                VGG19.VGG19_1d3
-            //              ),
-            //              styleModifiers = List(
-            //                //new GramMatrixEnhancer().setMinMax(-.125, .125),
-            //                new MomentMatcher()
-            //              ).map(_.withMask(foreground)),
-            //              styleUrl = List(styleUrl_foreground),
-            //              maxWidth = 2400,
-            //              magnification = magnification
-            //            ) + new VisualStyleContentNetwork(
-            //              styleLayers = List(
-            //                VGG19.VGG19_1a,
-            //                VGG19.VGG19_1b2,
-            //                VGG19.VGG19_1c3,
-            //                VGG19.VGG19_1d3
-            //              ),
-            //              styleModifiers = List(
-            //                new GramMatrixEnhancer().setMinMax(-.5, 5),
-            //                new GramMatrixMatcher()
-            //              ).map(_.withMask(background)),
-            //              styleUrl = List(styleUrl_background),
-            //              contentLayers = List(
-            //                VGG19.VGG19_1c3
-            //              ),
-            //              contentModifiers = List(
-            //                new ContentMatcher().scale(contentCoeff)
-            //              ).map(_.withMask(foreground)),
-            //              maxWidth = 2400,
-            //              magnification = magnification
-            //            ),
-            //              new BasicOptimizer {
-            //                override val trainingMinutes: Int = 180
-            //                override val trainingIterations: Int = 20
-            //                override val maxRate = 1e9
-            //              }, new GeometricSequence {
-            //                override val min: Double = 1200
-            //                override val max: Double = 1200
-            //                override val steps = 1
-            //              }.toStream.map(_.round.toDouble))
+            magnification = 8
+            paint(contentUrl, tensor => tensor, canvas, new VisualStyleContentNetwork(
+              styleLayers = List(
+                VGG19.VGG19_1a,
+                VGG19.VGG19_1b1,
+                VGG19.VGG19_1b2,
+                VGG19.VGG19_1c1,
+                VGG19.VGG19_1c2,
+                //VGG19.VGG19_1c3,
+                VGG19.VGG19_1d1,
+                VGG19.VGG19_1d2,
+                VGG19.VGG19_1d3
+              ),
+              styleModifiers = List(
+                new GramMatrixEnhancer().setMinMax(-.125, .125),
+                new MomentMatcher()
+              ).map(_.withMask(foreground)),
+              styleUrl = List(styleUrl_foreground),
+              maxWidth = 2400,
+              magnification = magnification
+            ) + new VisualStyleContentNetwork(
+              styleLayers = List(
+                VGG19.VGG19_1a,
+                VGG19.VGG19_1b1,
+                VGG19.VGG19_1b2,
+                VGG19.VGG19_1c1,
+                VGG19.VGG19_1c2,
+                //VGG19.VGG19_1c3,
+                VGG19.VGG19_1d1,
+                VGG19.VGG19_1d2,
+                VGG19.VGG19_1d3
+              ),
+              styleModifiers = List(
+                new GramMatrixEnhancer().setMinMax(-.5, 5),
+                new MomentMatcher()
+              ).map(_.withMask(background)),
+              styleUrl = List(styleUrl_background),
+              contentLayers = List(
+                VGG19.VGG19_1c3
+              ),
+              contentModifiers = List(
+                new ContentMatcher().scale(contentCoeff)
+              ).map(_.withMask(foreground)),
+              maxWidth = 2400,
+              magnification = magnification
+            ),
+              new BasicOptimizer {
+                override val trainingMinutes: Int = 180
+                override val trainingIterations: Int = 20
+                override val maxRate = 1e9
+              }, new GeometricSequence {
+                override val min: Double = 800
+                override val max: Double = 1200
+                override val steps = 1
+              }.toStream.map(_.round.toDouble))
 
             magnification = 1
             paint(contentUrl, (tensor: Tensor) => tensor, canvas, new VisualStyleContentNetwork(
               styleLayers = List(
                 VGG19.VGG19_1a,
+                VGG19.VGG19_1b1,
                 VGG19.VGG19_1b2,
                 VGG19.VGG19_1c1,
                 VGG19.VGG19_1c2,
@@ -195,7 +227,7 @@ class SegmentStyle extends SegmentingSetup {
                 //                new MomentMatcher()
                 //                new GramMatrixMatcher(),
                 new MomentMatcher()
-//                new ChannelMeanMatcher()
+                //                new ChannelMeanMatcher()
               ).map(_.withMask(foreground)),
               styleUrl = List(styleUrl_foreground),
               magnification = magnification,
@@ -204,21 +236,22 @@ class SegmentStyle extends SegmentingSetup {
             ) + new VisualStyleContentNetwork(
               styleLayers = List(
                 VGG19.VGG19_1a,
+                VGG19.VGG19_1b1,
                 VGG19.VGG19_1b2,
                 VGG19.VGG19_1c1,
                 VGG19.VGG19_1c2,
                 VGG19.VGG19_1c3
               ),
               styleModifiers = List(
-                //new GramMatrixEnhancer().setMinMax(-.5, 5),
-                //                new GramMatrixMatcher(),
+                new GramMatrixEnhancer().setMinMax(-.5, 5),
+                //                                new GramMatrixMatcher(),
                 new MomentMatcher()
                 //                new ChannelMeanMatcher()
               ).map(_.withMask(background)),
               styleUrl = List(styleUrl_background),
               contentLayers = List(
                 //VGG19.VGG19_1b2.prependAvgPool(4),
-                VGG19.VGG19_1c3
+                VGG19.VGG19_1d1
               ),
               contentModifiers = List(
                 new ContentMatcher().scale(contentCoeff)
