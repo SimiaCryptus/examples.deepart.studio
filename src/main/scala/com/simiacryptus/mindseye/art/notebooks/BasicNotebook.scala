@@ -20,19 +20,21 @@
 package com.simiacryptus.mindseye.art.notebooks
 
 import com.simiacryptus.sparkbook.util.Java8Util._
-import polynote.kernel.{LocalKernel, LocalSparkKernel}
-import polynote.server.Server
 
 object BasicNotebook {
 
   def main(args:Array[String]):Unit = {
 
+	/*
+	import polynote.kernel.{LocalKernel, LocalSparkKernel}
+	import polynote.server.Server
     val server = new Server(LocalKernel)
     val startServerThreadThread = new Thread(() => {
       server.main(Array.empty)
       println("polynote.Main exit")
     })
     startServerThreadThread.start()
+	*/
 
   }
 

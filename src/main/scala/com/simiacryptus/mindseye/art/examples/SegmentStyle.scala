@@ -58,11 +58,13 @@ class SegmentStyle extends SegmentingSetup {
   override def postConfigure(log: NotebookOutput) = log.eval { () =>
     () => {
       require(null != VGG19.VGG19_1a.getLayer)
+	  /*
       val startServerThreadThread = new Thread(() => {
         polynote.Main.main(Array.empty)
         println("polynote.Main exit")
       })
       startServerThreadThread.start()
+	  */
       NotebookReportBase.withRefLeakMonitor(log, cvtSerializableRunnable((log: NotebookOutput) => {
         implicit val _ = log
         // First, basic configuration so we publish to our s3 site
