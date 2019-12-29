@@ -78,7 +78,7 @@ class TextureTiledRotor extends RotorArt {
         var input = canvas.get()
         if (null == input) input else {
           val viewLayer = getKaleidoscope(input.getDimensions)
-          viewLayer.eval(input).getDataAndFree.getAndFree(0)
+          viewLayer.eval(input).getData.get(0)
         }
       }
 
@@ -87,7 +87,7 @@ class TextureTiledRotor extends RotorArt {
         var input = rotatedCanvas
         if (null == input) input else {
           val layer = new ImgTileAssemblyLayer(rowsAndCols, rowsAndCols)
-          val tensor = layer.eval((1 to (rowsAndCols * rowsAndCols)).map(_ => input): _*).getDataAndFree.getAndFree(0)
+          val tensor = layer.eval((1 to (rowsAndCols * rowsAndCols)).map(_ => input): _*).getData.get(0)
           layer.freeRef()
           tensor
         }
@@ -98,7 +98,7 @@ class TextureTiledRotor extends RotorArt {
       def viewLayer(dims: Seq[Int]) = {
         val padding = Math.min(256, Math.max(16, dims(0) / 2))
         val viewLayer = getKaleidoscope(dims.toArray).copyPipeline()
-        viewLayer.wrap(new ImgViewLayer(dims(0) + padding, dims(1) + padding, true)
+        viewLayer.add(new ImgViewLayer(dims(0) + padding, dims(1) + padding, true)
           .setOffsetX(-padding / 2).setOffsetY(-padding / 2)
         ).freeRef()
         viewLayer

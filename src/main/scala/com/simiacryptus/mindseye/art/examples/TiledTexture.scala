@@ -79,7 +79,7 @@ class TiledTexture extends ArtSetup[Object] {
         val input = canvas.get()
         if (null == input) input else {
           val layer = new ImgTileAssemblyLayer(rowsAndCols, rowsAndCols)
-          val tensor = layer.eval((1 to (rowsAndCols * rowsAndCols)).map(_ => input): _*).getDataAndFree.getAndFree(0)
+          val tensor = layer.eval((1 to (rowsAndCols * rowsAndCols)).map(_ => input): _*).getData.get(0)
           layer.freeRef()
           tensor
         }

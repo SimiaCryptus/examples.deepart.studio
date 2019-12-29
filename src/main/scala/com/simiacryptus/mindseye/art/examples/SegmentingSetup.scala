@@ -54,7 +54,7 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
   }
 
   def maskedDelta(mask: Tensor, base: Tensor, changed: Tensor) = {
-    changed.mapCoordsAndFree((c: Coordinate) => {
+    changed.mapCoords((c: Coordinate) => {
       val bg = mask.get(c)
       if (bg == 1) changed.get(c)
       else base.get(c)

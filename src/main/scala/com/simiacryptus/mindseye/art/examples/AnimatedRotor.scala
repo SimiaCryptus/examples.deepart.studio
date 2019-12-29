@@ -83,7 +83,7 @@ class AnimatedRotor extends RotorArt {
       // Execute the main process while registered with the site index
       val registration = registerWithIndexGIF_Cyclic(canvases.map(_.get()).map(t => {
         val kaleidoscope = getKaleidoscope(t.getDimensions)
-        val transformed = kaleidoscope.eval(t).getDataAndFree.getAndFree(0)
+        val transformed = kaleidoscope.eval(t).getData.get(0)
         kaleidoscope.freeRef()
         transformed
       }))

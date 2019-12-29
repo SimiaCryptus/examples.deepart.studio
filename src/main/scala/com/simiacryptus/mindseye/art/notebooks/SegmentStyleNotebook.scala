@@ -151,7 +151,7 @@ object SegmentStyleNotebook {
 
         var contentImage = loadImage(contentUrl, width.toInt)
         val contentTensor = if (null == contentImage) {
-          new Tensor(width.toInt, width.toInt, 3).mapAndFree((x: Double) => FastRandom.INSTANCE.random())
+          new Tensor(width.toInt, width.toInt, 3).map((x: Double) => FastRandom.INSTANCE.random())
         } else {
           Tensor.fromRGB(contentImage)
         }
@@ -196,7 +196,7 @@ object SegmentStyleNotebook {
   }
 
   def maskedDelta(mask: Tensor, base: Tensor, changed: Tensor) = {
-    changed.mapCoordsAndFree((c: Coordinate) => {
+    changed.mapCoords((c: Coordinate) => {
       val bg = mask.get(c)
       if (bg == 1) changed.get(c)
       else base.get(c)
