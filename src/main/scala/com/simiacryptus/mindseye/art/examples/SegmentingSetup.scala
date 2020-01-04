@@ -269,18 +269,6 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
     (x: Int, y: Int) => colorsMap.get(apxColor(diff_tensor.getPixel(x, y))).flatMap(selectionIndexToColorIndex.get(_))
   }
 
-  def diff(image_tensor: Tensor, edit_tensor: Tensor): Tensor = {
-    edit_tensor.mapCoords((c: Coordinate) => {
-      val val_tensor = image_tensor.get(c.getIndex)
-      val val_edit = edit_tensor.get(c.getIndex)
-      if (Math.abs(val_edit - val_tensor) > 1) {
-        val_edit
-      } else {
-        0
-      }
-    })
-  }
-
   def uploadMask(content: BufferedImage, colors: Color*)(implicit log: NotebookOutput) = {
     val maskFile = new UploadImageQuery("Upload Mask", log).print().get()
     val maskTensor = Tensor.fromRGB(ImageUtil.resize(ImageIO.read(maskFile), content.getWidth, content.getHeight))
@@ -320,6 +308,18 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
       .asScala.map(apxColor).filter(_.sum != 0).groupBy(x => x).mapValues(_.size)
       .toList.sortBy(-_._2).take(partitions).map(_._1).toArray.zipWithIndex.toMap
     (x: Int, y: Int) => colors.get(apxColor(diff_tensor.getPixel(x, y)))
+  }
+
+  def diff(image_tensor: Tensor, edit_tensor: Tensor): Tensor = {
+    edit_tensor.mapCoords((c: Coordinate) => {
+      val val_tensor = image_tensor.get(c.getIndex)
+      val val_edit = edit_tensor.get(c.getIndex)
+      if (Math.abs(val_edit - val_tensor) > 1) {
+        val_edit
+      } else {
+        0
+      }
+    })
   }
 
   def expand(tree: RegionAssembler.RegionTree, markup: Map[Int, Set[Int]], recursion: Int = 0): Map[Int, Int] = {
