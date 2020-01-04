@@ -23,18 +23,18 @@ import com.simiacryptus.sparkbook.util.Java8Util._
 
 object BasicNotebook {
 
-  def main(args:Array[String]):Unit = {
+  def main(args: Array[String]): Unit = {
 
-	/*
-	import polynote.kernel.{LocalKernel, LocalSparkKernel}
-	import polynote.server.Server
-    val server = new Server(LocalKernel)
-    val startServerThreadThread = new Thread(() => {
-      server.main(Array.empty)
-      println("polynote.Main exit")
-    })
-    startServerThreadThread.start()
-	*/
+    /*
+    import polynote.kernel.{LocalKernel, LocalSparkKernel}
+    import polynote.server.Server
+      val server = new Server(LocalKernel)
+      val startServerThreadThread = new Thread(() => {
+        server.main(Array.empty)
+        println("polynote.Main exit")
+      })
+      startServerThreadThread.start()
+    */
 
   }
 

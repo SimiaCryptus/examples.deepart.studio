@@ -58,13 +58,13 @@ class SegmentStyle extends SegmentingSetup {
   override def postConfigure(log: NotebookOutput) = log.eval { () =>
     () => {
       require(null != VGG19.VGG19_1a.getLayer)
-	  /*
-      val startServerThreadThread = new Thread(() => {
-        polynote.Main.main(Array.empty)
-        println("polynote.Main exit")
-      })
-      startServerThreadThread.start()
-	  */
+      /*
+        val startServerThreadThread = new Thread(() => {
+          polynote.Main.main(Array.empty)
+          println("polynote.Main exit")
+        })
+        startServerThreadThread.start()
+      */
       NotebookReportBase.withRefLeakMonitor(log, cvtSerializableRunnable((log: NotebookOutput) => {
         implicit val _ = log
         // First, basic configuration so we publish to our s3 site
@@ -92,7 +92,7 @@ class SegmentStyle extends SegmentingSetup {
             val initFn: Tensor => Tensor = content => {
               val dimensions = content.getDimensions
               val aspect = dimensions(1).toDouble / dimensions(0)
-              val wctSize = (Math.sqrt(320000 / (dimensions(0)*dimensions(1))) * dimensions(0)).toInt
+              val wctSize = (Math.sqrt(320000 / (dimensions(0) * dimensions(1))) * dimensions(0)).toInt
               val resizedDims = Array(wctSize, (wctSize * aspect).toInt)
               val resizedContent = resize(content, resizedDims)
               resize(smoother(resizedContent)(wct(

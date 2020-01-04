@@ -26,10 +26,7 @@ import java.util.zip.ZipFile
 import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.photo._
-import com.simiacryptus.mindseye.art.photo.affinity.RasterAffinity.{adjust, degree}
-import com.simiacryptus.mindseye.art.photo.affinity.RelativeAffinity
 import com.simiacryptus.mindseye.art.photo.cuda.SmoothSolver_Cuda
-import com.simiacryptus.mindseye.art.photo.topology.SearchRadiusTopology
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
@@ -47,6 +44,7 @@ class SmoothStyle_1 extends ArtSetup[Object] {
 
   val styleUrl = "upload:Style"
   val s3bucket: String = ""
+  val initUrl = "50 + noise * 0.5"
 
   override def indexStr = "306"
 
@@ -61,8 +59,6 @@ class SmoothStyle_1 extends ArtSetup[Object] {
   </div>.toString.trim
 
   override def inputTimeoutSeconds = 3600
-
-  val initUrl = "50 + noise * 0.5"
 
   override def postConfigure(log: NotebookOutput) = log.eval { () =>
     () => {

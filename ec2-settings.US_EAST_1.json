@@ -1,5 +1,5 @@
 {
-  "securityGroup" : "sg-06065da738810f9ea",
-  "instanceProfileArn" : "arn:aws:iam::470240306861:instance-profile/runpol-68414",
-  "bucket" : "data-ada02"
+  "securityGroup": "sg-06065da738810f9ea",
+  "instanceProfileArn": "arn:aws:iam::470240306861:instance-profile/runpol-68414",
+  "bucket": "data-ada02"
 }

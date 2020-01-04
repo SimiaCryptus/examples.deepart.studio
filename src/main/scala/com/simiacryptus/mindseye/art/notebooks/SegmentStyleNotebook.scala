@@ -56,7 +56,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 
 object SegmentStyleNotebook {
 
-  def main(args:Array[String]):Unit = {
+  def main(args: Array[String]): Unit = {
 
     val contentUrl = "file:///C:/Users/andre/Pictures/Personal/DSC_0386.JPG"
     val maskUrl = "file:///C:/Users/andre/Pictures/Personal/DSC_0386_mask.jpg"
@@ -67,11 +67,11 @@ object SegmentStyleNotebook {
     val contentCoeff = 5e0
     var magnification = 8
 
-//    val startServerThreadThread = new Thread(() => {
-//      polynote.Main.main(Array.empty)
-//      println("polynote.Main exit")
-//    })
-//    startServerThreadThread.start()
+    //    val startServerThreadThread = new Thread(() => {
+    //      polynote.Main.main(Array.empty)
+    //      println("polynote.Main exit")
+    //    })
+    //    startServerThreadThread.start()
 
     val Seq(foreground: Tensor, background: Tensor) = loadMasks(
       loadImage(contentUrl, initialResolution), maskUrl, RED, GREEN)

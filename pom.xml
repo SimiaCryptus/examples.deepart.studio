@@ -165,8 +165,6 @@
         </dependency>
 
 
-
-
         <dependency>
             <groupId>org.jcuda</groupId>
             <artifactId>jcusparse-natives</artifactId>
@@ -208,14 +206,14 @@
             <classifier>linux-x86_64</classifier>
             <scope>compile</scope>
         </dependency>
-		<!--
+        <!--
         <dependency>
             <groupId>org.polynote</groupId>
             <artifactId>polynote-embedded_2.11</artifactId>
             <version>0.2.9-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
-		-->
+        -->
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-all</artifactId>
