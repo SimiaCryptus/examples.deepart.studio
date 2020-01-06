@@ -122,7 +122,7 @@ object SegmentStyleNotebook {
       override val maxRate = 1e9
 
       override def log(msg: String): Unit = {
-        optlog ++= List((System.currentTimeMillis(), msg))
+        optlog ++= List((com.simiacryptus.ref.wrappers.RefSystem.currentTimeMillis(), msg))
         super.log(msg)
       }
 
