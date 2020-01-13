@@ -54,17 +54,17 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
     maskedDelta(mask, content, smoother(content)(wct(content, style, mask)))
   }
 
+  def wct(content: Tensor, style: Tensor, mask: Tensor) = {
+    val wctRestyled = fastPhotoStyleTransfer.photoWCT(style, content, DoubleStream.of(mask.getData: _*).average().getAsDouble, 1.0)
+    maskedDelta(mask, content, wctRestyled)
+  }
+
   def maskedDelta(mask: Tensor, base: Tensor, changed: Tensor) = {
     changed.mapCoords((c: Coordinate) => {
       val bg = mask.get(c)
       if (bg == 1) changed.get(c)
       else base.get(c)
     })
-  }
-
-  def wct(content: Tensor, style: Tensor, mask: Tensor) = {
-    val wctRestyled = fastPhotoStyleTransfer.photoWCT(style, content, DoubleStream.of(mask.getData: _*).average().getAsDouble, 1.0)
-    maskedDelta(mask, content, wctRestyled)
   }
 
   def smoother(content: Tensor) = {
@@ -74,8 +74,6 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
       .wrap((graphEdges: util.List[Array[Int]], innerResult: util.List[Array[Double]]) => adjust(graphEdges, innerResult, degree(innerResult), 0.5))
     solver.solve(topology, affinity, 1e-4)
   }
-
-  def solver: SmoothSolver = new SmoothSolver_Cuda()
 
   def drawMask(content: BufferedImage, colors: Color*)(implicit log: NotebookOutput) = {
     val image_tensor: Tensor = Tensor.fromRGB(content)
@@ -251,6 +249,8 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
     }
   }
 
+  def solver: SmoothSolver = new SmoothSolver_Cuda()
+
   def select(log: NotebookOutput, image: BufferedImage, colors: Color*) = {
     val editResult = new EditImageQuery(log, image).print().get()
     val diff_tensor = diff(Tensor.fromRGB(image), Tensor.fromRGB(editResult))
@@ -281,6 +281,14 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
     })
   }
 
+  def dist(color: Color, x: Seq[Double]) = {
+    List(
+      color.getRed - x(2).doubleValue(),
+      color.getGreen - x(1).doubleValue(),
+      color.getBlue - x(0).doubleValue()
+    ).map(x => x * x).sum
+  }
+
   def uploadMask(content: BufferedImage, colors: Color*)(implicit log: NotebookOutput) = {
     val maskFile = new UploadImageQuery("Upload Mask", log).print().get()
     val maskTensor = Tensor.fromRGB(ImageUtil.resize(ImageIO.read(maskFile), content.getWidth, content.getHeight))
@@ -299,14 +307,6 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
     }
     tensor.freeRef()
     tensors
-  }
-
-  def dist(color: Color, x: Seq[Double]) = {
-    List(
-      color.getRed - x(2).doubleValue(),
-      color.getGreen - x(1).doubleValue(),
-      color.getBlue - x(0).doubleValue()
-    ).map(x => x * x).sum
   }
 
   def select(log: NotebookOutput, image: BufferedImage, partitions: Int) = {
