@@ -269,6 +269,14 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
     (x: Int, y: Int) => colorsMap.get(apxColor(diff_tensor.getPixel(x, y))).flatMap(selectionIndexToColorIndex.get(_))
   }
 
+  def dist(color: Color, x: Seq[Double]) = {
+    List(
+      color.getRed - x(2).doubleValue(),
+      color.getGreen - x(1).doubleValue(),
+      color.getBlue - x(0).doubleValue()
+    ).map(x => x * x).sum
+  }
+
   def diff(image_tensor: Tensor, edit_tensor: Tensor): Tensor = {
     edit_tensor.mapCoords((c: Coordinate) => {
       val val_tensor = image_tensor.get(c.getIndex)
@@ -279,14 +287,6 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
         0
       }
     })
-  }
-
-  def dist(color: Color, x: Seq[Double]) = {
-    List(
-      color.getRed - x(2).doubleValue(),
-      color.getGreen - x(1).doubleValue(),
-      color.getBlue - x(0).doubleValue()
-    ).map(x => x * x).sum
   }
 
   def uploadMask(content: BufferedImage, colors: Color*)(implicit log: NotebookOutput) = {
