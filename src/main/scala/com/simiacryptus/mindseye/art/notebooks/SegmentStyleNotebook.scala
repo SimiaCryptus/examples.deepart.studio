@@ -184,7 +184,6 @@ object SegmentStyleNotebook {
     val outFile = new File(new File(result_location), UUID.randomUUID() + ".jpg")
     ImageIO.write(canvasRef.get().toImage, "jpg", outFile)
     Desktop.getDesktop.open(outFile)
-
   }
 
   @JsonIgnore lazy val fastPhotoStyleTransfer = FastPhotoStyleTransfer.fromZip(new ZipFile(Util.cacheFile(new URI(

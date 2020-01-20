@@ -97,8 +97,10 @@ class TextureStereogram extends ArtSetup[Object] {
       // Expands the canvas by a small amount, using tile wrap to draw in the expanded boundary.
       def tiled(dims: Seq[Int]) = {
         val padding = Math.min(256, Math.max(16, dims(0) / 2))
-        new ImgViewLayer(dims(0) + padding, dims(1) + padding, true)
-          .setOffsetX(-padding / 2).setOffsetY(-padding / 2)
+        val layer = new ImgViewLayer(dims(0) + padding, dims(1) + padding, true)
+        layer.setOffsetX(-padding / 2)
+        layer.setOffsetY(-padding / 2)
+        layer
       }
 
       // Execute the main process while registered with the site index
@@ -176,10 +178,12 @@ class TextureStereogram extends ArtSetup[Object] {
       }
     }
 
-    depthMap.copy().setByCoord((c: Coordinate) => {
+    val tensor = depthMap.copy()
+    tensor.setByCoord((c: Coordinate) => {
       val ints = c.getCoords()
       getPixel(ints(0), ints(1), ints(2))
-    }, true).toRgbImage
+    }, true)
+    tensor.toRgbImage
   }
 
 }

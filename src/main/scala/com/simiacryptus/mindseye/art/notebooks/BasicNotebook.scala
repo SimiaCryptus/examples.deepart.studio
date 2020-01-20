@@ -35,7 +35,6 @@ object BasicNotebook {
       })
       startServerThreadThread.start()
     */
-
   }
 
 }

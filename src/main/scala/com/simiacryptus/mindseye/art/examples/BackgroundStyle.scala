@@ -195,7 +195,6 @@ class BackgroundStyle extends SegmentingSetup {
                 override val trainingIterations: Int = 10
                 override val maxRate = 1e9
               }, 3000)
-
           }
         finally {
           registration.foreach(_.stop()(s3client, ec2client))

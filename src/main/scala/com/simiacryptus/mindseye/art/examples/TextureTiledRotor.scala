@@ -98,9 +98,10 @@ class TextureTiledRotor extends RotorArt {
       def viewLayer(dims: Seq[Int]) = {
         val padding = Math.min(256, Math.max(16, dims(0) / 2))
         val viewLayer = getKaleidoscope(dims.toArray).copyPipeline()
-        viewLayer.add(new ImgViewLayer(dims(0) + padding, dims(1) + padding, true)
-          .setOffsetX(-padding / 2).setOffsetY(-padding / 2)
-        ).freeRef()
+        val layer = new ImgViewLayer(dims(0) + padding, dims(1) + padding, true)
+        layer.setOffsetX(-padding / 2)
+        layer.setOffsetY(-padding / 2)
+        viewLayer.add(layer).freeRef()
         viewLayer
       }
 

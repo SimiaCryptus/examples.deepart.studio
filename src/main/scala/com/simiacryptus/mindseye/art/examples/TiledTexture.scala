@@ -89,8 +89,10 @@ class TiledTexture extends ArtSetup[Object] {
       // Expands the canvas by a small amount, using tile wrap to draw in the expanded boundary.
       def tilingLayer(dims: Seq[Int]) = {
         val padding = Math.min(256, Math.max(16, dims(0) / 2))
-        new ImgViewLayer(dims(0) + padding, dims(1) + padding, true)
-          .setOffsetX(-padding / 2).setOffsetY(-padding / 2)
+        val layer = new ImgViewLayer(dims(0) + padding, dims(1) + padding, true)
+        layer.setOffsetX(-padding / 2)
+        layer.setOffsetY(-padding / 2)
+        layer
       }
 
       // Execute the main process while registered with the site index
