@@ -81,9 +81,14 @@ class SmoothStyle extends ArtSetup[Object] {
               "https://simiacryptus.s3-us-west-2.amazonaws.com/photo_wct.zip"))))
             val style = Tensor.fromRGB(ImageArtUtil.load(log, styleUrl, 600))
             val wctRestyled = fastPhotoStyleTransfer.photoWCT(style, content)
-            val topology = new SearchRadiusTopology(content).setSelfRef(true).setVerbose(true)
-            var affinity = new RelativeAffinity(content, topology).setContrast(20).setGraphPower1(2).setMixing(0.1)
-              .wrap((graphEdges: java.util.List[Array[Int]], innerResult: java.util.List[Array[Double]]) => adjust(graphEdges, innerResult, degree(innerResult), 0.2))
+            val topology = new SearchRadiusTopology(content)
+            topology.setSelfRef(true)
+            topology.setVerbose(true)
+            var affinity = new RelativeAffinity(content, topology)
+            affinity.setContrast(20)
+            affinity.setGraphPower1(2)
+            affinity.setMixing(0.1)
+            affinity.wrap((graphEdges: java.util.List[Array[Int]], innerResult: java.util.List[Array[Double]]) => adjust(graphEdges, innerResult, degree(innerResult), 0.2))
             solver.solve(topology, affinity, 1e-4).apply(wctRestyled)
           }, canvas, new VisualStyleContentNetwork(
             styleLayers = List(

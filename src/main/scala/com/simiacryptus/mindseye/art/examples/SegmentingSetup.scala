@@ -22,6 +22,7 @@ package com.simiacryptus.mindseye.art.examples
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.net.URI
+import java.util.function.BiFunction
 import java.util.stream.{Collectors, DoubleStream, IntStream}
 import java.util.zip.ZipFile
 import java.{lang, util}
@@ -68,10 +69,14 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
   }
 
   def smoother(content: Tensor) = {
-    val topology = new SearchRadiusTopology(content).setSelfRef(true)
+    val topology = new SearchRadiusTopology(content)
+    topology.setSelfRef(true)
     //.setVerbose(true)
-    var affinity = new RelativeAffinity(content, topology).setContrast(10).setGraphPower1(2).setMixing(0.2)
-      .wrap((graphEdges: util.List[Array[Int]], innerResult: util.List[Array[Double]]) => adjust(graphEdges, innerResult, degree(innerResult), 0.5))
+    var affinity = new RelativeAffinity(content, topology)
+    affinity.setContrast(10)
+    affinity.setGraphPower1(2)
+    affinity.setMixing(0.2)
+    affinity.wrap((graphEdges: util.List[Array[Int]], innerResult: util.List[Array[Double]]) => adjust(graphEdges, innerResult, degree(innerResult), 0.5))
     solver.solve(topology, affinity, 1e-4)
   }
 
@@ -87,22 +92,21 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
     val topology = new RadiusRasterTopology(image_tensor.getDimensions, RadiusRasterTopology.getRadius(1, 1), 0).cached()
     //new SimpleRasterTopology(image_tensor.getDimensions).cached()
     val topology_analysis = new SearchRadiusTopology(image_tensor)
-      .setInitialRadius(1)
-      .setMaxSpatialDist(8)
-      .setMaxChromaDist(0.1)
-      .setNeighborhoodSize(5)
-      .setSelfRef(true)
-      .setVerbose(true)
-      .cached()
-    val affinity_regions = new RelativeAffinity(image_tensor, topology_analysis)
-      .setContrast(25)
-      .setGraphPower1(2)
-      .setMixing(0.2)
+    topology_analysis.setInitialRadius(1)
+    topology_analysis.setMaxSpatialDist(8)
+    topology_analysis.setMaxChromaDist(0.1)
+    topology_analysis.setNeighborhoodSize(5)
+    topology_analysis.setSelfRef(true)
+    topology_analysis.setVerbose(true)
+    val rasterTopology = topology_analysis.cached()
+    val affinity_regions = new RelativeAffinity(image_tensor, rasterTopology)
+    affinity_regions.setContrast(25)
+    affinity_regions.setGraphPower1(2)
+    affinity_regions.setMixing(0.2)
     val flattenedColors = log.eval(() => {
       SegmentUtil.flattenColors(image_tensor,
-        topology_analysis,
-        affinity_regions.wrap((graphEdges: RefList[Array[Int]], innerResult: RefList[Array[Double]]) =>
-          adjust(graphEdges, innerResult, degree(innerResult), 0.5)), 3, solver)
+        rasterTopology,
+        affinity_regions.wrap((graphEdges: util.List[Array[Int]], innerResult: util.List[Array[Double]]) => adjust(graphEdges, innerResult, degree(innerResult), 0.5)), 3, solver)
     })
     val flattenedTensor = Tensor.fromRGB(flattenedColors)
     var pixelMap: Array[Int] = SegmentUtil.markIslands(
@@ -115,9 +119,9 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
       pixels
     )
     val affinity_graph = new RelativeAffinity(image_tensor, topology_analysis)
-      .setContrast(50)
-      .setGraphPower1(2)
-      .setMixing(0.5)
+    affinity_graph.setContrast(50)
+    affinity_graph.setGraphPower1(2)
+    affinity_graph.setMixing(0.5)
     var graph = SmoothSolver_Cuda.laplacian(affinity_graph, topology).matrix.project(pixelMap)
 
     log.h2("Basic Regions")

@@ -205,10 +205,14 @@ object SegmentStyleNotebook {
   def solver: SmoothSolver = new SmoothSolver_Cuda()
 
   def smoother(content: Tensor) = {
-    val topology = new SearchRadiusTopology(content).setSelfRef(true)
+    val topology = new SearchRadiusTopology(content)
+    topology.setSelfRef(true)
     //.setVerbose(true)
-    var affinity = new RelativeAffinity(content, topology).setContrast(10).setGraphPower1(2).setMixing(0.2)
-      .wrap((graphEdges: util.List[Array[Int]], innerResult: util.List[Array[Double]]) => adjust(graphEdges, innerResult, degree(innerResult), 0.5))
+    var affinity = new RelativeAffinity(content, topology)
+    affinity.setContrast(10)
+    affinity.setGraphPower1(2)
+    affinity.setMixing(0.2)
+    affinity.wrap((graphEdges: util.List[Array[Int]], innerResult: util.List[Array[Double]]) => adjust(graphEdges, innerResult, degree(innerResult), 0.5))
     solver.solve(topology, affinity, 1e-4)
   }
 

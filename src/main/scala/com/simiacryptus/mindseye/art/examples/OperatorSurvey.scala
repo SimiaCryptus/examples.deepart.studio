@@ -84,8 +84,16 @@ class OperatorSurvey extends ArtSetup[Object] {
             "GramMatrixEnhancer (100)" -> new GramMatrixEnhancer().setMinMax(-100, 100),
             "ChannelMeanMatcher" -> new ChannelMeanMatcher(),
             "MomentMatcher" -> new MomentMatcher(),
-            "MomentMatcher (no-cov)" -> new MomentMatcher().setCovCoeff(0.0),
-            "MomentMatcher (no-pos)" -> new MomentMatcher().setPosCoeff(0.0),
+            "MomentMatcher (no-cov)" -> {
+              val momentMatcher = new MomentMatcher()
+              momentMatcher.setCovCoeff(0.0)
+              momentMatcher
+            },
+            "MomentMatcher (no-pos)" -> {
+              val momentMatcher = new MomentMatcher()
+              momentMatcher.setPosCoeff(0.0)
+              momentMatcher
+            },
             "GramMatrixMatcher" -> new GramMatrixMatcher(),
             "ChannelPowerEnhancer" -> new ChannelPowerEnhancer()
           )

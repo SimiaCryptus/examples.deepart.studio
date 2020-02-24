@@ -42,7 +42,8 @@ class TextureTiledRotor extends RotorArt {
   override val rotationalChannelPermutation: Array[Int] = Array(2, 1, 3)
   val styleUrl = "upload:Style"
   val initUrl: String = "50 + noise * 0.5"
-  val s3bucket: String = "examples.deepartist.org"
+  //val s3bucket: String = "examples.deepartist.org"
+  val s3bucket: String = ""
   val minResolution = 128
   val maxResolution = 400
   val magnification = 4
