@@ -32,6 +32,7 @@ import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.mindseye.test.NotebookReportBase
 import com.simiacryptus.mindseye.util.ImageUtil
 import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.NotebookRunner
 import com.simiacryptus.sparkbook.NotebookRunner.withMonitoredJpg
 import com.simiacryptus.sparkbook.util.Java8Util._
@@ -85,8 +86,8 @@ class SegmentStyle extends SegmentingSetup {
           ImageArtUtil.load(log, styleUrl_foreground, (displayRes * Math.sqrt(magnification)).toInt)
         }))
         magnification = 32
-        val canvas = new AtomicReference[Tensor](null)
-        val registration = registerWithIndexJPG(canvas.get())
+        val canvas = new RefAtomicReference[Tensor](null)
+        val registration = registerWithIndexJPG(() => canvas.get())
         try {
           withMonitoredJpg(() => canvas.get().toImage) {
             val initFn: Tensor => Tensor = content => {

@@ -30,6 +30,7 @@ import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.mindseye.layers.java.{ImgTileAssemblyLayer, ImgViewLayer}
 import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.NotebookRunner.withMonitoredJpg
 import com.simiacryptus.sparkbook._
 import com.simiacryptus.sparkbook.util.Java8Util._
@@ -72,7 +73,7 @@ class TiledTexture extends ArtSetup[Object] {
       log.onComplete(() => upload(log): Unit)
       // Fetch image (user upload prompt) and display a rescaled copy
       log.p(log.jpg(load(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
-      val canvas = new AtomicReference[Tensor](null)
+      val canvas = new RefAtomicReference[Tensor](null)
 
       // Generates a pretiled image (e.g. 3x3) to display
       def tiledCanvas = {
@@ -96,7 +97,7 @@ class TiledTexture extends ArtSetup[Object] {
       }
 
       // Execute the main process while registered with the site index
-      val registration = registerWithIndexJPG(tiledCanvas)
+      val registration = registerWithIndexJPG(() => tiledCanvas)
       try {
         // Display a pre-tiled image inside the report itself
         withMonitoredJpg(() => tiledCanvas.toImage) {

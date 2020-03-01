@@ -32,6 +32,7 @@ import com.simiacryptus.mindseye.eval.Trainable
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.mindseye.opt.Step
 import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.NotebookRunner._
 import com.simiacryptus.sparkbook._
 import com.simiacryptus.sparkbook.util.Java8Util._
@@ -98,7 +99,7 @@ class OperatorSurvey extends ArtSetup[Object] {
             "ChannelPowerEnhancer" -> new ChannelPowerEnhancer()
           )
           for (modifiers <- oneAtATime(operatorMap)) {
-            val canvas = new AtomicReference[Tensor](null)
+            val canvas = new RefAtomicReference[Tensor](null)
             val keys = modifiers.keys.toList.sorted
             log.h2(keys.mkString(" + "))
             renderedCanvases += (() => {

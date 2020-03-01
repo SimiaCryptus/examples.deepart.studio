@@ -33,6 +33,7 @@ import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.mindseye.lang.cudnn.Precision
 import com.simiacryptus.mindseye.opt.Step
 import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.NotebookRunner
 import com.simiacryptus.sparkbook.NotebookRunner._
 import com.simiacryptus.sparkbook.util.Java8Util._
@@ -86,7 +87,7 @@ class ContentReconstructionSurvey extends ArtSetup[Object] {
             import scala.collection.JavaConverters._
             for (layer <- pipeline.getLayers.asScala.keys) {
               log.h1(layer.name())
-              val canvas = new AtomicReference[Tensor](null)
+              val canvas = new RefAtomicReference[Tensor](null)
               renderedCanvases += (() => {
                 val image = canvas.get().toImage
                 if (null == image) image else {

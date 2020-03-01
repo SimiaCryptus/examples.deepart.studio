@@ -28,6 +28,7 @@ import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.NotebookRunner
 import com.simiacryptus.sparkbook.NotebookRunner._
 import com.simiacryptus.sparkbook.util.Java8Util._
@@ -65,9 +66,9 @@ class DeepDream extends ArtSetup[Object] {
       log.onComplete(() => upload(log): Unit)
       // Fetch input image (user upload prompt)
       ImageArtUtil.load(log, contentUrl, resolution)
-      val canvas = new AtomicReference[Tensor](null)
+      val canvas = new RefAtomicReference[Tensor](null)
       // Execute the main process while registered with the site index
-      val registration = registerWithIndexJPG(canvas.get())
+      val registration = registerWithIndexJPG(() => canvas.get())
       try {
         // In contrast to other uses, in this painting operation we are enhancing
         // an input image (mask) only, with no other inputs or canvas preparation.

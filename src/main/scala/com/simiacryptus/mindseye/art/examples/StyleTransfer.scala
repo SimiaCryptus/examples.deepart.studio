@@ -28,6 +28,7 @@ import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.NotebookRunner._
 import com.simiacryptus.sparkbook._
 import com.simiacryptus.sparkbook.util.Java8Util._
@@ -71,9 +72,9 @@ class StyleTransfer extends ArtSetup[Object] {
       // Fetch input images (user upload prompts) and display a rescaled copies
       log.p(log.jpg(ImageArtUtil.load(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
       log.p(log.jpg(ImageArtUtil.load(log, contentUrl, maxResolution), "Input Content"))
-      val canvas = new AtomicReference[Tensor](null)
+      val canvas = new RefAtomicReference[Tensor](null)
       // Execute the main process while registered with the site index
-      val registration = registerWithIndexJPG(canvas.get())
+      val registration = registerWithIndexJPG(() => canvas.get())
       try {
         // Display an additional image inside the report itself
         withMonitoredJpg(() => canvas.get().toImage) {

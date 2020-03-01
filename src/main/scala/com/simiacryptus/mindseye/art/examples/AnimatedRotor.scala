@@ -121,7 +121,7 @@ class AnimatedRotor extends RotorArt {
             override val maxRate = 1e9
 
             // The canvas result should be processed by the kaliedoscope
-            override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray).copyPipeline()
+            override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray)
 
             // By default, we use a trust region that constrains the canvas pixel values from 0-256.
             // This conflicts with using a kaliedoscope, whose output is bounded and input may be out of that range.

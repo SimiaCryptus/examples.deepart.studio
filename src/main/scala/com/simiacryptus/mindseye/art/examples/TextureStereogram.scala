@@ -104,7 +104,7 @@ class TextureStereogram extends ArtSetup[Object] {
       }
 
       // Execute the main process while registered with the site index
-      val registration = registerWithIndexJPG(rendered)
+      val registration = registerWithIndexJPG(() => rendered)
       try {
         // Display the stereogram
         withMonitoredJpg(() => rendered.toImage) {

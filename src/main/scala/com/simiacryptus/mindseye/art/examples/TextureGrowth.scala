@@ -33,6 +33,7 @@ import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.mindseye.opt.Step
 import com.simiacryptus.mindseye.util.ImageUtil
 import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.NotebookRunner.withMonitoredJpg
 import com.simiacryptus.sparkbook._
 import com.simiacryptus.sparkbook.util.Java8Util._
@@ -87,7 +88,7 @@ class TextureGrowth extends ArtSetup[Object] {
             log.h1(layer.name())
             for (numberOfSteps <- List(1, 2, 5)) {
               log.h2(s"$numberOfSteps steps")
-              val canvas = new AtomicReference[Tensor](null)
+              val canvas = new RefAtomicReference[Tensor](null)
               renderedCanvases += (() => {
                 val image = ImageUtil.resize(canvas.get().toImage, maxResolution)
                 if (null == image) image else {

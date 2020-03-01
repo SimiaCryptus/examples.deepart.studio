@@ -65,7 +65,7 @@ class BasicNotebook extends ArtSetup[Object] {
         canvas
       })
       // Usually not on one line, this code publishes our result to the site's index so it is linked from the homepage.
-      registerWithIndexJPG(Tensor.fromRGB(canvas)).foreach(_.stop()(s3client, ec2client))
+      registerWithIndexJPG(() => Tensor.fromRGB(canvas)).foreach(_.stop()(s3client, ec2client))
       null
     }
   }()
