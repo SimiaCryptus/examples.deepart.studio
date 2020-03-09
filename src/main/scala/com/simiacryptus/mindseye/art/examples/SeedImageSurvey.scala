@@ -22,7 +22,6 @@ package com.simiacryptus.mindseye.art.examples
 import java.awt.image.BufferedImage
 import java.awt.{Font, Graphics2D}
 import java.net.URI
-import java.util.concurrent.atomic.AtomicReference
 
 import com.simiacryptus.mindseye.art.models.VGG16
 import com.simiacryptus.mindseye.art.ops._
@@ -68,19 +67,19 @@ class SeedImageSurvey extends ArtSetup[Object] {
 
   override def postConfigure(log: NotebookOutput) = log.eval { () =>
     () => {
-      implicit val _ = log
+      implicit val implicitLog = log
       // First, basic configuration so we publish to our s3 site
-      log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
+      log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Fetch input images (user upload prompts) and display rescaled copies
-      log.p(log.jpg(ImageArtUtil.load(log, styleUrl, (resolution * Math.sqrt(magnification)).toInt), "Input Style"))
+      log.p(log.jpg(ImageArtUtil.loadImage(log, styleUrl, (resolution * Math.sqrt(magnification)).toInt), "Input Style"))
       val contentUrl = "upload:Content"
       val seeds = Array(
         contentUrl,
         "plasma",
         "50 + noise * 0.5"
       )
-      for (seed <- seeds) log.p(log.jpg(ImageArtUtil.load(log, seed, (resolution * Math.sqrt(magnification)).toInt), "Seed"))
+      for (seed <- seeds) log.p(log.jpg(ImageArtUtil.loadImage(log, seed, (resolution * Math.sqrt(magnification)).toInt), "Seed"))
       val renderedCanvases = new ArrayBuffer[() => BufferedImage]
       // Execute the main process while registered with the site index
       val registration = registerWithIndexGIF(renderedCanvases.map(_ ()), delay = animationDelay)
@@ -129,7 +128,7 @@ class SeedImageSurvey extends ArtSetup[Object] {
                       steps = steps + 1
                       super.onStepComplete(trainable, currentPoint)
                     }
-                  }, new GeometricSequence {
+                  }, None, new GeometricSequence {
                     override val min: Double = resolution
                     override val max: Double = resolution
                     override val steps = 1

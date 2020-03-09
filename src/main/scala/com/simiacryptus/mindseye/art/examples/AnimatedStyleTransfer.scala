@@ -20,7 +20,6 @@
 package com.simiacryptus.mindseye.art.examples
 
 import java.net.URI
-import java.util.concurrent.atomic.AtomicReference
 
 import com.simiacryptus.mindseye.art.models.VGG16
 import com.simiacryptus.mindseye.art.ops._
@@ -29,6 +28,7 @@ import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.mindseye.network.PipelineNetwork
 import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook._
 import com.simiacryptus.sparkbook.util.Java8Util._
 import com.simiacryptus.sparkbook.util.LocalRunner
@@ -65,55 +65,62 @@ class AnimatedStyleTransfer extends ArtSetup[Object] {
 
   override def postConfigure(log: NotebookOutput) = log.eval { () =>
     () => {
-      implicit val _ = log
+      implicit val implicitLog = log
       // First, basic configuration so we publish to our s3 site
-      log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
+      log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Fetch input images (user upload prompts) and display rescaled copies
-      log.p(log.jpg(ImageArtUtil.load(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
-      log.p(log.jpg(ImageArtUtil.load(log, contentUrl, maxResolution), "Input Content"))
+      log.p(log.jpg(ImageArtUtil.loadImage(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
+      log.p(log.jpg(ImageArtUtil.loadImage(log, contentUrl, maxResolution), "Input Content"))
 
       def frames = keyframes * 2 - 1
 
-      val canvases = (1 to frames).map(_ => new AtomicReference[Tensor](null)).toList
+      val canvases = (1 to frames).map(_ => new RefAtomicReference[Tensor](null)).toList.toBuffer
       // Execute the main process while registered with the site index
       val registration = registerWithIndexGIF_Cyclic(canvases.map(_.get()))
       try {
-        paintEveryOther(contentUrl, initUrl, canvases, (1 to frames).map(f => f.toString -> {
-          new VisualStyleContentNetwork(
-            styleLayers = List(
-              // We select all the lower-level layers to achieve a good balance between speed and accuracy.
-              VGG16.VGG16_0b,
-              VGG16.VGG16_1a,
-              VGG16.VGG16_1b1,
-              VGG16.VGG16_1b2,
-              VGG16.VGG16_1c1,
-              VGG16.VGG16_1c2,
-              VGG16.VGG16_1c3
-            ),
-            styleModifiers = List(
-              // These two operators are a good combination for a vivid yet accurate style
-              new GramMatrixEnhancer(),
-              new MomentMatcher()
-            ),
-            styleUrl = List(styleUrl),
-            contentLayers = List(
-              VGG16.VGG16_1b2
-            ),
-            contentModifiers = List(
-              new ContentMatcher()
-            ),
-            magnification = magnification
-          )
-        }).toList, new BasicOptimizer {
-          override val trainingMinutes: Int = 60
-          override val trainingIterations: Int = 30
-          override val maxRate = 1e9
-        }, x => new PipelineNetwork(1), new GeometricSequence {
-          override val min: Double = minResolution
-          override val max: Double = maxResolution
-          override val steps = AnimatedStyleTransfer.this.steps
-        }.toStream.map(_.round.toDouble): _*)
+        animate(
+          contentUrl = contentUrl,
+          initUrl = initUrl,
+          canvases = canvases,
+          networks = (1 to frames).map(f => f.toString -> {
+            new VisualStyleContentNetwork(
+              styleLayers = List(
+                // We select all the lower-level layers to achieve a good balance between speed and accuracy.
+                VGG16.VGG16_0b,
+                VGG16.VGG16_1a,
+                VGG16.VGG16_1b1,
+                VGG16.VGG16_1b2,
+                VGG16.VGG16_1c1,
+                VGG16.VGG16_1c2,
+                VGG16.VGG16_1c3
+              ),
+              styleModifiers = List(
+                // These two operators are a good combination for a vivid yet accurate style
+                new GramMatrixEnhancer(),
+                new MomentMatcher()
+              ),
+              styleUrl = List(styleUrl),
+              contentLayers = List(
+                VGG16.VGG16_1b2
+              ),
+              contentModifiers = List(
+                new ContentMatcher()
+              ),
+              magnification = magnification
+            )
+          }).toList.toBuffer,
+          optimizer = new BasicOptimizer {
+            override val trainingMinutes: Int = 60
+            override val trainingIterations: Int = 30
+            override val maxRate = 1e9
+          },
+          resolutions = new GeometricSequence {
+            override val min: Double = minResolution
+            override val max: Double = maxResolution
+            override val steps = AnimatedStyleTransfer.this.steps
+          }.toStream.map(_.round.toDouble),
+          renderingFn = x => new PipelineNetwork(1))
         null
       } finally {
         registration.foreach(_.stop()(s3client, ec2client))

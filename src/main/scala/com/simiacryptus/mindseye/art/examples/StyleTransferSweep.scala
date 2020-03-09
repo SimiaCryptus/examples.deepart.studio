@@ -20,7 +20,6 @@
 package com.simiacryptus.mindseye.art.examples
 
 import java.net.URI
-import java.util.concurrent.atomic.AtomicReference
 
 import com.simiacryptus.mindseye.art.models.VGG16
 import com.simiacryptus.mindseye.art.ops._
@@ -28,6 +27,7 @@ import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.NotebookRunner
 import com.simiacryptus.sparkbook.util.Java8Util._
 import com.simiacryptus.sparkbook.util.LocalRunner
@@ -69,73 +69,79 @@ class StyleTransferSweep extends ArtSetup[Object] {
 
   override def postConfigure(log: NotebookOutput) = log.eval { () =>
     () => {
-      implicit val _ = log
+      implicit val implicitLog = log
       // First, basic configuration so we publish to our s3 site
-      log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
+      log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Fetch input images (user upload prompts) and display rescaled copies
-      log.p(log.jpg(ImageArtUtil.load(log, contentUrl, maxResolution), "Input Content"))
-      log.p(log.jpg(ImageArtUtil.load(log, styleAUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style A"))
-      log.p(log.jpg(ImageArtUtil.load(log, styleBUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style B"))
+      log.p(log.jpg(ImageArtUtil.loadImage(log, contentUrl, maxResolution), "Input Content"))
+      log.p(log.jpg(ImageArtUtil.loadImage(log, styleAUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style A"))
+      log.p(log.jpg(ImageArtUtil.loadImage(log, styleBUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style B"))
 
 
-      val canvases = (1 to frames).map(_ => new AtomicReference[Tensor](null)).toList
+      val canvases = (1 to frames).map(_ => new RefAtomicReference[Tensor](null)).toList.toBuffer
       // Execute the main process while registered with the site index
       val registration = registerWithIndexGIF_Cyclic(canvases.map(_.get()), delay = delay)
       try {
-        animate(contentUrl, initUrl, canvases, log.eval(() => (0 to frames - 1).map(f => {
-          var coeffA = Math.pow(separation, (f.toDouble / frames) - 0.5)
-          var coeffB = 1.0 / coeffA
-          val mag = coeffA + coeffB
-          coeffA = coeffA / mag
-          coeffB = coeffB / mag
-          f"${coeffA * 100}%.3f - ${coeffB * 100}%.3f" -> {
-            val styleLayers = List(
-              // We select all the lower-level layers to achieve a good balance between speed and accuracy.
-              VGG16.VGG16_0b,
-              VGG16.VGG16_1a,
-              VGG16.VGG16_1b1,
-              VGG16.VGG16_1b2,
-              VGG16.VGG16_1c1,
-              VGG16.VGG16_1c2,
-              VGG16.VGG16_1c3
-            )
-            new VisualStyleNetwork(
-              // This primary component accounts for style A
-              styleLayers = styleLayers,
-              styleModifiers = List(
-                // These two operators are a good combination for a vivid yet accurate style
-                new GramMatrixEnhancer().scale(coeffA),
-                new MomentMatcher().scale(coeffA)
-              ),
-              styleUrl = List(styleAUrl),
-              magnification = magnification
-            ) + new VisualStyleNetwork(
-              styleLayers = styleLayers,
-              styleModifiers = List(
-                // We use the same two operators in the alternate component, which calculates the style B
-                new GramMatrixEnhancer().scale(coeffB),
-                new MomentMatcher().scale(coeffB)
-              ),
-              styleUrl = List(styleBUrl),
-              magnification = magnification
-            ).withContent(
-              contentLayers = List(
-                VGG16.VGG16_1b2
-              ),
-              contentModifiers = List(
-                new ContentMatcher()
-              ))
-          }
-        }).toList), new BasicOptimizer {
-          override val trainingMinutes: Int = 60
-          override val trainingIterations: Int = 30
-          override val maxRate = 1e9
-        }, new GeometricSequence {
-          override val min: Double = minResolution
-          override val max: Double = maxResolution
-          override val steps = StyleTransferSweep.this.steps
-        }.toStream.map(_.round.toDouble),
+        animate(
+          contentUrl = contentUrl,
+          initUrl = initUrl,
+          canvases = canvases,
+          networks = log.eval(() => (0 to frames - 1).map(f => {
+            var coeffA = Math.pow(separation, (f.toDouble / frames) - 0.5)
+            var coeffB = 1.0 / coeffA
+            val mag = coeffA + coeffB
+            coeffA = coeffA / mag
+            coeffB = coeffB / mag
+            f"${coeffA * 100}%.3f - ${coeffB * 100}%.3f" -> {
+              val styleLayers = List(
+                // We select all the lower-level layers to achieve a good balance between speed and accuracy.
+                VGG16.VGG16_0b,
+                VGG16.VGG16_1a,
+                VGG16.VGG16_1b1,
+                VGG16.VGG16_1b2,
+                VGG16.VGG16_1c1,
+                VGG16.VGG16_1c2,
+                VGG16.VGG16_1c3
+              )
+              new VisualStyleNetwork(
+                // This primary component accounts for style A
+                styleLayers = styleLayers,
+                styleModifiers = List(
+                  // These two operators are a good combination for a vivid yet accurate style
+                  new GramMatrixEnhancer().scale(coeffA),
+                  new MomentMatcher().scale(coeffA)
+                ),
+                styleUrl = List(styleAUrl),
+                magnification = magnification
+              ) + new VisualStyleNetwork(
+                styleLayers = styleLayers,
+                styleModifiers = List(
+                  // We use the same two operators in the alternate component, which calculates the style B
+                  new GramMatrixEnhancer().scale(coeffB),
+                  new MomentMatcher().scale(coeffB)
+                ),
+                styleUrl = List(styleBUrl),
+                magnification = magnification
+              ).withContent(
+                contentLayers = List(
+                  VGG16.VGG16_1b2
+                ),
+                contentModifiers = List(
+                  new ContentMatcher()
+                ))
+            }
+          }).toList.toBuffer),
+          optimizer = new BasicOptimizer {
+            override val trainingMinutes: Int = 60
+            override val trainingIterations: Int = 30
+            override val maxRate = 1e9
+          },
+          resolutions = new GeometricSequence {
+            override val min: Double = minResolution
+            override val max: Double = maxResolution
+            override val steps = StyleTransferSweep.this.steps
+          }.toStream.map(_.round.toDouble),
           delay = StyleTransferSweep.this.delay)
         null
       } finally {

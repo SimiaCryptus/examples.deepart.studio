@@ -20,7 +20,6 @@
 package com.simiacryptus.mindseye.art.examples
 
 import java.net.URI
-import java.util.concurrent.atomic.AtomicReference
 
 import com.simiacryptus.mindseye.art.models.VGG16
 import com.simiacryptus.mindseye.art.ops._
@@ -29,6 +28,7 @@ import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.lang.{Layer, Tensor}
 import com.simiacryptus.mindseye.opt.region.TrustRegion
 import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.NotebookRunner
 import com.simiacryptus.sparkbook.util.Java8Util._
 import com.simiacryptus.sparkbook.util.LocalRunner
@@ -60,6 +60,7 @@ class AnimatedRotor extends RotorArt {
       <li>Operators to match content and constrain and enhance style</li>
       <li>Progressive resolution increase</li>
       <li>Rotational symmerty constraint caused by a kaliedoscopic image layer</li>
+      <li>A content seed image to guide the aspect ratio</li>
     </ol>
     The parameters for each frame are fixed, but due to the random initialization
     and loose constraints we can achive a dynamic effect.
@@ -69,30 +70,31 @@ class AnimatedRotor extends RotorArt {
 
   override def postConfigure(log: NotebookOutput) = log.eval { () =>
     () => {
-      implicit val _ = log
+      implicit val implicitLog = log
       // First, basic configuration so we publish to our s3 site
-      log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
+      log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
-      // Fetch input images (user upload prompts) and display rescaled copies
-      log.p(log.jpg(ImageArtUtil.load(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
-      log.p(log.jpg(ImageArtUtil.load(log, contentUrl, maxResolution), "Input Content"))
+      ImageArtUtil.loadImages(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt).foreach(x => log.p(log.jpg(x, "Input Style")))
+      log.p(log.jpg(ImageArtUtil.loadImage(log, contentUrl, maxResolution), "Input Content"))
 
       def frames = keyframes * 2 - 1
 
-      val canvases = (1 to frames).map(_ => new AtomicReference[Tensor](null)).toList
+      val canvases = (1 to frames).map(_ => new RefAtomicReference[Tensor](null)).toList.toBuffer
       // Execute the main process while registered with the site index
-      val registration = registerWithIndexGIF_Cyclic(canvases.map(_.get()).map(t => {
-        val kaleidoscope = getKaleidoscope(t.getDimensions)
-        val transformed = kaleidoscope.eval(t).getData.get(0)
-        kaleidoscope.freeRef()
-        transformed
-      }))
+      val registration = registerWithIndexGIF_Cyclic(canvases.map(_.get())
+        .filter(_ != null)
+        .map(t => {
+          val kaleidoscope = getKaleidoscope(t.getDimensions)
+          val transformed = kaleidoscope.eval(t).getData.get(0)
+          kaleidoscope.freeRef()
+          transformed
+        }))
       try {
-        paintEveryOther(
-          contentUrl,
-          initUrl,
-          canvases,
-          (1 to frames).map(f => f.toString -> {
+        animate(
+          contentUrl = contentUrl,
+          initUrl = initUrl,
+          canvases = canvases,
+          networks = (1 to frames).map(f => f.toString -> {
             new VisualStyleNetwork(
               styleLayers = List(
                 // We select all the lower-level layers to achieve a good balance between speed and accuracy.
@@ -109,15 +111,15 @@ class AnimatedRotor extends RotorArt {
                 new GramMatrixEnhancer(),
                 new MomentMatcher()
               ),
-              styleUrl = List(styleUrl),
+              styleUrls = Option(styleUrl),
               magnification = magnification,
               // Our optimization network should be built with a kaliedoscope appended to the canvas
               viewLayer = dims => getKaleidoscope(dims.toArray)
             )
-          }).toList,
-          new BasicOptimizer {
+          }).toList.toBuffer,
+          optimizer = new BasicOptimizer {
             override val trainingMinutes: Int = 60
-            override val trainingIterations: Int = 30
+            override val trainingIterations: Int = 10
             override val maxRate = 1e9
 
             // The canvas result should be processed by the kaliedoscope
@@ -127,12 +129,12 @@ class AnimatedRotor extends RotorArt {
             // This conflicts with using a kaliedoscope, whose output is bounded and input may be out of that range.
             override def trustRegion(layer: Layer): TrustRegion = null
           },
-          (dims: Seq[Int]) => getKaleidoscope(dims.toArray).copyPipeline(),
-          new GeometricSequence {
+          resolutions = new GeometricSequence {
             override val min: Double = minResolution
             override val max: Double = maxResolution
             override val steps = AnimatedRotor.this.steps
-          }.toStream.map(_.round.toDouble): _*)
+          }.toStream.map(_.round.toDouble),
+          renderingFn = (dims: Seq[Int]) => getKaleidoscope(dims.toArray))
         null
       } finally {
         registration.foreach(_.stop()(s3client, ec2client))

@@ -23,7 +23,6 @@ import java.awt.Font
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.net.URI
-import java.util.concurrent.atomic.AtomicReference
 
 import com.simiacryptus.mindseye.art.models.VGG16
 import com.simiacryptus.mindseye.art.ops._
@@ -32,6 +31,7 @@ import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.lang.{Coordinate, Tensor}
 import com.simiacryptus.mindseye.layers.java.ImgViewLayer
 import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.NotebookRunner._
 import com.simiacryptus.sparkbook._
 import com.simiacryptus.sparkbook.util.Java8Util._
@@ -74,16 +74,16 @@ class TextureStereogram extends ArtSetup[Object] {
 
   override def postConfigure(log: NotebookOutput) = log.eval { () =>
     () => {
-      implicit val _ = log
+      implicit val implicitLog = log
       // First, basic configuration so we publish to our s3 site
-      log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
+      log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Fetch image (user upload prompt) and display a rescaled copy
-      log.out(log.jpg(ImageArtUtil.load(log, styleUrl, (maxWidth * Math.sqrt(magnification)).toInt), "Input Style"))
+      log.out(log.jpg(ImageArtUtil.loadImage(log, styleUrl, (maxWidth * Math.sqrt(magnification)).toInt), "Input Style"))
       // Render and display the depth map
       val depthImage = depthMap((maxHeight * maxAspect).toInt, maxHeight, text)
       log.out(log.jpg(depthImage.toImage, "Depth Map"))
-      val canvas = new AtomicReference[Tensor](null)
+      val canvas = new RefAtomicReference[Tensor](null)
 
       // Renders the sterogram
       def rendered = {
@@ -166,7 +166,7 @@ class TextureStereogram extends ArtSetup[Object] {
   def stereoImage(depthMap: Tensor, canvas: Tensor, depthFactor: Int): BufferedImage = {
     val dimensions = canvas.getDimensions
     val canvasWidth = dimensions(0)
-    val depthScale = canvasWidth / (depthFactor * depthMap.getData.max)
+    val depthScale = canvasWidth / (depthFactor * depthMap.doubleStream().max().getAsDouble)
 
     def getPixel(x: Int, y: Int, c: Int): Double = {
       if (x < 0) getPixel(x + canvasWidth, y, c)
@@ -183,6 +183,8 @@ class TextureStereogram extends ArtSetup[Object] {
       val ints = c.getCoords()
       getPixel(ints(0), ints(1), ints(2))
     }, true)
+    depthMap.freeRef()
+    canvas.freeRef()
     tensor.toRgbImage
   }
 

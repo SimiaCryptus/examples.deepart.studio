@@ -21,35 +21,37 @@ package com.simiacryptus.mindseye.art.examples
 
 import java.net.URI
 
-import com.simiacryptus.mindseye.art.models.VGG16
+import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.lang.{Layer, Tensor}
 import com.simiacryptus.mindseye.layers.java.{ImgTileAssemblyLayer, ImgViewLayer}
 import com.simiacryptus.mindseye.opt.region.TrustRegion
-import com.simiacryptus.mindseye.test.NotebookReportBase
 import com.simiacryptus.notebook.NotebookOutput
-import com.simiacryptus.ref.wrappers.{RefAtomicReference, RefConsumer}
+import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.NotebookRunner._
 import com.simiacryptus.sparkbook._
 import com.simiacryptus.sparkbook.util.Java8Util._
 import com.simiacryptus.sparkbook.util.LocalRunner
 
-object TextureTiledRotor extends TextureTiledRotor with LocalRunner[Object] with NotebookRunner[Object]
+object TextureTiledRotor extends TextureTiledRotor with LocalRunner[Object] with NotebookRunner[Object] {
+  override def http_port: Int = 1081
+}
 
 class TextureTiledRotor extends RotorArt {
   override val rotationalSegments = 6
-  override val rotationalChannelPermutation: Array[Int] = Array(2, 1, 3)
+  override val rotationalChannelPermutation: Array[Int] = Permutation.random(3, rotationalSegments)
   val styleUrl = "upload:Style"
   val initUrl: String = "50 + noise * 0.5"
-  //val s3bucket: String = "examples.deepartist.org"
+  //  val s3bucket: String = "examples.deepartist.org"
   val s3bucket: String = ""
   val minResolution = 128
-  val maxResolution = 400
-  val magnification = 4
+  val maxResolution = 800
+  val magnification = 2
   val rowsAndCols = 3
-  val steps = 3
+  val steps = 4
+  val aspectRatio = 1 / 1.732
 
   override def indexStr = "202"
 
@@ -57,7 +59,7 @@ class TextureTiledRotor extends RotorArt {
     Creates a tiled and rotationally symmetric texture based on a style using:
     <ol>
       <li>Random noise initialization</li>
-      <li>Standard VGG16 layers</li>
+      <li>Standard VGG19 layers</li>
       <li>Operators constraining and enhancing style</li>
       <li>Progressive resolution increase</li>
       <li>Kaleidoscopic view layer in addition to tiling layer</li>
@@ -66,124 +68,129 @@ class TextureTiledRotor extends RotorArt {
 
   override def inputTimeoutSeconds = 3600
 
+  override def postConfigure(log: NotebookOutput) = {
+    log.eval { () => {
+      () => {
+        implicit val implicitLog = log
+        // First, basic configuration so we publish to our s3 site
+        log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
+        log.onComplete(() => upload(log): Unit)
+        ImageArtUtil.loadImages(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt)
+          .foreach(img => log.p(log.jpg(img, "Input Style")))
+        val canvas = new RefAtomicReference[Tensor](null)
 
-  override def postConfigure(log1: NotebookOutput) = {
-    NotebookReportBase.withRefLeakMonitor(log1, new RefConsumer[NotebookOutput] {
-      override def accept(log: NotebookOutput): Unit = {
-        log.eval { () =>
-          () => {
-            implicit val _ = log
-            // First, basic configuration so we publish to our s3 site
-            log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
-            log.onComplete(() => upload(log): Unit)
-            log.p(log.jpg(ImageArtUtil.load(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
-            val canvas = new RefAtomicReference[Tensor](null)
-
-            def rotatedCanvas = {
-              var input = canvas.get()
-              if (null == input) input else {
-                val viewLayer = getKaleidoscope(input.getDimensions)
-                val result = viewLayer.eval(input)
-                viewLayer.freeRef()
-                val data = result.getData
-                result.freeRef()
-                val tensor = data.get(0)
-                data.freeRef()
-                tensor
-              }
-            }
-
-            // Generates a pretiled image (e.g. 3x3) to display
-            def tiledCanvas = {
-              var input = rotatedCanvas
-              if (null == input) input else {
-                val layer = new ImgTileAssemblyLayer(rowsAndCols, rowsAndCols)
-                val result = layer.eval((1 to (rowsAndCols * rowsAndCols)).map(_ => input.addRef()): _*)
-                layer.freeRef()
-                input.freeRef()
-                val data = result.getData
-                result.freeRef()
-                val tensor = data.get(0)
-                data.freeRef()
-                tensor
-              }
-            }
-
-            // Kaleidoscope+Tiling layer used by the optimization engine.
-            // Expands the canvas by a small amount, using tile wrap to draw in the expanded boundary.
-            def viewLayer(dims: Seq[Int]) = {
-              val padding = Math.min(256, Math.max(16, dims(0) / 2))
-              val viewLayer = getKaleidoscope(dims.toArray)
-              val layer = new ImgViewLayer(dims(0) + padding, dims(1) + padding, true)
-              layer.setOffsetX(-padding / 2)
-              layer.setOffsetY(-padding / 2)
-              viewLayer.add(layer).freeRef()
-              viewLayer
-            }
-
-            // Execute the main process while registered with the site index
-            val registration = registerWithIndexJPG(() => tiledCanvas)
-            try {
-              // Display a pre-tiled image inside the report itself
-              withMonitoredJpg(() => {
-                val tiledCanvas1 = tiledCanvas
-                val toImage = tiledCanvas1.toImage
-                tiledCanvas1.freeRef()
-                toImage
-              }) {
-                // Display an additional, non-tiled image of the canvas
-                withMonitoredJpg(() => Option(rotatedCanvas).map(tensor => {
-                  val image = tensor.toRgbImage
-                  tensor.freeRef()
-                  image
-                }).orNull) {
-                  log.subreport("Painting", (sub: NotebookOutput) => {
-                    paint(initUrl, initUrl, canvas.addRef(), new VisualStyleNetwork(
-                      styleLayers = List(
-                        // We select all the lower-level layers to achieve a good balance between speed and accuracy.
-                        VGG16.VGG16_0b,
-                        VGG16.VGG16_1a,
-                        VGG16.VGG16_1b1
-                        //                    VGG16.VGG16_1b2,
-                        //                    VGG16.VGG16_1c1,
-                        //                    VGG16.VGG16_1c2,
-                        //                    VGG16.VGG16_1c3
-                      ),
-                      styleModifiers = List(
-                        // These two operators are a good combination for a vivid yet accurate style
-                        new GramMatrixEnhancer(),
-                        new MomentMatcher()
-                      ),
-                      styleUrl = List(styleUrl),
-                      magnification = magnification,
-                      viewLayer = viewLayer
-                    ), new BasicOptimizer {
-                      override val trainingMinutes: Int = 30
-                      override val trainingIterations: Int = 10
-                      override val maxRate = 1e9
-
-                      override def trustRegion(layer: Layer): TrustRegion = null
-
-                      override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray)
-                    }, new GeometricSequence {
-                      override val min: Double = minResolution
-                      override val max: Double = maxResolution
-                      override val steps = TextureTiledRotor.this.steps
-                    }.toStream.map(_.round.toDouble): _*)(sub)
-                    null
-                  })
-                  uploadAsync(log)
-                }(log)
-              }
-              null
-            } finally {
-              canvas.freeRef()
-              registration.foreach(_.stop()(s3client, ec2client))
-            }
+        def rotatedCanvas = {
+          var input = canvas.get()
+          if (null == input) input else {
+            val viewLayer = getKaleidoscope(input.getDimensions)
+            val result = viewLayer.eval(input)
+            viewLayer.freeRef()
+            val data = result.getData
+            result.freeRef()
+            val tensor = data.get(0)
+            data.freeRef()
+            tensor
           }
-        }()
+        }
+
+        // Generates a pretiled image (e.g. 3x3) to display
+        def tiledCanvas = {
+          var input = rotatedCanvas
+          if (null == input) input else {
+            val layer = new ImgTileAssemblyLayer(rowsAndCols, rowsAndCols)
+            val result = layer.eval((1 to (rowsAndCols * rowsAndCols)).map(_ => input.addRef()): _*)
+            layer.freeRef()
+            input.freeRef()
+            val data = result.getData
+            result.freeRef()
+            val tensor = data.get(0)
+            data.freeRef()
+            tensor
+          }
+        }
+
+        // Kaleidoscope+Tiling layer used by the optimization engine.
+        // Expands the canvas by a small amount, using tile wrap to draw in the expanded boundary.
+        def viewLayer(dims: Seq[Int]) = {
+          val padding = Math.min(256, Math.max(16, dims(0) / 2))
+          val viewLayer = getKaleidoscope(dims.toArray)
+          val layer = new ImgViewLayer(dims(0) + padding, dims(1) + padding, true)
+          layer.setOffsetX(-padding / 2)
+          layer.setOffsetY(-padding / 2)
+          viewLayer.add(layer).freeRef()
+          viewLayer
+        }
+
+        // Execute the main process while registered with the site index
+        val registration = registerWithIndexJPG(() => tiledCanvas)
+        try {
+          // Display a pre-tiled image inside the report itself
+          withMonitoredJpg(() => {
+            val tiledCanvas1 = tiledCanvas
+            val toImage = tiledCanvas1.toImage
+            tiledCanvas1.freeRef()
+            toImage
+          }) {
+            // Display an additional, non-tiled image of the canvas
+            withMonitoredJpg(() => Option(rotatedCanvas).map(tensor => {
+              val image = tensor.toRgbImage
+              tensor.freeRef()
+              image
+            }).orNull) {
+              log.subreport("Painting", (sub: NotebookOutput) => {
+                paint(initUrl, initUrl, canvas.addRef(), new VisualStyleNetwork(
+                  styleLayers = List(
+                    // We select all the lower-level layers to achieve a good balance between speed and accuracy.
+                    VGG19.VGG19_0a,
+                    VGG19.VGG19_0b,
+                    VGG19.VGG19_1a,
+                    VGG19.VGG19_1b1,
+                    VGG19.VGG19_1b2,
+                    VGG19.VGG19_1c1,
+                    VGG19.VGG19_1c2,
+                    VGG19.VGG19_1c3,
+                    VGG19.VGG19_1e1,
+                    VGG19.VGG19_1e2,
+                    VGG19.VGG19_1e3
+                  ),
+                  styleModifiers = List(
+                    // These two operators are a good combination for a vivid yet accurate style
+                    {
+                      new GramMatrixEnhancer()
+                        .setMinMax(-5, 5)
+                      //.scale(0.5)
+                    },
+                    {
+                      new MomentMatcher()
+                    }
+                  ),
+                  styleUrls = Option(styleUrl),
+                  magnification = magnification,
+                  viewLayer = viewLayer
+                ), new BasicOptimizer {
+                  override val trainingMinutes: Int = 30
+                  override val trainingIterations: Int = 10
+                  override val maxRate = 1e9
+
+                  override def trustRegion(layer: Layer): TrustRegion = null
+
+                  override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray)
+                }, Option(aspectRatio), new GeometricSequence {
+                  override val min: Double = minResolution
+                  override val max: Double = maxResolution
+                  override val steps = TextureTiledRotor.this.steps
+                }.toStream.map(_.round.toDouble): _*)(sub)
+                null
+              })
+              uploadAsync(log)
+            }(log)
+          }
+          null
+        } finally {
+          registration.foreach(_.stop()(s3client, ec2client))
+        }
       }
-    })
-    new Object
+    }
+    }()
   }
 }

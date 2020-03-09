@@ -20,7 +20,6 @@
 package com.simiacryptus.mindseye.art.examples
 
 import java.net.URI
-import java.util.concurrent.atomic.AtomicReference
 
 import com.simiacryptus.mindseye.art.models.VGG16
 import com.simiacryptus.mindseye.art.ops._
@@ -67,12 +66,12 @@ class TiledTexture extends ArtSetup[Object] {
 
   override def postConfigure(log: NotebookOutput) = log.eval { () =>
     () => {
-      implicit val _ = log
+      implicit val implicitLog = log
       // First, basic configuration so we publish to our s3 site
-      log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
+      log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Fetch image (user upload prompt) and display a rescaled copy
-      log.p(log.jpg(load(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
+      log.p(log.jpg(loadImage(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
       val canvas = new RefAtomicReference[Tensor](null)
 
       // Generates a pretiled image (e.g. 3x3) to display
@@ -127,7 +126,7 @@ class TiledTexture extends ArtSetup[Object] {
                 override val trainingMinutes: Int = 60
                 override val trainingIterations: Int = 15
                 override val maxRate = 1e9
-              }, new GeometricSequence {
+              }, None, new GeometricSequence {
                 override val min: Double = minResolution
                 override val max: Double = maxResolution
                 override val steps = TiledTexture.this.steps

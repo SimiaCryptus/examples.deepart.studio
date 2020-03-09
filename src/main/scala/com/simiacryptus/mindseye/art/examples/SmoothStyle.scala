@@ -20,13 +20,11 @@
 package com.simiacryptus.mindseye.art.examples
 
 import java.net.URI
-import java.util.concurrent.atomic.AtomicReference
 import java.util.zip.ZipFile
 
 import com.simiacryptus.mindseye.art.models.VGG16
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.photo._
-import com.simiacryptus.mindseye.art.photo.affinity.RasterAffinity.{adjust, degree}
 import com.simiacryptus.mindseye.art.photo.affinity.RelativeAffinity
 import com.simiacryptus.mindseye.art.photo.cuda.SmoothSolver_Cuda
 import com.simiacryptus.mindseye.art.photo.topology.SearchRadiusTopology
@@ -47,7 +45,8 @@ class SmoothStyle extends ArtSetup[Object] {
 
   val contentUrl = "upload:Content"
   val styleUrl = "upload:Style"
-  val s3bucket: String = "examples.deepartist.org"
+  //  val s3bucket: String = "examples.deepartist.org"
+  val s3bucket: String = ""
 
   override def indexStr = "306"
 
@@ -65,33 +64,41 @@ class SmoothStyle extends ArtSetup[Object] {
 
   override def postConfigure(log: NotebookOutput) = log.eval { () =>
     () => {
-      implicit val _ = log
+      implicit val implicitLog = log
       // First, basic configuration so we publish to our s3 site
-      log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
+      log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Fetch input images (user upload prompts) and display a rescaled copies
-      log.p(log.jpg(ImageArtUtil.load(log, styleUrl, 1200), "Input Style"))
-      log.p(log.jpg(ImageArtUtil.load(log, contentUrl, 1200), "Input Content"))
+      log.p(log.jpg(ImageArtUtil.loadImage(log, styleUrl, 600), "Input Style"))
+      log.p(log.jpg(ImageArtUtil.loadImage(log, contentUrl, 600), "Input Content"))
       val canvas = new RefAtomicReference[Tensor](null)
       // Execute the main process while registered with the site index
       val registration = registerWithIndexJPG(() => canvas.get())
       try {
-        withMonitoredJpg(() => canvas.get().toImage) {
+        withMonitoredJpg(() => {
+          val tensor = canvas.get()
+          if (tensor == null) null
+          else tensor.toImage
+        }) {
           paint(contentUrl, content => {
             val fastPhotoStyleTransfer = FastPhotoStyleTransfer.fromZip(new ZipFile(Util.cacheFile(new URI(
               "https://simiacryptus.s3-us-west-2.amazonaws.com/photo_wct.zip"))))
-            val style = Tensor.fromRGB(ImageArtUtil.load(log, styleUrl, 600))
-            val wctRestyled = fastPhotoStyleTransfer.photoWCT(style, content)
-            val topology = new SearchRadiusTopology(content)
+            val style = Tensor.fromRGB(ImageArtUtil.loadImage(log, styleUrl, 200))
+            val wctRestyled = fastPhotoStyleTransfer.photoWCT(style, content.addRef())
+            fastPhotoStyleTransfer.freeRef()
+            val topology = new SearchRadiusTopology(content.addRef())
             topology.setSelfRef(true)
             topology.setVerbose(true)
             var affinity = new RelativeAffinity(content, topology)
             affinity.setContrast(20)
             affinity.setGraphPower1(2)
             affinity.setMixing(0.1)
-            affinity.wrap((graphEdges: java.util.List[Array[Int]], innerResult: java.util.List[Array[Double]]) => adjust(graphEdges, innerResult, degree(innerResult), 0.2))
-            solver.solve(topology, affinity, 1e-4).apply(wctRestyled)
-          }, canvas, new VisualStyleContentNetwork(
+            //val wrapper = affinity.wrap((graphEdges, innerResult) => adjust(graphEdges, innerResult, degree(innerResult), 0.2))
+            val operator = solver.solve(topology, affinity, 1e-4)
+            val tensor = operator.apply(wctRestyled)
+            operator.freeRef()
+            tensor
+          }, canvas.addRef(), new VisualStyleContentNetwork(
             styleLayers = List(
               VGG16.VGG16_1a,
               VGG16.VGG16_1b1,
@@ -104,10 +111,10 @@ class SmoothStyle extends ArtSetup[Object] {
               VGG16.VGG16_1d3,
               VGG16.VGG16_1e3
             ).flatMap(x => List(
-              x, x.prependAvgPool(2)
+              x //, x.prependAvgPool(2)
             )),
             styleModifiers = List(
-              new GramMatrixEnhancer().setMinMax(-3, 3),
+              new GramMatrixEnhancer().setMinMax(-1, 1),
               new MomentMatcher()
             ),
             styleUrl = List(styleUrl),
@@ -115,20 +122,20 @@ class SmoothStyle extends ArtSetup[Object] {
               VGG16.VGG16_1c3
             ),
             contentModifiers = List(
-              new ContentMatcher().scale(1e0)
+              new ContentMatcher().scale(1e1)
             ),
             magnification = 2
           ),
             new BasicOptimizer {
               override val trainingMinutes: Int = 90
-              override val trainingIterations: Int = 50
+              override val trainingIterations: Int = 2
               override val maxRate = 1e8
             }, new GeometricSequence {
-              override val min: Double = 800
-              override val max: Double = 1400
-              override val steps = 2
+              override val min: Double = 200
+              override val max: Double = 200
+              override val steps = 1
             }.toStream.map(_.round.toDouble))
-          paint(contentUrl, x => x, canvas, new VisualStyleContentNetwork(
+          paint(contentUrl, x => x, canvas.addRef(), new VisualStyleContentNetwork(
             styleLayers = List(
               VGG16.VGG16_1a,
               VGG16.VGG16_1b1,
@@ -141,12 +148,14 @@ class SmoothStyle extends ArtSetup[Object] {
               VGG16.VGG16_1d3
             ),
             styleModifiers = List(
-              new GramMatrixEnhancer().setMinMax(-3, 3),
+              new GramMatrixEnhancer().setMinMax(-1, 1),
               new GramMatrixMatcher()
             ),
             styleUrl = List(styleUrl),
             contentLayers = List(
-              VGG16.VGG16_1b2.prependAvgPool(2).appendMaxPool(2)
+              VGG16.VGG16_1b2
+                .prependAvgPool(2)
+                .appendMaxPool(2)
             ),
             contentModifiers = List(
               new ContentMatcher().scale(5e-1)
@@ -154,16 +163,17 @@ class SmoothStyle extends ArtSetup[Object] {
             magnification = 1
           ), new BasicOptimizer {
             override val trainingMinutes: Int = 180
-            override val trainingIterations: Int = 20
+            override val trainingIterations: Int = 2
             override val maxRate = 1e9
           }, new GeometricSequence {
-            override val min: Double = 2000
-            override val max: Double = 3000
-            override val steps = 2
+            override val min: Double = 400
+            override val max: Double = 400
+            override val steps = 1
           }.toStream.map(_.round.toDouble))
         }
         null
       } finally {
+        canvas.freeRef()
         registration.foreach(_.stop()(s3client, ec2client))
       }
     }

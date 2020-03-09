@@ -20,7 +20,6 @@
 package com.simiacryptus.mindseye.art.examples
 
 import java.net.URI
-import java.util.concurrent.atomic.AtomicReference
 
 import com.simiacryptus.mindseye.art.models.VGG16
 import com.simiacryptus.mindseye.art.ops._
@@ -60,12 +59,12 @@ class DeepDream extends ArtSetup[Object] {
 
   override def postConfigure(log: NotebookOutput) = log.eval { () =>
     () => {
-      implicit val _ = log
+      implicit val implicitLog = log
       // First, basic configuration so we publish to our s3 site
-      log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
+      log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Fetch input image (user upload prompt)
-      ImageArtUtil.load(log, contentUrl, resolution)
+      ImageArtUtil.loadImage(log, contentUrl, resolution)
       val canvas = new RefAtomicReference[Tensor](null)
       // Execute the main process while registered with the site index
       val registration = registerWithIndexJPG(() => canvas.get())
@@ -87,7 +86,7 @@ class DeepDream extends ArtSetup[Object] {
             override val trainingMinutes: Int = 180
             override val trainingIterations: Int = 200
             override val maxRate = 1e9
-          }, new GeometricSequence {
+          }, None, new GeometricSequence {
             override val min: Double = resolution
             override val max: Double = resolution
             override val steps = 1

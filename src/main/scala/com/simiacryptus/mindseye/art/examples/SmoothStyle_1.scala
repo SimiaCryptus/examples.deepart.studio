@@ -20,7 +20,6 @@
 package com.simiacryptus.mindseye.art.examples
 
 import java.net.URI
-import java.util.concurrent.atomic.AtomicReference
 import java.util.zip.ZipFile
 
 import com.simiacryptus.mindseye.art.models.VGG19
@@ -65,12 +64,12 @@ class SmoothStyle_1 extends ArtSetup[Object] {
     () => {
       implicit val _ = log
       // First, basic configuration so we publish to our s3 site
-      log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
+      log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Fetch input images (user upload prompts) and display a rescaled copies
 
 
-      log.p(log.jpg(ImageArtUtil.load(log, styleUrl, 1200), "Input Style"))
+      log.p(log.jpg(ImageArtUtil.loadImage(log, styleUrl, 1200), "Input Style"))
       val canvas = new RefAtomicReference[Tensor](null)
       // Execute the main process while registered with the site index
       val registration = registerWithIndexJPG(() => canvas.get())
@@ -79,10 +78,10 @@ class SmoothStyle_1 extends ArtSetup[Object] {
           paint(styleUrl, contentDims => {
             val wctRes = 400
             val height = wctRes * (contentDims.getDimensions()(1).toDouble / contentDims.getDimensions()(0))
-            val content = Tensor.fromRGB(ImageArtUtil.load(log, initUrl, wctRes, height.ceil.toInt))
+            val content = Tensor.fromRGB(ImageArtUtil.loadImage(log, initUrl, wctRes, height.ceil.toInt))
             val fastPhotoStyleTransfer = FastPhotoStyleTransfer.fromZip(new ZipFile(Util.cacheFile(new URI(
               "https://simiacryptus.s3-us-west-2.amazonaws.com/photo_wct.zip"))))
-            val style = Tensor.fromRGB(ImageArtUtil.load(log, styleUrl, wctRes))
+            val style = Tensor.fromRGB(ImageArtUtil.loadImage(log, styleUrl, wctRes))
             fastPhotoStyleTransfer.photoWCT(style, content)
           }, canvas, new VisualStyleNetwork(
             styleLayers = List(

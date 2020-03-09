@@ -22,8 +22,7 @@ package com.simiacryptus.mindseye.art.examples
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.net.URI
-import java.util.function.BiFunction
-import java.util.stream.{Collectors, DoubleStream, IntStream}
+import java.util.stream.{Collectors, IntStream}
 import java.util.zip.ZipFile
 import java.{lang, util}
 
@@ -38,7 +37,6 @@ import com.simiacryptus.mindseye.art.util.ArtSetup
 import com.simiacryptus.mindseye.lang.{Coordinate, Tensor}
 import com.simiacryptus.mindseye.util.ImageUtil
 import com.simiacryptus.notebook.{EditImageQuery, NotebookOutput, UploadImageQuery}
-import com.simiacryptus.ref.wrappers.RefList
 import com.simiacryptus.sparkbook.util.Java8Util._
 import com.simiacryptus.util.Util
 import javax.imageio.ImageIO
@@ -56,16 +54,20 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
   }
 
   def wct(content: Tensor, style: Tensor, mask: Tensor) = {
-    val wctRestyled = fastPhotoStyleTransfer.photoWCT(style, content, DoubleStream.of(mask.getData: _*).average().getAsDouble, 1.0)
+    val wctRestyled = fastPhotoStyleTransfer.photoWCT(style, content, mask.doubleStream().average().getAsDouble, 1.0)
     maskedDelta(mask, content, wctRestyled)
   }
 
   def maskedDelta(mask: Tensor, base: Tensor, changed: Tensor) = {
-    changed.mapCoords((c: Coordinate) => {
+    val tensor = changed.mapCoords((c: Coordinate) => {
       val bg = mask.get(c)
       if (bg == 1) changed.get(c)
       else base.get(c)
     })
+    changed.freeRef()
+    base.freeRef()
+    mask.freeRef()
+    tensor
   }
 
   def smoother(content: Tensor) = {
@@ -79,8 +81,6 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
     affinity.wrap((graphEdges: util.List[Array[Int]], innerResult: util.List[Array[Double]]) => adjust(graphEdges, innerResult, degree(innerResult), 0.5))
     solver.solve(topology, affinity, 1e-4)
   }
-
-  def solver: SmoothSolver = new SmoothSolver_Cuda()
 
   def drawMask(content: BufferedImage, colors: Color*)(implicit log: NotebookOutput) = {
     val image_tensor: Tensor = Tensor.fromRGB(content)
@@ -255,6 +255,8 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
     }
   }
 
+  def solver: SmoothSolver = new SmoothSolver_Cuda()
+
   def select(log: NotebookOutput, image: BufferedImage, colors: Color*) = {
     val editResult = new EditImageQuery(log, image).print().get()
     val diff_tensor = diff(Tensor.fromRGB(image), Tensor.fromRGB(editResult))
@@ -271,26 +273,6 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
     }).toArray.toMap
     val colorsMap = colorList.zipWithIndex.toMap
     (x: Int, y: Int) => colorsMap.get(apxColor(diff_tensor.getPixel(x, y))).flatMap(selectionIndexToColorIndex.get(_))
-  }
-
-  def diff(image_tensor: Tensor, edit_tensor: Tensor): Tensor = {
-    edit_tensor.mapCoords((c: Coordinate) => {
-      val val_tensor = image_tensor.get(c.getIndex)
-      val val_edit = edit_tensor.get(c.getIndex)
-      if (Math.abs(val_edit - val_tensor) > 1) {
-        val_edit
-      } else {
-        0
-      }
-    })
-  }
-
-  def dist(color: Color, x: Seq[Double]) = {
-    List(
-      color.getRed - x(2).doubleValue(),
-      color.getGreen - x(1).doubleValue(),
-      color.getBlue - x(0).doubleValue()
-    ).map(x => x * x).sum
   }
 
   def uploadMask(content: BufferedImage, colors: Color*)(implicit log: NotebookOutput) = {
@@ -313,6 +295,14 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
     tensors
   }
 
+  def dist(color: Color, x: Seq[Double]) = {
+    List(
+      color.getRed - x(2).doubleValue(),
+      color.getGreen - x(1).doubleValue(),
+      color.getBlue - x(0).doubleValue()
+    ).map(x => x * x).sum
+  }
+
   def select(log: NotebookOutput, image: BufferedImage, partitions: Int) = {
     val editResult = new EditImageQuery(log, image).print().get()
     var diff_tensor = diff(Tensor.fromRGB(image), Tensor.fromRGB(editResult))
@@ -324,6 +314,18 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
       .asScala.map(apxColor).filter(_.sum != 0).groupBy(x => x).mapValues(_.size)
       .toList.sortBy(-_._2).take(partitions).map(_._1).toArray.zipWithIndex.toMap
     (x: Int, y: Int) => colors.get(apxColor(diff_tensor.getPixel(x, y)))
+  }
+
+  def diff(image_tensor: Tensor, edit_tensor: Tensor): Tensor = {
+    edit_tensor.mapCoords((c: Coordinate) => {
+      val val_tensor = image_tensor.get(c.getIndex)
+      val val_edit = edit_tensor.get(c.getIndex)
+      if (Math.abs(val_edit - val_tensor) > 1) {
+        val_edit
+      } else {
+        0
+      }
+    })
   }
 
   def expand(tree: RegionAssembler.RegionTree, markup: Map[Int, Set[Int]], recursion: Int = 0): Map[Int, Int] = {

@@ -22,7 +22,6 @@ package com.simiacryptus.mindseye.art.examples
 import java.awt.image.BufferedImage
 import java.awt.{Font, Graphics2D}
 import java.net.URI
-import java.util.concurrent.atomic.AtomicReference
 
 import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
@@ -72,10 +71,10 @@ class ContentReconstructionSurvey extends ArtSetup[Object] {
     () => {
       implicit val _ = log
       // First, basic configuration so we publish to our s3 site
-      log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
+      log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Fetch image (user upload prompt) and display a rescaled copy
-      log.out(log.jpg(ImageArtUtil.load(log, contentUrl, resolution.toInt), "Input Style"))
+      log.out(log.jpg(ImageArtUtil.loadImage(log, contentUrl, resolution.toInt), "Input Style"))
       val renderedCanvases = new ArrayBuffer[() => BufferedImage]
       // Execute the main process while registered with the site index
       val registration = registerWithIndexGIF(renderedCanvases.map(_ ()), delay = animationDelay)
@@ -85,7 +84,7 @@ class ContentReconstructionSurvey extends ArtSetup[Object] {
             VGG19.getVisionPipeline
           )) {
             import scala.collection.JavaConverters._
-            for (layer <- pipeline.getLayers.asScala.keys) {
+            for (layer <- pipeline.getLayerList.asScala) {
               log.h1(layer.name())
               val canvas = new RefAtomicReference[Tensor](null)
               renderedCanvases += (() => {
@@ -116,7 +115,7 @@ class ContentReconstructionSurvey extends ArtSetup[Object] {
                         steps = steps + 1
                         super.onStepComplete(trainable, currentPoint)
                       }
-                    }, new GeometricSequence {
+                    }, None, new GeometricSequence {
                       override val min: Double = resolution
                       override val max: Double = resolution
                       override val steps = 1

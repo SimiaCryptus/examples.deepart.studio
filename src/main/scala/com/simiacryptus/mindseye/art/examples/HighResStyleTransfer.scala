@@ -20,7 +20,6 @@
 package com.simiacryptus.mindseye.art.examples
 
 import java.net.URI
-import java.util.concurrent.atomic.AtomicReference
 
 import com.simiacryptus.mindseye.art.models.VGG16
 import com.simiacryptus.mindseye.art.ops._
@@ -56,13 +55,13 @@ class HighResStyleTransfer extends ArtSetup[Object] {
 
   override def postConfigure(log: NotebookOutput) = log.eval { () =>
     () => {
-      implicit val _ = log
+      implicit val implicitLog = log
       // First, basic configuration so we publish to our s3 site
-      log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
+      log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Fetch input images (user upload prompts) and display a rescaled copies
-      log.p(log.jpg(ImageArtUtil.load(log, styleUrl, (1200 * Math.sqrt(2)).toInt), "Input Style"))
-      log.p(log.jpg(ImageArtUtil.load(log, contentUrl, 1200), "Input Content"))
+      log.p(log.jpg(ImageArtUtil.loadImage(log, styleUrl, (1200 * Math.sqrt(2)).toInt), "Input Style"))
+      log.p(log.jpg(ImageArtUtil.loadImage(log, contentUrl, 1200), "Input Content"))
       val canvas = new RefAtomicReference[Tensor](null)
       // Execute the main process while registered with the site index
       val registration = registerWithIndexJPG(() => canvas.get())
@@ -106,7 +105,7 @@ class HighResStyleTransfer extends ArtSetup[Object] {
             override val trainingMinutes: Int = 60
             override val trainingIterations: Int = 20
             override val maxRate = 1e9
-          }, new GeometricSequence {
+          }, None, new GeometricSequence {
             override val min: Double = 200
             override val max: Double = 400
             override val steps = 2
@@ -152,7 +151,7 @@ class HighResStyleTransfer extends ArtSetup[Object] {
             override val trainingMinutes: Int = 60
             override val trainingIterations: Int = 20
             override val maxRate = 1e9
-          }, new GeometricSequence {
+          }, None, new GeometricSequence {
             override val min: Double = 600
             override val max: Double = 800
             override val steps = 2
@@ -197,7 +196,7 @@ class HighResStyleTransfer extends ArtSetup[Object] {
             override val trainingMinutes: Int = 90
             override val trainingIterations: Int = 20
             override val maxRate = 1e9
-          }, new GeometricSequence {
+          }, None, new GeometricSequence {
             override val min: Double = 1024
             override val max: Double = 1600
             override val steps = 3
@@ -229,7 +228,7 @@ class HighResStyleTransfer extends ArtSetup[Object] {
             override val trainingMinutes: Int = 180
             override val trainingIterations: Int = 20
             override val maxRate = 1e9
-          }, new GeometricSequence {
+          }, None, new GeometricSequence {
             override val min: Double = 2400
             override val max: Double = 2400
             override val steps = 1

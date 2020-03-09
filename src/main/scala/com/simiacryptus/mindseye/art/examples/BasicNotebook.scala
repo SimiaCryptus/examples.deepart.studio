@@ -53,12 +53,12 @@ class BasicNotebook extends ArtSetup[Object] {
     () => {
       implicit val _ = log
       // First, basic configuration so we publish to our s3 site
-      log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
+      log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Now we evaluate the drawing code inside a logged eval block.
       // This will publish the code, the result, any logs, the duration, and also link to github.
       val canvas = log.eval(() => {
-        val canvas = ImageArtUtil.load(log, styleUrl, resolution.toInt)
+        val canvas = ImageArtUtil.loadImage(log, styleUrl, resolution.toInt)
         val graphics = canvas.getGraphics.asInstanceOf[Graphics2D]
         graphics.setFont(new Font("Calibri", Font.BOLD, 42))
         graphics.drawString(message, 10, 50)

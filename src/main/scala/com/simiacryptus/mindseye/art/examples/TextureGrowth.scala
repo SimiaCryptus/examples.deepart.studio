@@ -22,7 +22,6 @@ package com.simiacryptus.mindseye.art.examples
 import java.awt.image.BufferedImage
 import java.awt.{Font, Graphics2D}
 import java.net.URI
-import java.util.concurrent.atomic.AtomicReference
 
 import com.simiacryptus.mindseye.art.models.VGG16
 import com.simiacryptus.mindseye.art.ops._
@@ -72,10 +71,10 @@ class TextureGrowth extends ArtSetup[Object] {
 
   override def postConfigure(log: NotebookOutput) = log.eval { () =>
     () => {
-      implicit val _ = log
-      log.setArchiveHome(URI.create(s"s3://$s3bucket/${getClass.getSimpleName.stripSuffix("$")}/${log.getId}/"))
+      implicit val implicitLog = log
+      log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
-      log.out(log.jpg(ImageArtUtil.load(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
+      log.out(log.jpg(ImageArtUtil.loadImage(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
       val renderedCanvases = new ArrayBuffer[() => BufferedImage]
       val registration = registerWithIndexGIF(renderedCanvases.map(_ ()), delay = animationDelay)
       NotebookRunner.withMonitoredGif(() => {
@@ -84,7 +83,7 @@ class TextureGrowth extends ArtSetup[Object] {
         try {
           val pipeline = VGG16.getVisionPipeline
           import scala.collection.JavaConverters._
-          for (layer <- pipeline.getLayers.asScala.keys) {
+          for (layer <- pipeline.getLayerList.asScala) {
             log.h1(layer.name())
             for (numberOfSteps <- List(1, 2, 5)) {
               log.h2(s"$numberOfSteps steps")
@@ -120,7 +119,7 @@ class TextureGrowth extends ArtSetup[Object] {
                         steps = steps + 1
                         super.onStepComplete(trainable, currentPoint)
                       }
-                    }, new GeometricSequence {
+                    }, None, new GeometricSequence {
                       override val min: Double = minResolution
                       override val max: Double = maxResolution
                       override val steps = numberOfSteps

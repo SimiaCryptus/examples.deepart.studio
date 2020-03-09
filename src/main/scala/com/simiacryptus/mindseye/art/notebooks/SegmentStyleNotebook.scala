@@ -28,7 +28,6 @@ import java.util
 import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicReference
-import java.util.stream.DoubleStream
 import java.util.zip.ZipFile
 
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -175,7 +174,7 @@ object SegmentStyleNotebook {
 
         CudaSettings.INSTANCE().defaultPrecision = visualNetwork.precision
         val trainable = visualNetwork.apply(currentCanvas, contentTensor)
-        ArtUtil.resetPrecision(trainable, visualNetwork.precision)
+        ArtUtil.resetPrecision(trainable.addRef().asInstanceOf[Trainable], visualNetwork.precision)
         optimizer.optimize(currentCanvas, trainable)
       }
     }
@@ -190,7 +189,7 @@ object SegmentStyleNotebook {
     "https://simiacryptus.s3-us-west-2.amazonaws.com/photo_wct.zip"))))
 
   def wct(content: Tensor, style: Tensor, mask: Tensor) = {
-    val wctRestyled = fastPhotoStyleTransfer.photoWCT(style, content, DoubleStream.of(mask.getData: _*).average().getAsDouble, 1.0)
+    val wctRestyled = fastPhotoStyleTransfer.photoWCT(style, content.addRef(), mask.doubleStream().average().getAsDouble, 1.0)
     maskedDelta(mask, content, wctRestyled)
   }
 
