@@ -23,20 +23,20 @@ import com.simiacryptus.aws.exe.EC2NodeSettings
 import com.simiacryptus.mindseye.lang.cudnn.{CudaMemory, Precision}
 import com.simiacryptus.sparkbook.{AWSNotebookRunner, EC2Runner}
 
-object AnimatedRotorEC2 extends AnimatedRotor with EC2Runner[Object] with AWSNotebookRunner[Object] {
+object BigTextureEC2 extends BigTexture with EC2Runner[Object] with AWSNotebookRunner[Object] {
   override val s3bucket: String = "examples.deepartist.org"
 
   override def nodeSettings: EC2NodeSettings = EC2NodeSettings.P3_2XL
 
   override def maxHeap: Option[String] = Option("50g")
 
-  override def className: String = "AnimatedRotor"
+  override def className: String = "BigTexture"
 
   override def javaProperties: Map[String, String] = super.javaProperties ++ Map(
-    "MAX_TOTAL_MEMORY" -> (10 * CudaMemory.GiB).toString,
-    "MAX_DEVICE_MEMORY" -> (10 * CudaMemory.GiB).toString,
+    "MAX_TOTAL_MEMORY" -> (15 * CudaMemory.GiB).toString,
+    "MAX_DEVICE_MEMORY" -> (15 * CudaMemory.GiB).toString,
     "CUDA_DEFAULT_PRECISION" -> Precision.Float.name,
-    "MAX_FILTER_ELEMENTS" -> (256 * CudaMemory.MiB).toString,
-    "MAX_IO_ELEMENTS" -> (256 * CudaMemory.MiB).toString
+    "MAX_FILTER_ELEMENTS" -> (512 * CudaMemory.MiB).toString,
+    "MAX_IO_ELEMENTS" -> (512 * CudaMemory.MiB).toString
   )
 }

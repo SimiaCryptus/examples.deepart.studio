@@ -69,7 +69,7 @@ class ContentReconstructionSurvey extends ArtSetup[Object] {
 
   override def postConfigure(log: NotebookOutput) = log.eval { () =>
     () => {
-      implicit val _ = log
+      implicit val implicitLog = log
       // First, basic configuration so we publish to our s3 site
       log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
@@ -100,26 +100,33 @@ class ContentReconstructionSurvey extends ArtSetup[Object] {
                 var steps = 0
                 Try {
                   log.subreport(layer.name(), (sub: NotebookOutput) => {
-                    paint(contentUrl, initUrl, canvas, new VisualStyleContentNetwork(
-                      contentLayers = List(layer),
-                      contentModifiers = List(
-                        new ContentMatcher()
+                    paint(
+                      contentUrl = contentUrl,
+                      initUrl = initUrl,
+                      canvas = canvas,
+                      network = new VisualStyleContentNetwork(
+                        contentLayers = List(layer),
+                        contentModifiers = List(
+                          new ContentMatcher()
+                        ),
+                        precision = Precision.Double
                       ),
-                      precision = Precision.Double
-                    ), new BasicOptimizer {
-                      override val trainingMinutes: Int = 60
-                      override val trainingIterations: Int = 50
-                      override val maxRate = 1e9
+                      optimizer = new BasicOptimizer {
+                        override val trainingMinutes: Int = 60
+                        override val trainingIterations: Int = 50
+                        override val maxRate = 1e9
 
-                      override def onStepComplete(trainable: Trainable, currentPoint: Step): Boolean = {
-                        steps = steps + 1
-                        super.onStepComplete(trainable, currentPoint)
-                      }
-                    }, None, new GeometricSequence {
-                      override val min: Double = resolution
-                      override val max: Double = resolution
-                      override val steps = 1
-                    }.toStream.map(_.round.toDouble): _*)(sub)
+                        override def onStepComplete(trainable: Trainable, currentPoint: Step): Boolean = {
+                          steps = steps + 1
+                          super.onStepComplete(trainable, currentPoint)
+                        }
+                      },
+                      aspect = None,
+                      resolutions = new GeometricSequence {
+                        override val min: Double = resolution
+                        override val max: Double = resolution
+                        override val steps = 1
+                      }.toStream.map(_.round.toDouble))(sub)
                     null
                   })
                 }

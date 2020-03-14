@@ -21,7 +21,7 @@ package com.simiacryptus.mindseye.art.examples
 
 import java.net.URI
 
-import com.simiacryptus.mindseye.art.models.VGG16
+import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
@@ -39,16 +39,16 @@ object AnimatedRotor extends AnimatedRotor with LocalRunner[Object] with Noteboo
 class AnimatedRotor extends RotorArt {
 
   override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
-  override val rotationalSegments: Int = 3
+  override val rotationalSegments: Int = 6
   val contentUrl = "upload:Content"
   val styleUrl = "upload:Style"
   val initUrl: String = "50 + noise * 0.5"
   val s3bucket: String = "examples.deepartist.org"
-  val minResolution = 300
-  val maxResolution = 800
+  val minResolution = 200
+  val maxResolution = 512
   val magnification = 2
-  val steps = 3
-  val keyframes = 3
+  val steps = 2
+  val keyframes = 2
 
   override def indexStr = "303"
 
@@ -56,7 +56,7 @@ class AnimatedRotor extends RotorArt {
     Paints a series of images, each to match the content of one while in the style of another using:
     <ol>
       <li>Random noise initialization</li>
-      <li>Standard VGG16 layers</li>
+      <li>Standard VGG19 layers</li>
       <li>Operators to match content and constrain and enhance style</li>
       <li>Progressive resolution increase</li>
       <li>Rotational symmerty constraint caused by a kaliedoscopic image layer</li>
@@ -85,8 +85,12 @@ class AnimatedRotor extends RotorArt {
         .filter(_ != null)
         .map(t => {
           val kaleidoscope = getKaleidoscope(t.getDimensions)
-          val transformed = kaleidoscope.eval(t).getData.get(0)
+          val result = kaleidoscope.eval(t)
           kaleidoscope.freeRef()
+          val tensorList = result.getData
+          result.freeRef()
+          val transformed = tensorList.get(0)
+          tensorList.freeRef()
           transformed
         }))
       try {
@@ -94,17 +98,21 @@ class AnimatedRotor extends RotorArt {
           contentUrl = contentUrl,
           initUrl = initUrl,
           canvases = canvases,
-          networks = (1 to frames).map(f => f.toString -> {
+          networks = (1 to frames).map(f => f.toDouble -> {
             new VisualStyleNetwork(
               styleLayers = List(
                 // We select all the lower-level layers to achieve a good balance between speed and accuracy.
-                VGG16.VGG16_0b,
-                VGG16.VGG16_1a,
-                VGG16.VGG16_1b1,
-                VGG16.VGG16_1b2,
-                VGG16.VGG16_1c1,
-                VGG16.VGG16_1c2,
-                VGG16.VGG16_1c3
+                VGG19.VGG19_1a,
+                VGG19.VGG19_1b1,
+                VGG19.VGG19_1b2,
+                VGG19.VGG19_1c1,
+                VGG19.VGG19_1c2,
+                VGG19.VGG19_1c3,
+                VGG19.VGG19_1c4,
+                VGG19.VGG19_1d1,
+                VGG19.VGG19_1d2,
+                VGG19.VGG19_1d3,
+                VGG19.VGG19_1d4
               ),
               styleModifiers = List(
                 // These two operators are a good combination for a vivid yet accurate style

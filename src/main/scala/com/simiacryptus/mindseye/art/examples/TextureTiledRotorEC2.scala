@@ -19,21 +19,12 @@
 
 package com.simiacryptus.mindseye.art.examples
 
-import com.simiacryptus.aws.exe.EC2NodeSettings
-import com.simiacryptus.mindseye.lang.cudnn.CudaMemory
-import com.simiacryptus.sparkbook.{AWSNotebookRunner, EC2Runner}
+import com.simiacryptus.mindseye.art.aws.P2_XL
 
-object TextureTiledRotorEC2 extends TextureTiledRotor with EC2Runner[Object] with AWSNotebookRunner[Object] {
+object TextureTiledRotorEC2 extends TextureTiledRotor with P2_XL {
+
   override val s3bucket: String = "examples.deepartist.org"
-
-  override def nodeSettings: EC2NodeSettings = EC2NodeSettings.P3_2XL
-
-  override def maxHeap: Option[String] = Option("50g")
 
   override def className: String = "TextureTiledRotor"
 
-  override def javaProperties: Map[String, String] = super.javaProperties ++ Map(
-    "MAX_TOTAL_MEMORY" -> (15 * CudaMemory.GiB).toString,
-    "MAX_DEVICE_MEMORY" -> (15 * CudaMemory.GiB).toString
-  )
 }

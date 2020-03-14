@@ -100,29 +100,36 @@ class TextureSurvey extends ArtSetup[Object] {
                 var steps = 0
                 Try {
                   log.subreport(layer.name(), (sub: NotebookOutput) => {
-                    paint(styleUrl, initUrl, canvas, new VisualStyleNetwork(
-                      styleLayers = List(layer),
-                      styleModifiers = List(
-                        // These two operators are a good combination for a vivid yet accurate style
-                        new GramMatrixEnhancer(),
-                        new MomentMatcher()
+                    paint(
+                      contentUrl = styleUrl,
+                      initUrl = initUrl,
+                      canvas = canvas,
+                      network = new VisualStyleNetwork(
+                        styleLayers = List(layer),
+                        styleModifiers = List(
+                          // These two operators are a good combination for a vivid yet accurate style
+                          new GramMatrixEnhancer(),
+                          new MomentMatcher()
+                        ),
+                        styleUrl = List(styleUrl),
+                        magnification = magnification
                       ),
-                      styleUrl = List(styleUrl),
-                      magnification = magnification
-                    ), new BasicOptimizer {
-                      override val trainingMinutes: Int = 60
-                      override val trainingIterations: Int = 25
-                      override val maxRate = 1e9
+                      optimizer = new BasicOptimizer {
+                        override val trainingMinutes: Int = 60
+                        override val trainingIterations: Int = 25
+                        override val maxRate = 1e9
 
-                      override def onStepComplete(trainable: Trainable, currentPoint: Step): Boolean = {
-                        steps = steps + 1
-                        super.onStepComplete(trainable, currentPoint)
-                      }
-                    }, None, new GeometricSequence {
-                      override val min: Double = resolution
-                      override val max: Double = resolution
-                      override val steps = 1
-                    }.toStream.map(_.round.toDouble): _*)(sub)
+                        override def onStepComplete(trainable: Trainable, currentPoint: Step): Boolean = {
+                          steps = steps + 1
+                          super.onStepComplete(trainable, currentPoint)
+                        }
+                      },
+                      aspect = None,
+                      resolutions = new GeometricSequence {
+                        override val min: Double = resolution
+                        override val max: Double = resolution
+                        override val steps = 1
+                      }.toStream.map(_.round.toDouble))(sub)
                     null
                   })
                 }

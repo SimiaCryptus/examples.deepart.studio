@@ -21,7 +21,7 @@ package com.simiacryptus.mindseye.art.examples
 
 import java.net.URI
 
-import com.simiacryptus.mindseye.art.models.VGG16
+import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.ImageArtUtil._
@@ -40,13 +40,17 @@ object TiledTexture extends TiledTexture with LocalRunner[Object] with NotebookR
 class TiledTexture extends ArtSetup[Object] {
 
   val styleUrl = "upload:Style"
-  val initUrl: String = "50 + plasma * 0.5"
+  val initUrl: String = "plasma"
   val s3bucket: String = "examples.deepartist.org"
   val minResolution = 120
   val maxResolution = 400
-  val magnification = 9
-  val rowsAndCols = 3
-  val steps = 3
+  val magnification = 3
+  val rowsAndCols = 2
+  val steps = 2
+  val aspectRatio = 1.0
+  val min_padding = 64
+  val max_padding = 256
+  val border_factor = 1.0
 
   override def indexStr = "201"
 
@@ -54,7 +58,7 @@ class TiledTexture extends ArtSetup[Object] {
     Creates a simple tiled texture based on a style using:
     <ol>
       <li>Random plasma initialization</li>
-      <li>Standard VGG16 layers</li>
+      <li>Standard VGG19 layers</li>
       <li>Operators constraining and enhancing style</li>
       <li>Progressive resolution increase</li>
       <li>View layer to enforce tiling</li>
@@ -71,7 +75,7 @@ class TiledTexture extends ArtSetup[Object] {
       log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Fetch image (user upload prompt) and display a rescaled copy
-      log.p(log.jpg(loadImage(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
+      loadImages(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt).foreach(img => log.p(log.jpg(img, "Input Style")))
       val canvas = new RefAtomicReference[Tensor](null)
 
       // Generates a pretiled image (e.g. 3x3) to display
@@ -79,19 +83,25 @@ class TiledTexture extends ArtSetup[Object] {
         val input = canvas.get()
         if (null == input) input else {
           val layer = new ImgTileAssemblyLayer(rowsAndCols, rowsAndCols)
-          val tensor = layer.eval((1 to (rowsAndCols * rowsAndCols)).map(_ => input): _*).getData.get(0)
+          val result = layer.eval((1 to (rowsAndCols * rowsAndCols)).map(_ => input.addRef()): _*)
+          input.freeRef()
           layer.freeRef()
+          val tensorList = result.getData
+          result.freeRef()
+          val tensor = tensorList.get(0)
+          tensorList.freeRef()
           tensor
         }
       }
 
       // Tiling layer used by the optimization engine.
       // Expands the canvas by a small amount, using tile wrap to draw in the expanded boundary.
-      def tilingLayer(dims: Seq[Int]) = {
-        val padding = Math.min(256, Math.max(16, dims(0) / 2))
-        val layer = new ImgViewLayer(dims(0) + padding, dims(1) + padding, true)
-        layer.setOffsetX(-padding / 2)
-        layer.setOffsetY(-padding / 2)
+      def viewLayer(dims: Seq[Int]): ImgViewLayer = {
+        val paddingX = Math.min(max_padding, Math.max(min_padding, dims(0) * border_factor)).toInt
+        val paddingY = Math.min(max_padding, Math.max(min_padding, dims(1) * border_factor)).toInt
+        val layer = new ImgViewLayer(dims(0) + paddingX, dims(1) + paddingY, true)
+        layer.setOffsetX(-paddingX / 2)
+        layer.setOffsetY(-paddingY / 2)
         layer
       }
 
@@ -99,44 +109,84 @@ class TiledTexture extends ArtSetup[Object] {
       val registration = registerWithIndexJPG(() => tiledCanvas)
       try {
         // Display a pre-tiled image inside the report itself
-        withMonitoredJpg(() => tiledCanvas.toImage) {
-          // Display an additional, non-tiled image of the canvas
-          withMonitoredJpg(() => Option(canvas.get()).map(_.toRgbImage).orNull) {
-            log.subreport("Painting", (sub: NotebookOutput) => {
-              paint(styleUrl, initUrl, canvas, new VisualStyleNetwork(
-                styleLayers = List(
-                  // We select all the lower-level layers to achieve a good balance between speed and accuracy.
-                  VGG16.VGG16_0b,
-                  VGG16.VGG16_1a,
-                  VGG16.VGG16_1b1,
-                  VGG16.VGG16_1b2,
-                  VGG16.VGG16_1c1,
-                  VGG16.VGG16_1c2,
-                  VGG16.VGG16_1c3
-                ),
-                styleModifiers = List(
-                  // These two operators are a good combination for a vivid yet accurate style
-                  new GramMatrixEnhancer(),
-                  new MomentMatcher()
-                ),
-                styleUrl = List(styleUrl),
-                magnification = magnification,
-                viewLayer = tilingLayer
-              ), new BasicOptimizer {
-                override val trainingMinutes: Int = 60
-                override val trainingIterations: Int = 15
-                override val maxRate = 1e9
-              }, None, new GeometricSequence {
-                override val min: Double = minResolution
-                override val max: Double = maxResolution
-                override val steps = TiledTexture.this.steps
-              }.toStream.map(_.round.toDouble): _*)(sub)
-              null
-            })
-          }(log)
+        withMonitoredJpg(() => {
+          val tensor = tiledCanvas
+          val image = tensor.toImage
+          tensor.freeRef()
+          image
+        }) {
+          withMonitoredJpg(() => Option(canvas.get()).map(tensor => {
+            val imgViewLayer = viewLayer(tensor.getDimensions)
+            val result = imgViewLayer.eval(tensor)
+            imgViewLayer.freeRef()
+            val tensorList = result.getData
+            result.freeRef()
+            val data = tensorList.get(0)
+            tensorList.freeRef()
+            val image = data.toRgbImage
+            data.freeRef()
+            image
+          }).orNull) {
+            // Display an additional, non-tiled image of the canvas
+            withMonitoredJpg(() => Option(canvas.get()).map(tensor => {
+              val image = tensor.toRgbImage
+              tensor.freeRef()
+              image
+            }).orNull) {
+              log.subreport("Painting", (sub: NotebookOutput) => {
+                paint(
+                  contentUrl = initUrl,
+                  initUrl = initUrl,
+                  canvas = canvas.addRef(),
+                  network = new VisualStyleNetwork(
+                    styleLayers = List(
+                      // We select all the lower-level layers to achieve a good balance between speed and accuracy.
+                      VGG19.VGG19_0b,
+                      VGG19.VGG19_1a,
+                      VGG19.VGG19_1b1,
+                      VGG19.VGG19_1b2,
+                      VGG19.VGG19_1c1,
+                      VGG19.VGG19_1c2,
+                      VGG19.VGG19_1c3,
+                      VGG19.VGG19_1c4,
+                      VGG19.VGG19_1d1,
+                      VGG19.VGG19_1d2,
+                      VGG19.VGG19_1d3,
+                      VGG19.VGG19_1d4,
+                      VGG19.VGG19_1e1,
+                      VGG19.VGG19_1e2,
+                      VGG19.VGG19_1e3,
+                      VGG19.VGG19_1e4
+                    ),
+                    styleModifiers = List(
+                      // These two operators are a good combination for a vivid yet accurate style
+                      new GramMatrixEnhancer(),
+                      new MomentMatcher()
+                    ),
+                    styleUrls = Option(styleUrl),
+                    magnification = magnification,
+                    viewLayer = viewLayer
+                  ),
+                  optimizer = new BasicOptimizer {
+                    override val trainingMinutes: Int = 60
+                    override val trainingIterations: Int = 15
+                    override val maxRate = 1e9
+                  },
+                  aspect = Option(aspectRatio),
+                  resolutions = new GeometricSequence {
+                    override val min: Double = minResolution
+                    override val max: Double = maxResolution
+                    override val steps = TiledTexture.this.steps
+                  }.toStream.map(_.round.toDouble)
+                )(sub)
+                null
+              })
+            }(log)
+          }
         }
         null
       } finally {
+        canvas.freeRef()
         registration.foreach(_.stop()(s3client, ec2client))
       }
     }

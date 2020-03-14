@@ -40,12 +40,12 @@ class AnimatedStyleTransfer extends ArtSetup[Object] {
   val contentUrl = "upload:Content"
   val styleUrl = "upload:Style"
   val initUrl: String = "50 + noise * 0.5"
-  val s3bucket: String = "examples.deepartist.org"
-  val minResolution = 300
-  val maxResolution = 800
+  val s3bucket: String = ""
+  val minResolution = 256
+  val maxResolution = 512
   val magnification = 2
-  val steps = 3
-  val keyframes = 3
+  val steps = 2
+  val keyframes = 2
 
   override def indexStr = "302"
 
@@ -69,8 +69,9 @@ class AnimatedStyleTransfer extends ArtSetup[Object] {
       // First, basic configuration so we publish to our s3 site
       log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
+
       // Fetch input images (user upload prompts) and display rescaled copies
-      log.p(log.jpg(ImageArtUtil.loadImage(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
+      ImageArtUtil.loadImages(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt).foreach(img=>log.p(log.jpg(img, "Input Style")))
       log.p(log.jpg(ImageArtUtil.loadImage(log, contentUrl, maxResolution), "Input Content"))
 
       def frames = keyframes * 2 - 1
@@ -83,7 +84,7 @@ class AnimatedStyleTransfer extends ArtSetup[Object] {
           contentUrl = contentUrl,
           initUrl = initUrl,
           canvases = canvases,
-          networks = (1 to frames).map(f => f.toString -> {
+          networks = (1 to frames).map(f => f.toDouble -> {
             new VisualStyleContentNetwork(
               styleLayers = List(
                 // We select all the lower-level layers to achieve a good balance between speed and accuracy.
@@ -100,7 +101,7 @@ class AnimatedStyleTransfer extends ArtSetup[Object] {
                 new GramMatrixEnhancer(),
                 new MomentMatcher()
               ),
-              styleUrl = List(styleUrl),
+              styleUrls = Option(styleUrl),
               contentLayers = List(
                 VGG16.VGG16_1b2
               ),
@@ -120,7 +121,8 @@ class AnimatedStyleTransfer extends ArtSetup[Object] {
             override val max: Double = maxResolution
             override val steps = AnimatedStyleTransfer.this.steps
           }.toStream.map(_.round.toDouble),
-          renderingFn = x => new PipelineNetwork(1))
+          renderingFn = x => new PipelineNetwork(1)
+        )
         null
       } finally {
         registration.foreach(_.stop()(s3client, ec2client))

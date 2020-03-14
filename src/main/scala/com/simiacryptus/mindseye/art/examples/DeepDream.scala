@@ -72,25 +72,32 @@ class DeepDream extends ArtSetup[Object] {
         // In contrast to other uses, in this painting operation we are enhancing
         // an input image (mask) only, with no other inputs or canvas preparation.
         withMonitoredJpg(() => canvas.get().toImage) {
-          paint(contentUrl, contentUrl, canvas, new VisualStyleNetwork(
-            styleLayers = List(
-              // DeepDream traditionally uses the last layer of a network
-              VGG16.VGG16_3b
+          paint(
+            contentUrl = contentUrl,
+            initUrl = contentUrl,
+            canvas = canvas,
+            network = new VisualStyleNetwork(
+              styleLayers = List(
+                // DeepDream traditionally uses the last layer of a network
+                VGG16.VGG16_3b
+              ),
+              styleModifiers = List(
+                // This operator increases the RMS power of any signal
+                new ChannelPowerEnhancer()
+              ),
+              styleUrl = List(contentUrl)
             ),
-            styleModifiers = List(
-              // This operator increases the RMS power of any signal
-              new ChannelPowerEnhancer()
-            ),
-            styleUrl = List(contentUrl)
-          ), new BasicOptimizer {
-            override val trainingMinutes: Int = 180
-            override val trainingIterations: Int = 200
-            override val maxRate = 1e9
-          }, None, new GeometricSequence {
-            override val min: Double = resolution
-            override val max: Double = resolution
-            override val steps = 1
-          }.toStream.map(_.round.toDouble): _*)
+            optimizer = new BasicOptimizer {
+              override val trainingMinutes: Int = 180
+              override val trainingIterations: Int = 200
+              override val maxRate = 1e9
+            },
+            aspect = None,
+            resolutions = new GeometricSequence {
+              override val min: Double = resolution
+              override val max: Double = resolution
+              override val steps = 1
+            }.toStream.map(_.round.toDouble))
           null
         }
       } finally {

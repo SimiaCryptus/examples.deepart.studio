@@ -68,171 +68,195 @@ class HighResStyleTransfer extends ArtSetup[Object] {
       try {
         // Display an additional image inside the report itself
         withMonitoredJpg(() => canvas.get().toImage) {
-          paint(contentUrl, initUrl, canvas, new VisualStyleContentNetwork(
-            styleLayers = List(
-              VGG16.VGG16_1b1,
-              VGG16.VGG16_1b2,
-              VGG16.VGG16_1c1,
-              VGG16.VGG16_1c2,
-              VGG16.VGG16_1c3,
-              VGG16.VGG16_1d1,
-              VGG16.VGG16_1d2,
-              VGG16.VGG16_1d3
+          paint(
+            contentUrl = contentUrl,
+            initUrl = initUrl,
+            canvas = canvas,
+            network = new VisualStyleContentNetwork(
+              styleLayers = List(
+                VGG16.VGG16_1b1,
+                VGG16.VGG16_1b2,
+                VGG16.VGG16_1c1,
+                VGG16.VGG16_1c2,
+                VGG16.VGG16_1c3,
+                VGG16.VGG16_1d1,
+                VGG16.VGG16_1d2,
+                VGG16.VGG16_1d3
+              ),
+              styleModifiers = List(
+                new GramMatrixEnhancer().setMinMax(-5, 5),
+                new MomentMatcher()
+              ),
+              styleUrl = List(styleUrl),
+              contentLayers = List(
+                VGG16.VGG16_1c1
+              ),
+              contentModifiers = List(
+                new ContentMatcher().scale(1e1)
+              ),
+              magnification = 9
+            ) + new VisualStyleNetwork(
+              styleLayers = List(
+                VGG16.VGG16_0a
+              ),
+              styleModifiers = List(
+                new GramMatrixEnhancer(),
+                new MomentMatcher()
+              ).map(_.scale(1e2)),
+              styleUrl = List(contentUrl),
+              magnification = 9
+            ), optimizer = new BasicOptimizer {
+              override val trainingMinutes: Int = 60
+              override val trainingIterations: Int = 20
+              override val maxRate = 1e9
+            }, aspect = None, resolutions = new GeometricSequence {
+              override val min: Double = 200
+              override val max: Double = 400
+              override val steps = 2
+            }.toStream.map(_.round.toDouble))
+          paint(
+            contentUrl = contentUrl,
+            initUrl = initUrl,
+            canvas = canvas,
+            network = new VisualStyleContentNetwork(
+              styleLayers = List(
+                VGG16.VGG16_1a,
+                VGG16.VGG16_1b1,
+                VGG16.VGG16_1b2,
+                VGG16.VGG16_1c1,
+                VGG16.VGG16_1c2,
+                VGG16.VGG16_1c3,
+                VGG16.VGG16_1d1,
+                VGG16.VGG16_1d2,
+                VGG16.VGG16_1d3,
+                VGG16.VGG16_1e1,
+                VGG16.VGG16_1e2,
+                VGG16.VGG16_1e3
+              ),
+              styleModifiers = List(
+                new GramMatrixEnhancer().setMinMax(-2, 2),
+                new MomentMatcher()
+              ),
+              styleUrl = List(styleUrl),
+              contentLayers = List(
+                VGG16.VGG16_1b2.prependAvgPool(2)
+              ),
+              contentModifiers = List(
+                new ContentMatcher().scale(1e1)
+              ),
+              magnification = 4
+            ) + new VisualStyleNetwork(
+              styleLayers = List(
+                VGG16.VGG16_0a
+              ),
+              styleModifiers = List(
+                new GramMatrixEnhancer(),
+                new MomentMatcher()
+              ).map(_.scale(1e2)),
+              styleUrl = List(contentUrl),
+              magnification = 4
+            ), optimizer = new BasicOptimizer {
+              override val trainingMinutes: Int = 60
+              override val trainingIterations: Int = 20
+              override val maxRate = 1e9
+            },
+            aspect = None,
+            resolutions = new GeometricSequence {
+              override val min: Double = 600
+              override val max: Double = 800
+              override val steps = 2
+            }.toStream.map(_.round.toDouble))
+          paint(
+            contentUrl = contentUrl,
+            initUrl = initUrl,
+            canvas = canvas,
+            network = new VisualStyleContentNetwork(
+              styleLayers = List(
+                VGG16.VGG16_1a,
+                VGG16.VGG16_1b1,
+                VGG16.VGG16_1b2,
+                VGG16.VGG16_1c1,
+                VGG16.VGG16_1c2,
+                VGG16.VGG16_1c3,
+                VGG16.VGG16_1d1,
+                VGG16.VGG16_1d2,
+                VGG16.VGG16_1d3,
+                VGG16.VGG16_1e1,
+                VGG16.VGG16_1e2,
+                VGG16.VGG16_1e3
+              ),
+              styleModifiers = List(
+                new ChannelMeanMatcher(),
+                new GramMatrixMatcher()
+              ),
+              styleUrl = List(styleUrl),
+              contentLayers = List(
+                VGG16.VGG16_1b2.prependAvgPool(4)
+              ),
+              contentModifiers = List(
+                new ContentMatcher().scale(1e1)
+              )
+            ) + new VisualStyleNetwork(
+              styleLayers = List(
+                VGG16.VGG16_0a
+              ),
+              styleModifiers = List(
+                new ChannelMeanMatcher(),
+                new GramMatrixMatcher()
+              ).map(_.scale(1e2)),
+              styleUrl = List(contentUrl),
+              magnification = 2
             ),
-            styleModifiers = List(
-              new GramMatrixEnhancer().setMinMax(-5, 5),
-              new MomentMatcher()
+            optimizer = new BasicOptimizer {
+              override val trainingMinutes: Int = 90
+              override val trainingIterations: Int = 20
+              override val maxRate = 1e9
+            },
+            aspect = None,
+            resolutions = new GeometricSequence {
+              override val min: Double = 1024
+              override val max: Double = 1600
+              override val steps = 3
+            }.toStream.map(_.round.toDouble))
+          paint(
+            contentUrl = contentUrl,
+            initUrl = initUrl,
+            canvas = canvas,
+            network = new VisualStyleContentNetwork(
+              styleLayers = List(
+                VGG16.VGG16_1a,
+                VGG16.VGG16_1b1,
+                VGG16.VGG16_1b2,
+                VGG16.VGG16_1c1,
+                VGG16.VGG16_1c2,
+                VGG16.VGG16_1c3,
+                VGG16.VGG16_1d1,
+                VGG16.VGG16_1d2,
+                VGG16.VGG16_1d3
+              ),
+              styleModifiers = List(
+                new ChannelMeanMatcher(),
+                new GramMatrixMatcher()
+              ),
+              styleUrl = List(styleUrl),
+              contentLayers = List(
+                VGG16.VGG16_1b2.prependAvgPool(8).appendMaxPool(2)
+              ),
+              contentModifiers = List(
+                new ContentMatcher().scale(1e1)
+              )
             ),
-            styleUrl = List(styleUrl),
-            contentLayers = List(
-              VGG16.VGG16_1c1
-            ),
-            contentModifiers = List(
-              new ContentMatcher().scale(1e1)
-            ),
-            magnification = 9
-          ) + new VisualStyleNetwork(
-            styleLayers = List(
-              VGG16.VGG16_0a
-            ),
-            styleModifiers = List(
-              new GramMatrixEnhancer(),
-              new MomentMatcher()
-            ).map(_.scale(1e2)),
-            styleUrl = List(contentUrl),
-            magnification = 9
-          ), new BasicOptimizer {
-            override val trainingMinutes: Int = 60
-            override val trainingIterations: Int = 20
-            override val maxRate = 1e9
-          }, None, new GeometricSequence {
-            override val min: Double = 200
-            override val max: Double = 400
-            override val steps = 2
-          }.toStream.map(_.round.toDouble): _*)
-          paint(contentUrl, initUrl, canvas, new VisualStyleContentNetwork(
-            styleLayers = List(
-              VGG16.VGG16_1a,
-              VGG16.VGG16_1b1,
-              VGG16.VGG16_1b2,
-              VGG16.VGG16_1c1,
-              VGG16.VGG16_1c2,
-              VGG16.VGG16_1c3,
-              VGG16.VGG16_1d1,
-              VGG16.VGG16_1d2,
-              VGG16.VGG16_1d3,
-              VGG16.VGG16_1e1,
-              VGG16.VGG16_1e2,
-              VGG16.VGG16_1e3
-            ),
-            styleModifiers = List(
-              new GramMatrixEnhancer().setMinMax(-2, 2),
-              new MomentMatcher()
-            ),
-            styleUrl = List(styleUrl),
-            contentLayers = List(
-              VGG16.VGG16_1b2.prependAvgPool(2)
-            ),
-            contentModifiers = List(
-              new ContentMatcher().scale(1e1)
-            ),
-            magnification = 4
-          ) + new VisualStyleNetwork(
-            styleLayers = List(
-              VGG16.VGG16_0a
-            ),
-            styleModifiers = List(
-              new GramMatrixEnhancer(),
-              new MomentMatcher()
-            ).map(_.scale(1e2)),
-            styleUrl = List(contentUrl),
-            magnification = 4
-          ), new BasicOptimizer {
-            override val trainingMinutes: Int = 60
-            override val trainingIterations: Int = 20
-            override val maxRate = 1e9
-          }, None, new GeometricSequence {
-            override val min: Double = 600
-            override val max: Double = 800
-            override val steps = 2
-          }.toStream.map(_.round.toDouble): _*)
-          paint(contentUrl, initUrl, canvas, new VisualStyleContentNetwork(
-            styleLayers = List(
-              VGG16.VGG16_1a,
-              VGG16.VGG16_1b1,
-              VGG16.VGG16_1b2,
-              VGG16.VGG16_1c1,
-              VGG16.VGG16_1c2,
-              VGG16.VGG16_1c3,
-              VGG16.VGG16_1d1,
-              VGG16.VGG16_1d2,
-              VGG16.VGG16_1d3,
-              VGG16.VGG16_1e1,
-              VGG16.VGG16_1e2,
-              VGG16.VGG16_1e3
-            ),
-            styleModifiers = List(
-              new ChannelMeanMatcher(),
-              new GramMatrixMatcher()
-            ),
-            styleUrl = List(styleUrl),
-            contentLayers = List(
-              VGG16.VGG16_1b2.prependAvgPool(4)
-            ),
-            contentModifiers = List(
-              new ContentMatcher().scale(1e1)
-            )
-          ) + new VisualStyleNetwork(
-            styleLayers = List(
-              VGG16.VGG16_0a
-            ),
-            styleModifiers = List(
-              new ChannelMeanMatcher(),
-              new GramMatrixMatcher()
-            ).map(_.scale(1e2)),
-            styleUrl = List(contentUrl),
-            magnification = 2
-          ), new BasicOptimizer {
-            override val trainingMinutes: Int = 90
-            override val trainingIterations: Int = 20
-            override val maxRate = 1e9
-          }, None, new GeometricSequence {
-            override val min: Double = 1024
-            override val max: Double = 1600
-            override val steps = 3
-          }.toStream.map(_.round.toDouble): _*)
-          paint(contentUrl, initUrl, canvas, new VisualStyleContentNetwork(
-            styleLayers = List(
-              VGG16.VGG16_1a,
-              VGG16.VGG16_1b1,
-              VGG16.VGG16_1b2,
-              VGG16.VGG16_1c1,
-              VGG16.VGG16_1c2,
-              VGG16.VGG16_1c3,
-              VGG16.VGG16_1d1,
-              VGG16.VGG16_1d2,
-              VGG16.VGG16_1d3
-            ),
-            styleModifiers = List(
-              new ChannelMeanMatcher(),
-              new GramMatrixMatcher()
-            ),
-            styleUrl = List(styleUrl),
-            contentLayers = List(
-              VGG16.VGG16_1b2.prependAvgPool(8).appendMaxPool(2)
-            ),
-            contentModifiers = List(
-              new ContentMatcher().scale(1e1)
-            )
-          ), new BasicOptimizer {
-            override val trainingMinutes: Int = 180
-            override val trainingIterations: Int = 20
-            override val maxRate = 1e9
-          }, None, new GeometricSequence {
-            override val min: Double = 2400
-            override val max: Double = 2400
-            override val steps = 1
-          }.toStream.map(_.round.toDouble): _*)
+            optimizer = new BasicOptimizer {
+              override val trainingMinutes: Int = 180
+              override val trainingIterations: Int = 20
+              override val maxRate = 1e9
+            },
+            aspect = None,
+            resolutions = new GeometricSequence {
+              override val min: Double = 2400
+              override val max: Double = 2400
+              override val steps = 1
+            }.toStream.map(_.round.toDouble))
         }
         null
       } finally {

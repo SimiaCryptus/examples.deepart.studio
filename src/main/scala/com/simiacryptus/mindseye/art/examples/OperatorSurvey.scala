@@ -118,34 +118,41 @@ class OperatorSurvey extends ArtSetup[Object] {
               var steps = 0
               Try {
                 log.subreport("Painting", (sub: NotebookOutput) => {
-                  paint(styleUrl, initUrl, canvas, new VisualStyleNetwork(
-                    styleLayers = List(
-                      // We select all the lower-level layers to achieve a good balance between speed and accuracy.
-                      VGG16.VGG16_0b,
-                      VGG16.VGG16_1a,
-                      VGG16.VGG16_1b1,
-                      VGG16.VGG16_1b2,
-                      VGG16.VGG16_1c1,
-                      VGG16.VGG16_1c2,
-                      VGG16.VGG16_1c3
+                  paint(
+                    contentUrl = styleUrl,
+                    initUrl = initUrl,
+                    canvas = canvas,
+                    network = new VisualStyleNetwork(
+                      styleLayers = List(
+                        // We select all the lower-level layers to achieve a good balance between speed and accuracy.
+                        VGG16.VGG16_0b,
+                        VGG16.VGG16_1a,
+                        VGG16.VGG16_1b1,
+                        VGG16.VGG16_1b2,
+                        VGG16.VGG16_1c1,
+                        VGG16.VGG16_1c2,
+                        VGG16.VGG16_1c3
+                      ),
+                      styleModifiers = modifiers.values.toList,
+                      styleUrl = List(styleUrl),
+                      magnification = magnification
                     ),
-                    styleModifiers = modifiers.values.toList,
-                    styleUrl = List(styleUrl),
-                    magnification = magnification
-                  ), new BasicOptimizer {
-                    override val trainingMinutes: Int = 60
-                    override val trainingIterations: Int = 20
-                    override val maxRate = 1e9
+                    optimizer = new BasicOptimizer {
+                      override val trainingMinutes: Int = 60
+                      override val trainingIterations: Int = 20
+                      override val maxRate = 1e9
 
-                    override def onStepComplete(trainable: Trainable, currentPoint: Step): Boolean = {
-                      steps = steps + 1
-                      super.onStepComplete(trainable, currentPoint)
-                    }
-                  }, None, new GeometricSequence {
-                    override val min: Double = resolution
-                    override val max: Double = resolution
-                    override val steps = 1
-                  }.toStream.map(_.round.toDouble): _*)(sub)
+                      override def onStepComplete(trainable: Trainable, currentPoint: Step): Boolean = {
+                        steps = steps + 1
+                        super.onStepComplete(trainable, currentPoint)
+                      }
+                    },
+                    aspect = None,
+                    resolutions = new GeometricSequence {
+                      override val min: Double = resolution
+                      override val max: Double = resolution
+                      override val steps = 1
+                    }.toStream.map(_.round.toDouble))(sub)
                   null
                 })
               }
