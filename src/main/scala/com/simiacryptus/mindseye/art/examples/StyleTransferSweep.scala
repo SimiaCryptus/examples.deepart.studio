@@ -128,6 +128,7 @@ class StyleTransferSweep extends ArtSetup[Object] {
               ))
           }
         })
+
         animate(
           contentUrl = contentUrl,
           initUrl = initUrl,
@@ -147,7 +148,7 @@ class StyleTransferSweep extends ArtSetup[Object] {
             override val steps = StyleTransferSweep.this.steps
           }.toStream.map(_.round.toDouble),
           delay = StyleTransferSweep.this.delay,
-          getParams = (n,f) => {
+          getParams = (n, f) => {
             paramFn(f)
           }
         )

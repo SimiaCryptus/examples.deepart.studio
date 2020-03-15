@@ -71,7 +71,7 @@ class AnimatedStyleTransfer extends ArtSetup[Object] {
       log.onComplete(() => upload(log): Unit)
 
       // Fetch input images (user upload prompts) and display rescaled copies
-      ImageArtUtil.loadImages(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt).foreach(img=>log.p(log.jpg(img, "Input Style")))
+      ImageArtUtil.loadImages(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt).foreach(img => log.p(log.jpg(img, "Input Style")))
       log.p(log.jpg(ImageArtUtil.loadImage(log, contentUrl, maxResolution), "Input Content"))
 
       def frames = keyframes * 2 - 1

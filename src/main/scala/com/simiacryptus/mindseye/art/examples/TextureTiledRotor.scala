@@ -80,7 +80,7 @@ class TextureTiledRotor extends RotorArt {
         ImageArtUtil.loadImages(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt)
           .foreach(img => log.p(log.jpg(img, "Input Style")))
 
-        (1 to repeat).foreach(_=>{
+        (1 to repeat).foreach(_ => {
           val canvas = new RefAtomicReference[Tensor](null)
 
           def rotatedCanvas = {

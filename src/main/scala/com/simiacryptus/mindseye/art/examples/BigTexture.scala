@@ -27,7 +27,7 @@ import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.ImageArtUtil._
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
-import com.simiacryptus.mindseye.layers.java.{ImgTileAssemblyLayer, ImgViewLayer}
+import com.simiacryptus.mindseye.layers.java.ImgViewLayer
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.NotebookRunner
@@ -76,6 +76,7 @@ class BigTexture extends ArtSetup[Object] {
       val min_padding = 64
       val max_padding = 256
       val border_factor = 1.0
+
       def viewLayer(dims: Seq[Int]): ImgViewLayer = {
         val paddingX = Math.min(max_padding, Math.max(min_padding, dims(0) * border_factor)).toInt
         val paddingY = Math.min(max_padding, Math.max(min_padding, dims(1) * border_factor)).toInt
