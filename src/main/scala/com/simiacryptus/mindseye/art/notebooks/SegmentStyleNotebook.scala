@@ -55,6 +55,9 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 
 object SegmentStyleNotebook {
 
+  @JsonIgnore lazy val fastPhotoStyleTransfer = FastPhotoStyleTransfer.fromZip(new ZipFile(Util.cacheFile(new URI(
+    "https://simiacryptus.s3-us-west-2.amazonaws.com/photo_wct.zip"))))
+
   def main(args: Array[String]): Unit = {
 
     val contentUrl = "file:///C:/Users/andre/Pictures/Personal/DSC_0386.JPG"
@@ -76,7 +79,7 @@ object SegmentStyleNotebook {
       loadImage(contentUrl, initialResolution), maskUrl, RED, GREEN)
 
     magnification = 32
-    implicit val _ = new NullNotebookOutput()
+    implicit val implicitLog = new NullNotebookOutput()
     implicit val executionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4))
     val visualNetwork = new VisualStyleContentNetwork(
       styleLayers = List(
@@ -172,7 +175,7 @@ object SegmentStyleNotebook {
         }
         canvasRef.set(currentCanvas)
 
-        CudaSettings.INSTANCE().defaultPrecision = visualNetwork.precision
+        CudaSettings.INSTANCE().setDefaultPrecision(visualNetwork.precision)
         val trainable = visualNetwork.apply(currentCanvas, contentTensor)
         ArtUtil.resetPrecision(trainable.addRef().asInstanceOf[Trainable], visualNetwork.precision)
         optimizer.optimize(currentCanvas, trainable)
@@ -184,9 +187,6 @@ object SegmentStyleNotebook {
     ImageIO.write(canvasRef.get().toImage, "jpg", outFile)
     Desktop.getDesktop.open(outFile)
   }
-
-  @JsonIgnore lazy val fastPhotoStyleTransfer = FastPhotoStyleTransfer.fromZip(new ZipFile(Util.cacheFile(new URI(
-    "https://simiacryptus.s3-us-west-2.amazonaws.com/photo_wct.zip"))))
 
   def wct(content: Tensor, style: Tensor, mask: Tensor) = {
     val wctRestyled = fastPhotoStyleTransfer.photoWCT(style, content.addRef(), mask.doubleStream().average().getAsDouble, 1.0)
@@ -201,8 +201,6 @@ object SegmentStyleNotebook {
     })
   }
 
-  def solver: SmoothSolver = new SmoothSolver_Cuda()
-
   def smoother(content: Tensor) = {
     val topology = new SearchRadiusTopology(content)
     topology.setSelfRef(true)
@@ -215,16 +213,14 @@ object SegmentStyleNotebook {
     solver.solve(topology, affinity, 1e-4)
   }
 
+  def solver: SmoothSolver = new SmoothSolver_Cuda()
+
   def loadImage(file: String, width: Int): BufferedImage = {
     resize(loadTensor(file), width).toImage
   }
 
   def resize(tensor: Tensor, width: Int) = {
     Tensor.fromRGB(ImageUtil.resize(tensor.toImage, width, true))
-  }
-
-  def resize(foreground: Tensor, dims: Array[Int]) = {
-    Tensor.fromRGB(ImageUtil.resize(foreground.toImage, dims(0), dims(1)))
   }
 
   def loadTensor(file: String) = {
@@ -238,12 +234,8 @@ object SegmentStyleNotebook {
     }
   }
 
-  def dist(color: Color, x: Seq[Double]) = {
-    List(
-      color.getRed - x(2).doubleValue(),
-      color.getGreen - x(1).doubleValue(),
-      color.getBlue - x(0).doubleValue()
-    ).map(x => x * x).sum
+  def resize(foreground: Tensor, dims: Array[Int]) = {
+    Tensor.fromRGB(ImageUtil.resize(foreground.toImage, dims(0), dims(1)))
   }
 
   def loadMasks(contentImage: BufferedImage, maskUrl: String, colors: Color*) = {
@@ -266,5 +258,13 @@ object SegmentStyleNotebook {
       maskTensor.freeRef()
       tensor.freeRef()
     }
+  }
+
+  def dist(color: Color, x: Seq[Double]) = {
+    List(
+      color.getRed - x(2).doubleValue(),
+      color.getGreen - x(1).doubleValue(),
+      color.getBlue - x(0).doubleValue()
+    ).map(x => x * x).sum
   }
 }

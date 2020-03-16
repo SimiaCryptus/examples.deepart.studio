@@ -71,7 +71,7 @@ class TextureTiledRotor extends RotorArt {
 
 
   override def postConfigure(log: NotebookOutput) = {
-    log.eval { () => {
+    log.eval[() => Unit](() => {
       () => {
         implicit val implicitLog = log
         // First, basic configuration so we publish to our s3 site
@@ -79,7 +79,6 @@ class TextureTiledRotor extends RotorArt {
         log.onComplete(() => upload(log): Unit)
         ImageArtUtil.loadImages(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt)
           .foreach(img => log.p(log.jpg(img, "Input Style")))
-
         (1 to repeat).foreach(_ => {
           val canvas = new RefAtomicReference[Tensor](null)
 
@@ -200,9 +199,8 @@ class TextureTiledRotor extends RotorArt {
             registration.foreach(_.stop()(s3client, ec2client))
           }
         })
-        null
       }
-    }
-    }()
+    })()
+    null
   }
 }

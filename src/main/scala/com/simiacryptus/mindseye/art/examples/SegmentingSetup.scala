@@ -82,8 +82,6 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
     solver.solve(topology, affinity, 1e-4)
   }
 
-  def solver: SmoothSolver = new SmoothSolver_Cuda()
-
   def drawMask(content: BufferedImage, colors: Color*)(implicit log: NotebookOutput) = {
     val image_tensor: Tensor = Tensor.fromRGB(content)
     val dimensions: Array[Int] = image_tensor.getDimensions
@@ -256,6 +254,8 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
       })
     }
   }
+
+  def solver: SmoothSolver = new SmoothSolver_Cuda()
 
   def select(log: NotebookOutput, image: BufferedImage, colors: Color*) = {
     val editResult = new EditImageQuery(log, image).print().get()
