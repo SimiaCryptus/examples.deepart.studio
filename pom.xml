@@ -213,12 +213,12 @@
             <version>0.2.9-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
-        -->
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-all</artifactId>
             <scope>compile</scope>
         </dependency>
+        -->
     </dependencies>
 
 </project>
