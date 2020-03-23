@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 by Andrew Charneski.
+ * Copyright (c) 2020 by Andrew Charneski.
  *
  * The author licenses this file to you under the
  * Apache License, Version 2.0 (the "License");
@@ -7,7 +7,7 @@
  * with the License.  You may obtain a copy
  * of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -19,24 +19,13 @@
 
 package com.simiacryptus.mindseye.art.examples
 
-import com.simiacryptus.aws.exe.EC2NodeSettings
 import com.simiacryptus.mindseye.art.photo.{SmoothSolver, SmoothSolver_EJML}
-import com.simiacryptus.mindseye.lang.cudnn.CudaMemory
-import com.simiacryptus.sparkbook.{AWSNotebookRunner, EC2Runner}
+import com.simiacryptus.sparkbook.aws.P3_2XL
 
-object SmoothStyleEC2 extends SmoothStyle with EC2Runner[Object] with AWSNotebookRunner[Object] {
+object SmoothStyleEC2 extends SmoothStyle with P3_2XL {
   override val s3bucket: String = "examples.deepartist.org"
-
-  override def nodeSettings: EC2NodeSettings = EC2NodeSettings.P3_2XL
-
-  override def maxHeap: Option[String] = Option("50g")
 
   override def className: String = "SmoothStyle"
 
   override def solver: SmoothSolver = new SmoothSolver_EJML()
-
-  override def javaProperties: Map[String, String] = super.javaProperties ++ Map(
-    "MAX_TOTAL_MEMORY" -> (15 * CudaMemory.GiB).toString,
-    "MAX_DEVICE_MEMORY" -> (15 * CudaMemory.GiB).toString
-  )
 }
