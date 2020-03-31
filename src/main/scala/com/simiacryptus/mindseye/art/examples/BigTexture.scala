@@ -65,7 +65,8 @@ class BigTexture extends ArtSetup[Object] {
     () => {
       implicit val implicitLog = log
       // First, basic configuration so we publish to our s3 site
-      log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
+      if(Option(s3bucket).filter(!_.isEmpty).isDefined)
+        log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Fetch image (user upload prompt) and display a rescaled copy
       loadImages(log, styleUrl, (400 * Math.sqrt(1)).toInt).foreach(img => log.p(log.jpg(img, "Input Style")))
@@ -119,7 +120,7 @@ class BigTexture extends ArtSetup[Object] {
                 new GramMatrixEnhancer(),
                 new MomentMatcher()
               ),
-              styleUrls = Option(styleUrl),
+              styleUrls = Seq(styleUrl),
               magnification = 1,
               viewLayer = viewLayer
             ),
@@ -154,7 +155,7 @@ class BigTexture extends ArtSetup[Object] {
                 new GramMatrixEnhancer(),
                 new MomentMatcher()
               ),
-              styleUrls = Option(styleUrl),
+              styleUrls = Seq(styleUrl),
               magnification = 1,
               viewLayer = viewLayer
             ),

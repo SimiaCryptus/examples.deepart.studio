@@ -64,7 +64,8 @@ class SmoothStyle_1 extends ArtSetup[Object] {
     () => {
       implicit val _ = log
       // First, basic configuration so we publish to our s3 site
-      log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
+      if(Option(s3bucket).filter(!_.isEmpty).isDefined)
+        log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Fetch input images (user upload prompts) and display a rescaled copies
 

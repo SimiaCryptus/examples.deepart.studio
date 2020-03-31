@@ -53,6 +53,9 @@ class TextureTiledRotor extends RotorArt {
   val steps = 3
   val aspectRatio = 1 / 1.732
   val repeat = 3
+  val min_padding = 64
+  val max_padding = 256
+  val border_factor = 0.5
 
   override def indexStr = "202"
 
@@ -75,7 +78,8 @@ class TextureTiledRotor extends RotorArt {
       () => {
         implicit val implicitLog = log
         // First, basic configuration so we publish to our s3 site
-        log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
+        if(Option(s3bucket).filter(!_.isEmpty).isDefined)
+          log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
         log.onComplete(() => upload(log): Unit)
         ImageArtUtil.loadImages(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt)
           .foreach(img => log.p(log.jpg(img, "Input Style")))
@@ -115,13 +119,14 @@ class TextureTiledRotor extends RotorArt {
           // Kaleidoscope+Tiling layer used by the optimization engine.
           // Expands the canvas by a small amount, using tile wrap to draw in the expanded boundary.
           def viewLayer(dims: Seq[Int]) = {
-            val padding = Math.min(256, Math.max(16, dims(0) / 2))
-            val viewLayer = getKaleidoscope(dims.toArray)
-            val layer = new ImgViewLayer(dims(0) + padding, dims(1) + padding, true)
-            layer.setOffsetX(-padding / 2)
-            layer.setOffsetY(-padding / 2)
-            viewLayer.add(layer).freeRef()
-            viewLayer
+            val rotor = getKaleidoscope(dims.toArray)
+            val paddingX = Math.min(max_padding, Math.max(min_padding, dims(0) * border_factor)).toInt
+            val paddingY = Math.min(max_padding, Math.max(min_padding, dims(1) * border_factor)).toInt
+            val tiling = new ImgViewLayer(dims(0) + paddingX, dims(1) + paddingY, true)
+            tiling.setOffsetX(-paddingX / 2)
+            tiling.setOffsetY(-paddingY / 2)
+            rotor.add(tiling).freeRef()
+            rotor
           }
 
           // Execute the main process while registered with the site index
@@ -171,7 +176,7 @@ class TextureTiledRotor extends RotorArt {
                           new MomentMatcher()
                         }
                       ),
-                      styleUrls = Option(styleUrl),
+                      styleUrls = Seq(styleUrl),
                       magnification = magnification,
                       viewLayer = viewLayer
                     ),
