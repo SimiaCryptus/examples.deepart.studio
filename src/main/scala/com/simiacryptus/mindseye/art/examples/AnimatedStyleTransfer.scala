@@ -67,7 +67,7 @@ class AnimatedStyleTransfer extends ArtSetup[Object] {
     () => {
       implicit val implicitLog = log
       // First, basic configuration so we publish to our s3 site
-      if(Option(s3bucket).filter(!_.isEmpty).isDefined)
+      if (Option(s3bucket).filter(!_.isEmpty).isDefined)
         log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
 

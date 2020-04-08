@@ -72,7 +72,7 @@ class TextureGrowth extends ArtSetup[Object] {
   override def postConfigure(log: NotebookOutput) = log.eval { () =>
     () => {
       implicit val implicitLog = log
-      if(Option(s3bucket).filter(!_.isEmpty).isDefined)
+      if (Option(s3bucket).filter(!_.isEmpty).isDefined)
         log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       log.out(log.jpg(ImageArtUtil.loadImage(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))

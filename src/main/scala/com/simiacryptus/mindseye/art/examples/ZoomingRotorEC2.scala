@@ -19,9 +19,9 @@
 
 package com.simiacryptus.mindseye.art.examples
 
-import com.simiacryptus.sparkbook.aws.P2_XL
+import com.simiacryptus.sparkbook.aws.P3_2XL
 
-object ZoomingRotorEC2 extends ZoomingRotor with P2_XL {
+object ZoomingRotorEC2 extends ZoomingRotor with P3_2XL {
 
   override val s3bucket: String = "examples.deepartist.org"
 

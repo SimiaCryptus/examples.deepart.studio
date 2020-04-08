@@ -65,11 +65,11 @@ class BigTexture extends ArtSetup[Object] {
     () => {
       implicit val implicitLog = log
       // First, basic configuration so we publish to our s3 site
-      if(Option(s3bucket).filter(!_.isEmpty).isDefined)
+      if (Option(s3bucket).filter(!_.isEmpty).isDefined)
         log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Fetch image (user upload prompt) and display a rescaled copy
-      loadImages(log, styleUrl, (400 * Math.sqrt(1)).toInt).foreach(img => log.p(log.jpg(img, "Input Style")))
+      loadImages(log, styleUrl, 1200).foreach(img => log.p(log.jpg(img, "Input Style")))
       val canvas = new RefAtomicReference[Tensor](null)
 
       // Tiling layer used by the optimization engine.
@@ -117,7 +117,7 @@ class BigTexture extends ArtSetup[Object] {
               ),
               styleModifiers = List(
                 // These two operators are a good combination for a vivid yet accurate style
-                new GramMatrixEnhancer(),
+                new GramMatrixEnhancer().setMinMax(-5, 5).scale(5),
                 new MomentMatcher()
               ),
               styleUrls = Seq(styleUrl),
@@ -143,7 +143,6 @@ class BigTexture extends ArtSetup[Object] {
             network = new VisualStyleNetwork(
               styleLayers = List(
                 // We select all the lower-level layers to achieve a good balance between speed and accuracy.
-                VGG19.VGG19_1a,
                 VGG19.VGG19_1b1,
                 VGG19.VGG19_1b2,
                 VGG19.VGG19_1c1,
@@ -152,8 +151,8 @@ class BigTexture extends ArtSetup[Object] {
                 VGG19.VGG19_1c4
               ),
               styleModifiers = List(
-                new GramMatrixEnhancer(),
-                new MomentMatcher()
+                new GramMatrixEnhancer().setMinMax(-5, 5).scale(5),
+                new GramMatrixMatcher()
               ),
               styleUrls = Seq(styleUrl),
               magnification = 1,
@@ -174,8 +173,8 @@ class BigTexture extends ArtSetup[Object] {
         }
         null
       } finally {
-        canvas.freeRef()
         registration.foreach(_.stop()(s3client, ec2client))
+        canvas.freeRef()
       }
     }
   }()

@@ -58,7 +58,7 @@ class SegmentStyle extends SegmentingSetup {
     require(null != VGG19.VGG19_1a.getLayer)
     implicit val implicitLog: NotebookOutput = log
     // First, basic configuration so we publish to our s3 site
-    if(Option(s3bucket).filter(!_.isEmpty).isDefined)
+    if (Option(s3bucket).filter(!_.isEmpty).isDefined)
       log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
     log.onComplete(() => upload(log): Unit)
     var magnification = 8

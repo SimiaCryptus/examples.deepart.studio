@@ -43,9 +43,9 @@ object SmoothStyle extends SmoothStyle with LocalRunner[Object] with NotebookRun
 
 class SmoothStyle extends ArtSetup[Object] {
 
+  override val s3bucket: String = "examples.deepartist.org"
   val contentUrl = "upload:Content"
   val styleUrl = "upload:Style"
-  override val s3bucket: String = "examples.deepartist.org"
   //override val s3bucket: String = ""
 
   override def indexStr = "306"
@@ -62,11 +62,11 @@ class SmoothStyle extends ArtSetup[Object] {
 
   override def inputTimeoutSeconds = 3600
 
-  override def postConfigure(log: NotebookOutput) = log.eval[()=>Null] { () =>
+  override def postConfigure(log: NotebookOutput) = log.eval[() => Null] { () =>
     () => {
       implicit val implicitLog = log
       // First, basic configuration so we publish to our s3 site
-      if(Option(s3bucket).filter(!_.isEmpty).isDefined)
+      if (Option(s3bucket).filter(!_.isEmpty).isDefined)
         log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Fetch input images (user upload prompts) and display a rescaled copies

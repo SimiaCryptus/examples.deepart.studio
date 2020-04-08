@@ -53,7 +53,7 @@ class BasicNotebook extends ArtSetup[Object] {
     () => {
       implicit val _ = log
       // First, basic configuration so we publish to our s3 site
-      if(Option(s3bucket).filter(!_.isEmpty).isDefined)
+      if (Option(s3bucket).filter(!_.isEmpty).isDefined)
         log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Now we evaluate the drawing code inside a logged eval block.

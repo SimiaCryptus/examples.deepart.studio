@@ -82,6 +82,8 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
     solver.solve(topology, affinity, 1e-4)
   }
 
+  def solver: SmoothSolver = new SmoothSolver_Cuda()
+
   def drawMask(content: BufferedImage, colors: Color*)(implicit log: NotebookOutput) = {
     val image_tensor: Tensor = Tensor.fromRGB(content)
     val dimensions: Array[Int] = image_tensor.getDimensions
@@ -255,8 +257,6 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
     }
   }
 
-  def solver: SmoothSolver = new SmoothSolver_Cuda()
-
   def select(log: NotebookOutput, image: BufferedImage, colors: Color*) = {
     val editResult = new EditImageQuery(log, image).print().get()
     val diff_tensor = diff(Tensor.fromRGB(image), Tensor.fromRGB(editResult))
@@ -273,14 +273,6 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
     }).toArray.toMap
     val colorsMap = colorList.zipWithIndex.toMap
     (x: Int, y: Int) => colorsMap.get(apxColor(diff_tensor.getPixel(x, y))).flatMap(selectionIndexToColorIndex.get(_))
-  }
-
-  def dist(color: Color, x: Seq[Double]) = {
-    List(
-      color.getRed - x(2).doubleValue(),
-      color.getGreen - x(1).doubleValue(),
-      color.getBlue - x(0).doubleValue()
-    ).map(x => x * x).sum
   }
 
   def diff(image_tensor: Tensor, edit_tensor: Tensor): Tensor = {
@@ -313,6 +305,14 @@ abstract class SegmentingSetup extends ArtSetup[Object] {
     }
     tensor.freeRef()
     tensors
+  }
+
+  def dist(color: Color, x: Seq[Double]) = {
+    List(
+      color.getRed - x(2).doubleValue(),
+      color.getGreen - x(1).doubleValue(),
+      color.getBlue - x(0).doubleValue()
+    ).map(x => x * x).sum
   }
 
   def select(log: NotebookOutput, image: BufferedImage, partitions: Int) = {

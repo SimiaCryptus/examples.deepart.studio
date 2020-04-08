@@ -19,24 +19,11 @@
 
 package com.simiacryptus.mindseye.art.examples
 
-import com.simiacryptus.aws.exe.EC2NodeSettings
-import com.simiacryptus.mindseye.lang.cudnn.{CudaMemory, Precision}
-import com.simiacryptus.sparkbook.{AWSNotebookRunner, EC2Runner}
+import com.simiacryptus.sparkbook.aws.P3_2XL
 
-object BigTextureEC2 extends BigTexture with EC2Runner[Object] with AWSNotebookRunner[Object] {
+object BigTextureEC2 extends BigTexture with P3_2XL {
   override val s3bucket: String = "examples.deepartist.org"
-
-  override def nodeSettings: EC2NodeSettings = EC2NodeSettings.P3_2XL
-
-  override def maxHeap: Option[String] = Option("50g")
 
   override def className: String = "BigTexture"
 
-  override def javaProperties: Map[String, String] = super.javaProperties ++ Map(
-    "MAX_TOTAL_MEMORY" -> (15 * CudaMemory.GiB).toString,
-    "MAX_DEVICE_MEMORY" -> (15 * CudaMemory.GiB).toString,
-    "CUDA_DEFAULT_PRECISION" -> Precision.Float.name,
-    "MAX_FILTER_ELEMENTS" -> (512 * CudaMemory.MiB).toString,
-    "MAX_IO_ELEMENTS" -> (512 * CudaMemory.MiB).toString
-  )
 }
