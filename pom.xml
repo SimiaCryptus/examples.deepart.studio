@@ -30,7 +30,7 @@
 
     <artifactId>examples.deepartist.org</artifactId>
     <description>DeepArtist.org Example Jobs</description>
-    <url>https://simiacryptus.github.io/${github.project}/</url>
+
 
     <properties>
 
