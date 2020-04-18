@@ -43,7 +43,7 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
-object ZoomingRotor extends ZoomingRotorTest with LocalRunner[Object] with NotebookRunner[Object] {
+object ZoomingRotor extends MeatRotor with LocalRunner[Object] with NotebookRunner[Object] {
   override def http_port: Int = 1081
 }
 
@@ -91,6 +91,66 @@ trait GrafitiArt extends ArtSource {
   )
 }
 
+trait MeatRotor extends ZoomingRotorBase {
+  override val border: Double = 0.0
+  override val magnification: Int = 2
+  override val rotationalSegments = 6
+  override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
+  override val styles: Array[String] = Array(
+    ""
+  )
+  override val keyframes = Array(
+    "file:///H:/SimiaCryptus/all-projects/report/TextureTiledRotor/14f5738c-edd4-4d05-a5e9-593f2de9d1f6/etc/image_2d4bfbb17405ae22.jpg",
+    "file:///H:/SimiaCryptus/all-projects/report/TextureTiledRotor/14f5738c-edd4-4d05-a5e9-593f2de9d1f6/etc/image_62a54cffead14b31.jpg",
+    "file:///H:/SimiaCryptus/all-projects/report/TextureTiledRotor/14f5738c-edd4-4d05-a5e9-593f2de9d1f6/etc/image_b793d3f8c7dc1bc.jpg"
+  )
+
+  override val s3bucket: String = "examples.deepartist.org"
+  override val resolution: Int = 800
+  override val totalZoom: Double = 0.01
+  override val stepZoom: Double = 0.5
+  override val innerCoeff: Int = 0
+
+  override def getOptimizer()(implicit log: NotebookOutput): BasicOptimizer = {
+    log.eval(() => {
+      new BasicOptimizer {
+        override val trainingMinutes: Int = 90
+        override val trainingIterations: Int = 10
+        override val maxRate = 1e9
+
+        override def trustRegion(layer: Layer): TrustRegion = null
+
+        override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray)
+      }
+    })
+  }
+
+  override def getStyle(innerMask: Tensor)(implicit log: NotebookOutput): VisualNetwork = {
+    log.eval(() => {
+      val outerMask = innerMask.map(x => 1 - x)
+      var style: VisualNetwork = new VisualStyleNetwork(
+        styleLayers = List(
+          VGG19.VGG19_1c4
+        ),
+        styleModifiers = List(
+          new SingleChannelEnhancer(15,16)
+        ).map(_.withMask(outerMask.addRef())),
+        styleUrls = styles,
+        magnification = magnification,
+        viewLayer = dims => getKaleidoscope(dims.toArray)
+      )
+      if (innerCoeff > 0) style = style.asInstanceOf[VisualStyleNetwork].withContent(
+        contentLayers = List(
+          VGG19.VGG19_0a
+        ), contentModifiers = List(
+          new ContentMatcher().withMask(innerMask.addRef()).scale(innerCoeff)
+        ))
+      style
+    })
+  }
+
+}
+
 trait FlowersArt extends ArtSource {
   override val border: Double = 0.0
   override val magnification: Int = 2
@@ -119,7 +179,7 @@ class ZoomingRotor extends ZoomingRotorBase with CosmicArt {
   override val resolution: Int = 640
   override val totalZoom: Double = 0.01
   override val stepZoom: Double = 0.5
-  override val enhancementCoeff: Double = 0
+  val enhancementCoeff: Double = 0
   override val innerCoeff: Int = 0
   val splitLayers = true
 
@@ -221,7 +281,7 @@ class ZoomingRotor_altMask extends ZoomingRotorBase with GrafitiArt {
   override val totalZoom: Double = 0.01
   override val stepZoom: Double = 0.5
   override val border: Double = 0.0
-  override val enhancementCoeff: Double = 0
+  val enhancementCoeff: Double = 0
   override val innerCoeff: Int = 0
 
   override def getOptimizer()(implicit log: NotebookOutput): BasicOptimizer = {
@@ -283,7 +343,7 @@ class ZoomingRotor2 extends ZoomingRotorBase with GrafitiArt {
   override val totalZoom: Double = 0.01
   override val stepZoom: Double = 0.5
   override val border: Double = 0.125
-  override val enhancementCoeff: Double = 0
+  val enhancementCoeff: Double = 0
   override val innerCoeff: Int = 0
 
   override def getOptimizer()(implicit log: NotebookOutput): BasicOptimizer = {
@@ -353,7 +413,7 @@ class ZoomingRotorTest extends ZoomingRotorBase with CosmicArt {
   override val totalZoom = 0.25
   override val stepZoom = 1.0
   override val border: Double = 0.125
-  override val enhancementCoeff: Double = 0
+  val enhancementCoeff: Double = 0
   override val innerCoeff: Int = 0
 
   override def inputTimeoutSeconds: Int = 0
@@ -445,7 +505,7 @@ abstract class ZoomingRotorBase extends RotorArt with ArtSource {
 
   def stepZoom: Double
 
-  def enhancementCoeff: Double
+  //def enhancementCoeff: Double
 
   def innerCoeff: Int
 

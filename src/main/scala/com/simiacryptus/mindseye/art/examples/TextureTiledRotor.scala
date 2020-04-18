@@ -27,6 +27,7 @@ import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.lang.{Layer, Tensor}
 import com.simiacryptus.mindseye.layers.java.{ImgTileAssemblyLayer, ImgViewLayer}
+import com.simiacryptus.mindseye.network.PipelineNetwork
 import com.simiacryptus.mindseye.opt.region.TrustRegion
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.ref.wrappers.RefAtomicReference
@@ -42,16 +43,17 @@ object TextureTiledRotor extends TextureTiledRotor with LocalRunner[Object] with
 class TextureTiledRotor extends RotorArt {
   override val rotationalSegments = 6
   override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
-  val styleUrl = "upload:Style"
-  val initUrl: String = "50 + noise * 0.5"
+  val styleUrl = ""
+//  val initUrl: String = "50 + noise * 0.5"
+  val initUrl: String = "plasma"
   //  val s3bucket: String = "examples.deepartist.org"
   val s3bucket: String = ""
   val minResolution = 128
-  val maxResolution = 1200
+  val maxResolution = 800
   val magnification = 2
   val rowsAndCols = 2
   val steps = 3
-  val aspectRatio = 1 / 1.732
+  val aspectRatio = 1
   val repeat = 3
   val min_padding = 64
   val max_padding = 256
@@ -150,41 +152,11 @@ class TextureTiledRotor extends RotorArt {
                     contentUrl = initUrl,
                     initUrl = initUrl,
                     canvas = canvas.addRef(),
-                    network = new VisualStyleNetwork(
-                      styleLayers = List(
-                        // We select all the lower-level layers to achieve a good balance between speed and accuracy.
-                        VGG19.VGG19_0a,
-                        VGG19.VGG19_0b,
-                        VGG19.VGG19_1a,
-                        VGG19.VGG19_1b1,
-                        VGG19.VGG19_1b2,
-                        VGG19.VGG19_1c1,
-                        VGG19.VGG19_1c2,
-                        VGG19.VGG19_1c3,
-                        VGG19.VGG19_1e1,
-                        VGG19.VGG19_1e2,
-                        VGG19.VGG19_1e3
-                      ),
-                      styleModifiers = List(
-                        // These two operators are a good combination for a vivid yet accurate style
-                        {
-                          new GramMatrixEnhancer()
-                            .setMinMax(-5, 5)
-                          //.scale(0.5)
-                        },
-                        {
-                          new MomentMatcher()
-                        }
-                      ),
-                      styleUrls = Seq(styleUrl),
-                      magnification = magnification,
-                      viewLayer = viewLayer
-                    ),
+                    network = narrowStyle(viewLayer _),
                     optimizer = new BasicOptimizer {
                       override val trainingMinutes: Int = 90
                       override val trainingIterations: Int = 10
                       override val maxRate = 1e9
-
                       override def trustRegion(layer: Layer): TrustRegion = null
 
                       override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray)
@@ -208,4 +180,52 @@ class TextureTiledRotor extends RotorArt {
     })()
     null
   }
+
+  def widebandStyle(viewLayer: Seq[Int] => PipelineNetwork)(implicit log: NotebookOutput) = {
+    new VisualStyleNetwork(
+      styleLayers = List(
+        // We select all the lower-level layers to achieve a good balance between speed and accuracy.
+        VGG19.VGG19_0a,
+        VGG19.VGG19_0b,
+        VGG19.VGG19_1a,
+        VGG19.VGG19_1b1,
+        VGG19.VGG19_1b2,
+        VGG19.VGG19_1c1,
+        VGG19.VGG19_1c2,
+        VGG19.VGG19_1c3,
+        VGG19.VGG19_1e1,
+        VGG19.VGG19_1e2,
+        VGG19.VGG19_1e3
+      ),
+      styleModifiers = List(
+        // These two operators are a good combination for a vivid yet accurate style
+        {
+          new GramMatrixEnhancer()
+            .setMinMax(-5, 5)
+          //.scale(0.5)
+        },
+        {
+          new MomentMatcher()
+        }
+      ),
+      styleUrls = Seq(styleUrl),
+      magnification = magnification,
+      viewLayer = viewLayer
+    )
+  }
+
+  def narrowStyle(viewLayer: Seq[Int] => PipelineNetwork)(implicit log: NotebookOutput) = {
+    new VisualStyleNetwork(
+      styleLayers = List(
+        VGG19.VGG19_1c4
+      ),
+      styleModifiers = List(
+        new SingleChannelEnhancer(15,16)
+      ),
+      styleUrls = Seq(styleUrl),
+      magnification = magnification,
+      viewLayer = viewLayer
+    )
+  }
+
 }
