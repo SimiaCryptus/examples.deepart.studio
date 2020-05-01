@@ -44,7 +44,7 @@ class TextureTiledRotor extends RotorArt {
   override val rotationalSegments = 6
   override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
   val styleUrl = ""
-//  val initUrl: String = "50 + noise * 0.5"
+  //  val initUrl: String = "50 + noise * 0.5"
   val initUrl: String = "plasma"
   //  val s3bucket: String = "examples.deepartist.org"
   val s3bucket: String = ""
@@ -58,6 +58,7 @@ class TextureTiledRotor extends RotorArt {
   val min_padding = 64
   val max_padding = 256
   val border_factor = 0.5
+  val iterations = 10
 
   override def indexStr = "202"
 
@@ -74,18 +75,18 @@ class TextureTiledRotor extends RotorArt {
 
   override def inputTimeoutSeconds = 3600
 
-
   override def postConfigure(log: NotebookOutput) = {
-    log.eval[() => Unit](() => {
+    log.eval[() => Seq[Tensor]](() => {
       () => {
         implicit val implicitLog = log
         // First, basic configuration so we publish to our s3 site
-        if (Option(s3bucket).filter(!_.isEmpty).isDefined)
+        if (Option(s3bucket).filter(!_.isEmpty).isDefined) {
           log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
-        log.onComplete(() => upload(log): Unit)
+          log.onComplete(() => upload(log): Unit)
+        }
         ImageArtUtil.loadImages(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt)
           .foreach(img => log.p(log.jpg(img, "Input Style")))
-        (1 to repeat).foreach(_ => {
+        (1 to repeat).map(_ => {
           val canvas = new RefAtomicReference[Tensor](null)
 
           def rotatedCanvas = {
@@ -152,11 +153,12 @@ class TextureTiledRotor extends RotorArt {
                     contentUrl = initUrl,
                     initUrl = initUrl,
                     canvas = canvas.addRef(),
-                    network = narrowStyle(viewLayer _),
+                    network = getStyle(viewLayer _),
                     optimizer = new BasicOptimizer {
                       override val trainingMinutes: Int = 90
-                      override val trainingIterations: Int = 10
+                      override val trainingIterations: Int = iterations
                       override val maxRate = 1e9
+
                       override def trustRegion(layer: Layer): TrustRegion = null
 
                       override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray)
@@ -172,13 +174,27 @@ class TextureTiledRotor extends RotorArt {
                 uploadAsync(log)
               }(log)
             }
+            canvas.get()
           } finally {
             registration.foreach(_.stop()(s3client, ec2client))
           }
         })
       }
     })()
-    null
+  }
+
+  def getStyle(viewLayer: Seq[Int] => PipelineNetwork)(implicit log: NotebookOutput): VisualNetwork = {
+    new VisualStyleNetwork(
+      styleLayers = List(
+        VGG19.VGG19_1c4
+      ),
+      styleModifiers = List(
+        new SingleChannelEnhancer(130, 131)
+      ),
+      styleUrls = Seq(styleUrl),
+      magnification = magnification,
+      viewLayer = viewLayer
+    )
   }
 
   def widebandStyle(viewLayer: Seq[Int] => PipelineNetwork)(implicit log: NotebookOutput) = {
@@ -207,20 +223,6 @@ class TextureTiledRotor extends RotorArt {
         {
           new MomentMatcher()
         }
-      ),
-      styleUrls = Seq(styleUrl),
-      magnification = magnification,
-      viewLayer = viewLayer
-    )
-  }
-
-  def narrowStyle(viewLayer: Seq[Int] => PipelineNetwork)(implicit log: NotebookOutput) = {
-    new VisualStyleNetwork(
-      styleLayers = List(
-        VGG19.VGG19_1c4
-      ),
-      styleModifiers = List(
-        new SingleChannelEnhancer(15,16)
       ),
       styleUrls = Seq(styleUrl),
       magnification = magnification,

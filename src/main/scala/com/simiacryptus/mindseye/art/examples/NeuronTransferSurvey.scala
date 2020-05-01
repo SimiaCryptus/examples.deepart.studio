@@ -29,7 +29,7 @@ import com.simiacryptus.mindseye.art.registry.JobRegistration
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
-import com.simiacryptus.mindseye.layers.java.{ImgTileAssemblyLayer, ImgViewLayer}
+import com.simiacryptus.mindseye.layers.java.ImgViewLayer
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.NotebookRunner
@@ -40,22 +40,15 @@ import com.simiacryptus.sparkbook.util.LocalRunner
 import scala.collection.mutable.ArrayBuffer
 
 
-object NeuronTiledRotor extends NeuronTiledRotor with LocalRunner[Object] with NotebookRunner[Object]
+object NeuronTransferSurvey extends NeuronTransferSurvey with LocalRunner[Object] with NotebookRunner[Object]
 
-class NeuronTiledRotor extends RotorArt {
-  override val rotationalSegments = 6
-  override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
-  val initUrl: String = "50 + plasma * 0.5"
+class NeuronTransferSurvey extends ArtSetup[Object] {
+  val initUrl: String = "upload:Content"
+  val contentUrl: String = "upload:Content"
   val s3bucket: String = "examples.deepartist.org"
-  val minResolution = 128
+  val minResolution = 512
   val maxResolution = 512
-  val rowsAndCols = 2
-  val steps = 2
-  val aspectRatio = 0.5774
-  val repeat = 1
-  val min_padding = 8
-  val max_padding = 32
-  val border_factor = 0.125
+  val steps = 1
 
   override def indexStr = "202"
 
@@ -81,6 +74,8 @@ class NeuronTiledRotor extends RotorArt {
         if (Option(s3bucket).filter(!_.isEmpty).isDefined)
           log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
         log.onComplete(() => upload(log): Unit)
+        val srcImage = ImageArtUtil.loadImage(log, contentUrl, maxResolution)
+        log.p(log.jpg(srcImage, "Input Content"))
         for ((layer, toDim) <- List(
           //(VGG19.VGG19_1b2, 128),
           //(VGG19.VGG19_1c2, 255),
@@ -101,14 +96,12 @@ class NeuronTiledRotor extends RotorArt {
                     for (dimensionSelected <- list) {
                       sub2.h2(layer.name() + " " + dimensionSelected)
                       val size = renderedCanvases.size
-                      (1 to repeat).map(_ => {
-                        val image = test(layer, dimensionSelected)(sub2)
-                        if (renderedCanvases.size > size) {
-                          renderedCanvases(size) = () => image
-                        } else {
-                          renderedCanvases += (() => image)
-                        }
-                      })
+                      val image = test(layer, dimensionSelected, srcImage)(sub2)
+                      if (renderedCanvases.size > size) {
+                        renderedCanvases(size) = () => image
+                      } else {
+                        renderedCanvases += (() => image)
+                      }
                     }
                   })
                 }
@@ -124,52 +117,27 @@ class NeuronTiledRotor extends RotorArt {
     null
   }
 
-  def test(layer: VGG19, dimensionSelected: Int)(implicit log: NotebookOutput): BufferedImage = {
+  def test(layer: VGG19, dimensionSelected: Int, srcImage: BufferedImage)(implicit log: NotebookOutput): BufferedImage = {
     val registration: Option[JobRegistration[Tensor]] = None
     try {
       val canvas = new RefAtomicReference[Tensor](null)
 
       def rotatedCanvas = {
-        var input = canvas.get()
-        if (null == input) input else {
-          val viewLayer = getKaleidoscope(input.getDimensions)
-          val result = viewLayer.eval(input)
-          viewLayer.freeRef()
-          val data = result.getData
-          result.freeRef()
-          val tensor = data.get(0)
-          data.freeRef()
-          tensor
-        }
-      }
-
-      // Generates a pretiled image (e.g. 3x3) to display
-      def tiledCanvas = {
-        var input = rotatedCanvas
-        if (null == input) input else {
-          val layer = new ImgTileAssemblyLayer(rowsAndCols, rowsAndCols)
-          val result = layer.eval((1 to (rowsAndCols * rowsAndCols)).map(_ => input.addRef()): _*)
-          layer.freeRef()
-          input.freeRef()
-          val data = result.getData
-          result.freeRef()
-          val tensor = data.get(0)
-          data.freeRef()
-          tensor
-        }
+        canvas.get()
       }
 
       // Kaleidoscope+Tiling layer used by the optimization engine.
       // Expands the canvas by a small amount, using tile wrap to draw in the expanded boundary.
       def viewLayer(dims: Seq[Int]) = {
-        val rotor = getKaleidoscope(dims.toArray)
+        val min_padding = 8
+        val max_padding = 32
+        val border_factor = 0.125
         val paddingX = Math.min(max_padding, Math.max(min_padding, dims(0) * border_factor)).toInt
         val paddingY = Math.min(max_padding, Math.max(min_padding, dims(1) * border_factor)).toInt
         val tiling = new ImgViewLayer(dims(0) + paddingX, dims(1) + paddingY, true)
         tiling.setOffsetX(-paddingX / 2)
         tiling.setOffsetY(-paddingY / 2)
-        rotor.add(tiling).freeRef()
-        rotor
+        tiling
       }
 
       // Display a pre-tiled image inside the report itself
@@ -179,47 +147,39 @@ class NeuronTiledRotor extends RotorArt {
         image
       }).orNull) {
         log.subreport("Painting", (sub: NotebookOutput) => {
-          withMonitoredJpg(() => {
-            val tiledCanvas1 = tiledCanvas
-            val toImage = tiledCanvas1.toImage
-            tiledCanvas1.freeRef()
-            toImage
-          }) {
-            paint(
-              contentUrl = initUrl,
-              initUrl = initUrl,
-              canvas = canvas.addRef(),
-              network = new VisualStyleNetwork(
-                styleLayers = List(
-                  layer
-                ),
-                styleModifiers = List(
-                  new SingleChannelEnhancer(dimensionSelected, dimensionSelected + 1)
-                ),
-                styleUrls = Seq(""),
-                viewLayer = viewLayer
+          paint(
+            contentUrl = contentUrl,
+            initUrl = initUrl,
+            canvas = canvas.addRef(),
+            network = new VisualStyleNetwork(
+              styleLayers = List(
+                layer
               ),
-              optimizer = new BasicOptimizer {
-                override val trainingMinutes: Int = 90
-                override val trainingIterations: Int = 15
-                override val maxRate = 1e9
-
-                //override def trustRegion(layer: Layer): TrustRegion = null
-
-                override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray)
-              },
-              aspect = Option(aspectRatio),
-              resolutions = new GeometricSequence {
-                override val min: Double = minResolution
-                override val max: Double = maxResolution
-                override val steps = NeuronTiledRotor.this.steps
-              }.toStream.map(_.round.toDouble))(sub)
-            null
-          }(sub)
+              styleModifiers = List(
+                new SingleChannelEnhancer(dimensionSelected, dimensionSelected + 1)
+              ),
+              styleUrls = Seq(""),
+              viewLayer = viewLayer
+            ).withContent(contentLayers = List(
+              VGG19.VGG19_1c1
+            ), contentModifiers = List(
+              new ContentMatcher().scale(2e1)
+            )),
+            optimizer = new BasicOptimizer {
+              override val trainingMinutes: Int = 90
+              override val trainingIterations: Int = 30
+              override val maxRate = 1e9
+            },
+            aspect = Option(srcImage.getHeight().doubleValue() / srcImage.getWidth()),
+            resolutions = new GeometricSequence {
+              override val min: Double = minResolution
+              override val max: Double = maxResolution
+              override val steps = NeuronTransferSurvey.this.steps
+            }.toStream.map(_.round.toDouble))(sub)
+          null
         })
         uploadAsync(log)
       }(log)
-
       val image = rotatedCanvas.toImage
       if (null == image) image else {
         val graphics = image.getGraphics.asInstanceOf[Graphics2D]

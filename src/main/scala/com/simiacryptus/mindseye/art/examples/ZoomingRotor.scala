@@ -100,9 +100,9 @@ trait MeatRotor extends ZoomingRotorBase {
     ""
   )
   override val keyframes = Array(
-    "file:///H:/SimiaCryptus/all-projects/report/TextureTiledRotor/14f5738c-edd4-4d05-a5e9-593f2de9d1f6/etc/image_2d4bfbb17405ae22.jpg",
-    "file:///H:/SimiaCryptus/all-projects/report/TextureTiledRotor/14f5738c-edd4-4d05-a5e9-593f2de9d1f6/etc/image_62a54cffead14b31.jpg",
-    "file:///H:/SimiaCryptus/all-projects/report/TextureTiledRotor/14f5738c-edd4-4d05-a5e9-593f2de9d1f6/etc/image_b793d3f8c7dc1bc.jpg"
+    "file:///H:/SimiaCryptus/all-projects/report/TextureTiledRotor/06880563-cbda-4ef3-ac52-62fe89a748f7/etc/image_4f139291550789d8.jpg",
+    "file:///H:/SimiaCryptus/all-projects/report/TextureTiledRotor/06880563-cbda-4ef3-ac52-62fe89a748f7/etc/image_7fe7712270aece4c.jpg",
+    "file:///H:/SimiaCryptus/all-projects/report/TextureTiledRotor/06880563-cbda-4ef3-ac52-62fe89a748f7/etc/image_7535f03cd247d629.jpg"
   )
 
   override val s3bucket: String = "examples.deepartist.org"
@@ -133,7 +133,7 @@ trait MeatRotor extends ZoomingRotorBase {
           VGG19.VGG19_1c4
         ),
         styleModifiers = List(
-          new SingleChannelEnhancer(15,16)
+          new SingleChannelEnhancer(11, 12)
         ).map(_.withMask(outerMask.addRef())),
         styleUrls = styles,
         magnification = magnification,
@@ -179,8 +179,8 @@ class ZoomingRotor extends ZoomingRotorBase with CosmicArt {
   override val resolution: Int = 640
   override val totalZoom: Double = 0.01
   override val stepZoom: Double = 0.5
-  val enhancementCoeff: Double = 0
   override val innerCoeff: Int = 0
+  val enhancementCoeff: Double = 0
   val splitLayers = true
 
   override def getOptimizer()(implicit log: NotebookOutput): BasicOptimizer = {
@@ -281,8 +281,8 @@ class ZoomingRotor_altMask extends ZoomingRotorBase with GrafitiArt {
   override val totalZoom: Double = 0.01
   override val stepZoom: Double = 0.5
   override val border: Double = 0.0
-  val enhancementCoeff: Double = 0
   override val innerCoeff: Int = 0
+  val enhancementCoeff: Double = 0
 
   override def getOptimizer()(implicit log: NotebookOutput): BasicOptimizer = {
     log.eval(() => {
@@ -343,8 +343,8 @@ class ZoomingRotor2 extends ZoomingRotorBase with GrafitiArt {
   override val totalZoom: Double = 0.01
   override val stepZoom: Double = 0.5
   override val border: Double = 0.125
-  val enhancementCoeff: Double = 0
   override val innerCoeff: Int = 0
+  val enhancementCoeff: Double = 0
 
   override def getOptimizer()(implicit log: NotebookOutput): BasicOptimizer = {
     log.eval(() => {
@@ -413,8 +413,8 @@ class ZoomingRotorTest extends ZoomingRotorBase with CosmicArt {
   override val totalZoom = 0.25
   override val stepZoom = 1.0
   override val border: Double = 0.125
-  val enhancementCoeff: Double = 0
   override val innerCoeff: Int = 0
+  val enhancementCoeff: Double = 0
 
   override def inputTimeoutSeconds: Int = 0
 
@@ -528,9 +528,10 @@ abstract class ZoomingRotorBase extends RotorArt with ArtSource {
 
   override def postConfigure(log: NotebookOutput) = {
     implicit val implicitLog = log
-    if (Option(s3bucket).filter(!_.isEmpty).isDefined)
+    if (Option(s3bucket).filter(!_.isEmpty).isDefined) {
       log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
-    log.onComplete(() => upload(log): Unit)
+      log.onComplete(() => upload(log): Unit)
+    }
     log.subreport[Null]("Styles", (sub: NotebookOutput) => {
       ImageArtUtil.loadImages(sub, styles.toList.asJava, (resolution * Math.sqrt(magnification)).toInt)
         .foreach(img => sub.p(sub.jpg(img, "Input Style")))
