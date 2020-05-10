@@ -23,7 +23,7 @@ import java.awt.image.BufferedImage
 import java.awt.{Font, Graphics2D}
 import java.net.URI
 
-import com.simiacryptus.mindseye.art.models.VGG19
+import com.simiacryptus.mindseye.art.models.Inception5H
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.registry.JobRegistration
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
@@ -47,7 +47,7 @@ class NeuronDeconstructionRotors extends RotorArt {
   override val rotationalSegments = 6
   override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
   val sourceUrl: String = "upload:Source"
-  val initUrl: String = "50 + plasma * 0.5"
+  val initUrl: String = "50 + noise * 0.5"
   val s3bucket: String = ""
   val srcResolution = 1800
   val aspectRatio = 0.5774
@@ -62,7 +62,7 @@ class NeuronDeconstructionRotors extends RotorArt {
     Creates a tiled and rotationally symmetric texture based on a style using:
     <ol>
       <li>Random noise initialization</li>
-      <li>Standard VGG19 layers</li>
+      <li>Standard Inception5H layers</li>
       <li>Operators constraining and enhancing style</li>
       <li>Progressive resolution increase</li>
       <li>Kaleidoscopic view layer in addition to tiling layer</li>
@@ -71,6 +71,7 @@ class NeuronDeconstructionRotors extends RotorArt {
 
   override def inputTimeoutSeconds = 3600
 
+  type pipelineType = Inception5H
 
   override def postConfigure(log: NotebookOutput) = {
     log.eval[() => Unit](() => {
@@ -80,18 +81,15 @@ class NeuronDeconstructionRotors extends RotorArt {
         if (Option(s3bucket).filter(!_.isEmpty).isDefined)
           log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
         log.onComplete(() => upload(log): Unit)
-
-
         val srcImage = ImageArtUtil.loadImage(log, sourceUrl, srcResolution)
         log.p(log.jpg(srcImage, "Source"))
-
         val animationDelay = 1000
         val renderedCanvases = new ArrayBuffer[() => BufferedImage]
         // Execute the main process while registered with the site index
         val registration = registerWithIndexGIF(renderedCanvases.filter(_ != null).map(_ ()), delay = animationDelay)
         try {
           withMonitoredGif(() => renderedCanvases.filter(_ != null).map(_ ()), delay = animationDelay) {
-            val allData: List[(VGG19, Int, Double, Double)] = (for (
+            val allData: List[(pipelineType, Int, Double, Double)] = (for (
               res <- new GeometricSequence {
                 override def min: Double = 256
 
@@ -99,14 +97,14 @@ class NeuronDeconstructionRotors extends RotorArt {
 
                 override def steps: Int = 10
               }.toStream;
-              layer <- VGG19.values()
+              layer <- Inception5H.values()
             ) yield {
               val layerProduct: Tensor = simpleEval(layer.getPipeline.get(layer.name()), Tensor.fromRGB(ImageUtil.resize(srcImage, res.toInt, true)))
               (0 until layerProduct.getDimensions()(2)).map(band => (layer, band, res, layerProduct.selectBand(band).getDoubleStatistics().getAverage()))
             }).flatten.toList
             val adj = allData.groupBy(_._1).mapValues(_.map(_._4).toArray).mapValues(x => x.sum.toDouble / x.size)
 
-            val bestPerResolution: Array[(VGG19, Int, Double, Double)] = allData.groupBy(x => (x._1, x._2))
+            val bestPerResolution: Array[(pipelineType, Int, Double, Double)] = allData.groupBy(x => (x._1, x._2))
               .mapValues(_.maxBy(_._4)).values.toArray.sortBy(t => t._4 / adj(t._1)).reverse.take(20)
             for ((layer, rows) <- bestPerResolution.groupBy(_._1)) {
               log.subreport("Neurons in " + layer.name(), (sub: NotebookOutput) => {
@@ -117,7 +115,7 @@ class NeuronDeconstructionRotors extends RotorArt {
                   })
                   val size = renderedCanvases.size
                   (1 to repeat).map(_ => {
-                    val image = test(layer, band, layer.name() + " " + band + " @ " + res.floor.toInt, 126, 512)(sub)
+                    val image = test(layer, band, layer.name() + " " + band + " @ " + res.floor.toInt, 512)(sub)
                     if (renderedCanvases.size > size) {
                       renderedCanvases(size) = () => image
                     } else {
@@ -126,36 +124,7 @@ class NeuronDeconstructionRotors extends RotorArt {
                   })
                 }
               })
-
             }
-
-            //            for ((layer, toDims) <- List(
-            //              (VGG19.VGG19_1b2, (0 until 128)),
-            //              (VGG19.VGG19_1c2, (0 until 255)),
-            //              (VGG19.VGG19_1c4, (0 until 255)),
-            //              (VGG19.VGG19_1d4, (0 until 512)),
-            //              (VGG19.VGG19_1e4, (0 until 512))
-            //            )) {
-            //              val powers: Map[Int, Double] = log.eval(() => {
-            //                val layerProduct = simpleEval(layer.getPipeline.get(layer.name()), Tensor.fromRGB(srcImage))
-            //                toDims.map(b => b -> layerProduct.selectBand(b).rms()).toList.sortBy(_._2).toArray.toMap
-            //              })
-            //              log.subreport("Neurons in " + layer.name(), (sub: NotebookOutput) => {
-            //                for (dimensionSelected <- powers.toList.sortBy(_._2).takeRight(5).map(_._1).toStream) {
-            //                  sub.h2(layer.name() + " " + dimensionSelected)
-            //                  val size = renderedCanvases.size
-            //                  (1 to repeat).map(_ => {
-            //                    val image = test(layer, dimensionSelected)(sub)
-            //                    if (renderedCanvases.size > size) {
-            //                      renderedCanvases(size) = () => image
-            //                    } else {
-            //                      renderedCanvases += (() => image)
-            //                    }
-            //                  })
-            //                }
-            //              })
-            //              null
-            //            }
           }
         } finally {
           registration.foreach(_.stop()(s3client, ec2client))
@@ -169,7 +138,7 @@ class NeuronDeconstructionRotors extends RotorArt {
     layer.eval(tensor).getData.get(0)
   }
 
-  def test(layer: VGG19, dimensionSelected: Int, imageLabel: String, resolutions: Int*)(log: NotebookOutput): BufferedImage = {
+  def test(layer: pipelineType, dimensionSelected: Int, imageLabel: String, resolutions: Int*)(log: NotebookOutput): BufferedImage = {
     val registration: Option[JobRegistration[Tensor]] = None
     try {
       val canvas = new RefAtomicReference[Tensor](null)
@@ -223,8 +192,8 @@ class NeuronDeconstructionRotors extends RotorArt {
               viewLayer = viewLayer
             )(log),
             optimizer = new BasicOptimizer {
-              override val trainingMinutes: Int = 90
-              override val trainingIterations: Int = 15
+              override val trainingMinutes: Int = 60
+              override val trainingIterations: Int = 150
               override val maxRate = 1e9
 
               //override def trustRegion(layer: Layer): TrustRegion = null
