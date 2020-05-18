@@ -35,7 +35,7 @@ object BasicNotebook extends BasicNotebook with LocalRunner[Object] with Noteboo
 class BasicNotebook extends ArtSetup[Object] {
 
   val styleUrl = "upload:Image"
-  val s3bucket: String = "examples.deepartist.org"
+  val s3bucket: String = "test.deepartist.org"
   val message = "Hello World!"
   val resolution = 400
 

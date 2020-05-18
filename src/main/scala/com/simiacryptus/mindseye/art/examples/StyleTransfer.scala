@@ -41,7 +41,7 @@ class StyleTransfer extends ArtSetup[Object] {
   val contentUrl = "upload:Content"
   val styleUrl = "upload:Style"
   val initUrl: String = "50 + noise * 0.5"
-  val s3bucket: String = "examples.deepartist.org"
+  val s3bucket: String = "test.deepartist.org"
   val minResolution = 320
   val maxResolution = 1200
   val magnification = 2

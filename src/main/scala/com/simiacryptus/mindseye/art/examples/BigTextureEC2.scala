@@ -22,7 +22,7 @@ package com.simiacryptus.mindseye.art.examples
 import com.simiacryptus.sparkbook.aws.P3_2XL
 
 object BigTextureEC2 extends BigTexture with P3_2XL {
-  override val s3bucket: String = "examples.deepartist.org"
+  override val s3bucket: String = "test.deepartist.org"
 
   override def className: String = "BigTexture"
 

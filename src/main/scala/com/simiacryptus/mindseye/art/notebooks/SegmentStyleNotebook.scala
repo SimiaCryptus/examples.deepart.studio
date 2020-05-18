@@ -219,21 +219,6 @@ object SegmentStyleNotebook {
     resize(loadTensor(file), width).toImage
   }
 
-  def resize(tensor: Tensor, width: Int) = {
-    Tensor.fromRGB(ImageUtil.resize(tensor.toImage, width, true))
-  }
-
-  def loadTensor(file: String) = {
-    try {
-      val read = ImageIO.read(new URL(file.toString))
-      if (null == read) throw new IllegalArgumentException("Error reading " + file)
-      Tensor.fromRGB(read)
-    } catch {
-      case e: Throwable =>
-        throw new RuntimeException("Error reading " + file, e)
-    }
-  }
-
   def resize(foreground: Tensor, dims: Array[Int]) = {
     Tensor.fromRGB(ImageUtil.resize(foreground.toImage, dims(0), dims(1)))
   }
@@ -257,6 +242,21 @@ object SegmentStyleNotebook {
     } finally {
       maskTensor.freeRef()
       tensor.freeRef()
+    }
+  }
+
+  def resize(tensor: Tensor, width: Int) = {
+    Tensor.fromRGB(ImageUtil.resize(tensor.toImage, width, true))
+  }
+
+  def loadTensor(file: String) = {
+    try {
+      val read = ImageIO.read(new URL(file.toString))
+      if (null == read) throw new IllegalArgumentException("Error reading " + file)
+      Tensor.fromRGB(read)
+    } catch {
+      case e: Throwable =>
+        throw new RuntimeException("Error reading " + file, e)
     }
   }
 

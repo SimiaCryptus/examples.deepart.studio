@@ -42,7 +42,7 @@ class BigTexture extends ArtSetup[Object] {
 
   val styleUrl = "upload:Style"
   val initUrl: String = "plasma"
-  val s3bucket: String = "examples.deepartist.org"
+  val s3bucket: String = "test.deepartist.org"
   val aspectRatio = 0.5774
 
   override def indexStr = "201"

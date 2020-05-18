@@ -43,7 +43,7 @@ object SmoothStyle extends SmoothStyle with LocalRunner[Object] with NotebookRun
 
 class SmoothStyle extends ArtSetup[Object] {
 
-  override val s3bucket: String = "examples.deepartist.org"
+  override val s3bucket: String = "test.deepartist.org"
   val contentUrl = "upload:Content"
   val styleUrl = "upload:Style"
   //override val s3bucket: String = ""

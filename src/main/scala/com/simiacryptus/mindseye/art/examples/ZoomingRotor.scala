@@ -105,7 +105,7 @@ trait MeatRotor extends ZoomingRotorBase {
     "file:///H:/SimiaCryptus/all-projects/report/TextureTiledRotor/06880563-cbda-4ef3-ac52-62fe89a748f7/etc/image_7535f03cd247d629.jpg"
   )
 
-  override val s3bucket: String = "examples.deepartist.org"
+  override val s3bucket: String = "test.deepartist.org"
   override val resolution: Int = 800
   override val totalZoom: Double = 0.01
   override val stepZoom: Double = 0.5
@@ -175,7 +175,7 @@ trait FlowersArt extends ArtSource {
 }
 
 class ZoomingRotor extends ZoomingRotorBase with CosmicArt {
-  override val s3bucket: String = "examples.deepartist.org"
+  override val s3bucket: String = "test.deepartist.org"
   override val resolution: Int = 640
   override val totalZoom: Double = 0.01
   override val stepZoom: Double = 0.5
@@ -276,7 +276,7 @@ class ZoomingRotor extends ZoomingRotorBase with CosmicArt {
 }
 
 class ZoomingRotor_altMask extends ZoomingRotorBase with GrafitiArt {
-  override val s3bucket: String = "examples.deepartist.org"
+  override val s3bucket: String = "test.deepartist.org"
   override val resolution: Int = 800
   override val totalZoom: Double = 0.01
   override val stepZoom: Double = 0.5
@@ -338,7 +338,7 @@ class ZoomingRotor_altMask extends ZoomingRotorBase with GrafitiArt {
 }
 
 class ZoomingRotor2 extends ZoomingRotorBase with GrafitiArt {
-  override val s3bucket: String = "examples.deepartist.org"
+  override val s3bucket: String = "test.deepartist.org"
   override val resolution: Int = 800
   override val totalZoom: Double = 0.01
   override val stepZoom: Double = 0.5
@@ -612,7 +612,6 @@ abstract class ZoomingRotorBase extends RotorArt with ArtSource {
       val zoomedImage = zoom(Tensor.fromRGB(innerImage), finalZoom)
       Option(innerMask).foreach(_.freeRef())
       innerMask = zoomMask(Array(width, height, 3), finalZoom, (width * border).toInt)
-      innerMask.watch()
       zoomedImage
     }
 

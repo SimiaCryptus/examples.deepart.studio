@@ -46,7 +46,7 @@ class TextureTiledRotor extends RotorArt {
   val styleUrl = ""
   //  val initUrl: String = "50 + noise * 0.5"
   val initUrl: String = "plasma"
-  //  val s3bucket: String = "examples.deepartist.org"
+  //  val s3bucket: String = "test.deepartist.org"
   val s3bucket: String = ""
   val minResolution = 128
   val maxResolution = 800

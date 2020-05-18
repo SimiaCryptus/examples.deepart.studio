@@ -44,6 +44,7 @@ import scala.collection.mutable.ArrayBuffer
 object NeuronDeconstructionRotors extends NeuronDeconstructionRotors with LocalRunner[Object] with NotebookRunner[Object]
 
 class NeuronDeconstructionRotors extends RotorArt {
+  type pipelineType = Inception5H
   override val rotationalSegments = 6
   override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
   val sourceUrl: String = "upload:Source"
@@ -70,8 +71,6 @@ class NeuronDeconstructionRotors extends RotorArt {
   </div>.toString.trim
 
   override def inputTimeoutSeconds = 3600
-
-  type pipelineType = Inception5H
 
   override def postConfigure(log: NotebookOutput) = {
     log.eval[() => Unit](() => {

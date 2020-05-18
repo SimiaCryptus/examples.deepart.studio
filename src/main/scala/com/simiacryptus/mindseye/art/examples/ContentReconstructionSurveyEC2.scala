@@ -24,7 +24,7 @@ import com.simiacryptus.mindseye.lang.cudnn.CudaMemory
 import com.simiacryptus.sparkbook.{AWSNotebookRunner, EC2Runner}
 
 object ContentReconstructionSurveyEC2 extends ContentReconstructionSurvey with EC2Runner[Object] with AWSNotebookRunner[Object] {
-  override val s3bucket: String = "examples.deepartist.org"
+  override val s3bucket: String = "test.deepartist.org"
 
   override def nodeSettings: EC2NodeSettings = EC2NodeSettings.P3_2XL
 

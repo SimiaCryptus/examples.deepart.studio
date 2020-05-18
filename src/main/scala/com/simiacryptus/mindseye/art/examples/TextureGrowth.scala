@@ -48,7 +48,7 @@ class TextureGrowth extends ArtSetup[Object] {
 
   val styleUrl = "upload:Style"
   val initUrl: String = "50 + plasma * 0.5"
-  val s3bucket: String = "examples.deepartist.org"
+  val s3bucket: String = "test.deepartist.org"
   val minResolution = 200
   val maxResolution = 800
   val animationDelay = 1000

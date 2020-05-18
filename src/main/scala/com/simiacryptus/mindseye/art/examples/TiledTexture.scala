@@ -35,13 +35,15 @@ import com.simiacryptus.sparkbook._
 import com.simiacryptus.sparkbook.util.Java8Util._
 import com.simiacryptus.sparkbook.util.LocalRunner
 
-object TiledTexture extends TiledTexture with LocalRunner[Object] with NotebookRunner[Object]
+object TiledTexture extends TiledTexture with LocalRunner[Object] with NotebookRunner[Object] {
+  override val styleUrl: String = "file:///C:/Users/andre/Pictures/texture_sources/the-starry-night.jpg"
+}
 
 class TiledTexture extends ArtSetup[Object] {
 
   val styleUrl = "upload:Style"
   val initUrl: String = "50 + noise * 0.5"
-  val s3bucket: String = "examples.deepartist.org"
+  val s3bucket: String = "test.deepartist.org"
   val minResolution = 120
   val maxResolution = 400
   val magnification = 3

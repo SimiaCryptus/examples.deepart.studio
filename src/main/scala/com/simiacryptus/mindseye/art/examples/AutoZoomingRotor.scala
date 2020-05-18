@@ -39,8 +39,8 @@ object AutoZoomingRotor extends AutoZoomingRotorBase with LocalRunner[Object] wi
 
 abstract class AutoZoomingRotorBase extends RotorArt {
 
-  override val s3bucket: String = "examples.deepartist.org"
-  override val rotationalChannelPermutation: Array[Int] = Array(2,3,1)
+  override val s3bucket: String = "test.deepartist.org"
+  override val rotationalChannelPermutation: Array[Int] = Array(2, 3, 1)
   override val rotationalSegments = 6
   val resolution: Int = 1024
   val band = 18

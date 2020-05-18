@@ -47,7 +47,7 @@ class ContentReconstructionSurvey extends ArtSetup[Object] {
 
   val contentUrl = "upload:Content"
   val initUrl = "50 + noise * 0.05"
-  val s3bucket: String = "examples.deepartist.org"
+  val s3bucket: String = "test.deepartist.org"
   val resolution = 800
   val animationDelay = 1000
 
