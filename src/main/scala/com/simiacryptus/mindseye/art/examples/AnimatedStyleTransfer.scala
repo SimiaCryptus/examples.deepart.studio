@@ -39,13 +39,13 @@ class AnimatedStyleTransfer extends ArtSetup[Object] {
 
   val contentUrl = "upload:Content"
   val styleUrl = "upload:Style"
-  val initUrl: String = "50 + noise * 0.5"
+  val initUrl: String = "50 + plasma * 0.5"
   val s3bucket: String = ""
-  val minResolution = 256
-  val maxResolution = 512
+  val minResolution = 300
+  val maxResolution = 800
   val magnification = 2
   val steps = 2
-  val keyframes = 2
+  val keyframes = 3
 
   override def indexStr = "302"
 
