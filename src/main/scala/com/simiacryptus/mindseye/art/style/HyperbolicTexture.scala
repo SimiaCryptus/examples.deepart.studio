@@ -72,9 +72,10 @@ class HyperbolicTexture extends ArtSetup[Object] with GeometricArt {
   def vectorSequence =
   //    Random.shuffle(Map(
     (List(
-      "4/6 Nonsymetric" -> JobDetails(
+      "4/6 4-fold rotational symmetry" -> JobDetails(
         aspectRatio = 1.0,
         views = Array(Array(
+          RotatedVector(rotation = List(1,2,3).map(_ * Math.PI / 2 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(4, 6, 3)
         )),
         resolutions = Map(
@@ -82,7 +83,18 @@ class HyperbolicTexture extends ArtSetup[Object] with GeometricArt {
           400 -> Array(16.0),
           800 -> Array(16.0)
         ).mapValues(_.flatMap(x => Array(x)))
-      )
+      ),
+//      "4/6 Nonsymetric" -> JobDetails(
+//        aspectRatio = 1.0,
+//        views = Array(Array(
+//          HyperbolicTileView(4, 6, 3)
+//        )),
+//        resolutions = Map(
+//          200 -> Array(16.0),
+//          400 -> Array(16.0),
+//          800 -> Array(16.0)
+//        ).mapValues(_.flatMap(x => Array(x)))
+//      )
     ))
 
   override def indexStr = "202"
