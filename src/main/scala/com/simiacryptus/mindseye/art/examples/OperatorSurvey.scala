@@ -49,7 +49,7 @@ class OperatorSurvey extends ArtSetup[Object] {
   val s3bucket: String = "test.deepartist.org"
   val resolution = 800
   val animationDelay = 1000
-  val magnification = 4
+  val magnification = Array(4.0)
 
   override def indexStr = "102"
 
@@ -74,7 +74,7 @@ class OperatorSurvey extends ArtSetup[Object] {
         log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Fetch input images (user upload prompts) and display rescaled copies
-      log.out(log.jpg(ImageArtUtil.loadImage(log, styleUrl, (resolution * Math.sqrt(magnification)).toInt), "Input Style"))
+      log.out(log.jpg(ImageArtUtil.loadImage(log, styleUrl, (resolution * Math.sqrt(magnification.head)).toInt), "Input Style"))
       val renderedCanvases = new ArrayBuffer[() => BufferedImage]
       // Execute the main process while registered with the site index
       val registration = registerWithIndexGIF(renderedCanvases.map(_ ()), delay = animationDelay)

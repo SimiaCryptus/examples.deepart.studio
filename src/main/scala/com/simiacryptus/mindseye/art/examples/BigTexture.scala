@@ -27,7 +27,7 @@ import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.ImageArtUtil._
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
-import com.simiacryptus.mindseye.layers.java.ImgViewLayer
+import com.simiacryptus.mindseye.layers.java.AffineImgViewLayer
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.NotebookRunner
@@ -78,13 +78,13 @@ class BigTexture extends ArtSetup[Object] {
       val max_padding = 256
       val border_factor = 1.0
 
-      def viewLayer(dims: Seq[Int]): ImgViewLayer = {
+      def viewLayer(dims: Seq[Int]) = {
         val paddingX = Math.min(max_padding, Math.max(min_padding, dims(0) * border_factor)).toInt
         val paddingY = Math.min(max_padding, Math.max(min_padding, dims(1) * border_factor)).toInt
-        val layer = new ImgViewLayer(dims(0) + paddingX, dims(1) + paddingY, true)
+        val layer = new AffineImgViewLayer(dims(0) + paddingX, dims(1) + paddingY, true)
         layer.setOffsetX(-paddingX / 2)
         layer.setOffsetY(-paddingY / 2)
-        layer
+        List(layer)
       }
 
       // Execute the main process while registered with the site index
@@ -121,7 +121,7 @@ class BigTexture extends ArtSetup[Object] {
                 new MomentMatcher()
               ),
               styleUrls = Seq(styleUrl),
-              magnification = 1,
+              magnification = Array(1.0),
               viewLayer = viewLayer
             ),
             optimizer = new BasicOptimizer {
@@ -155,7 +155,7 @@ class BigTexture extends ArtSetup[Object] {
                 new GramMatrixMatcher()
               ),
               styleUrls = Seq(styleUrl),
-              magnification = 1,
+              magnification = Array(1.0),
               viewLayer = viewLayer
             ),
             optimizer = new BasicOptimizer {

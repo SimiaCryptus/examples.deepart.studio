@@ -67,7 +67,7 @@ object SegmentStyleNotebook {
     val result_location = "C:/Users/andre/Pictures/"
     val initialResolution = 600
     val contentCoeff = 5e0
-    var magnification = 8
+    var magnification = Array(8.0)
 
     //    val startServerThreadThread = new Thread(() => {
     //      polynote.Main.main(Array.empty)
@@ -78,7 +78,7 @@ object SegmentStyleNotebook {
     val Seq(foreground: Tensor, background: Tensor) = loadMasks(
       loadImage(contentUrl, initialResolution), maskUrl, RED, GREEN)
 
-    magnification = 32
+    magnification = Array(32.0)
     implicit val implicitLog = new NullNotebookOutput()
     implicit val executionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4))
     val visualNetwork = new VisualStyleContentNetwork(
@@ -164,7 +164,7 @@ object SegmentStyleNotebook {
         val currentCanvas = {
           if (null == prevCanvas) {
             smoother(contentTensor)(wct(content = contentTensor,
-              style = Tensor.fromRGB(loadImage(styleUrl_background, (initialResolution * Math.sqrt(magnification)).toInt)),
+              style = Tensor.fromRGB(loadImage(styleUrl_background, (initialResolution * Math.sqrt(magnification.head)).toInt)),
               mask = MomentMatcher.toMask(resize(background, contentTensor.getDimensions()))))
               .map((x: Double) => if (java.lang.Double.isFinite(x)) x else 0)
           } else {

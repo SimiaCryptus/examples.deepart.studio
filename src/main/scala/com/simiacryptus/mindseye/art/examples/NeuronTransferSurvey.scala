@@ -29,7 +29,7 @@ import com.simiacryptus.mindseye.art.registry.JobRegistration
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
-import com.simiacryptus.mindseye.layers.java.ImgViewLayer
+import com.simiacryptus.mindseye.layers.java.AffineImgViewLayer
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.NotebookRunner
@@ -134,10 +134,10 @@ class NeuronTransferSurvey extends ArtSetup[Object] {
         val border_factor = 0.125
         val paddingX = Math.min(max_padding, Math.max(min_padding, dims(0) * border_factor)).toInt
         val paddingY = Math.min(max_padding, Math.max(min_padding, dims(1) * border_factor)).toInt
-        val tiling = new ImgViewLayer(dims(0) + paddingX, dims(1) + paddingY, true)
+        val tiling = new AffineImgViewLayer(dims(0) + paddingX, dims(1) + paddingY, true)
         tiling.setOffsetX(-paddingX / 2)
         tiling.setOffsetY(-paddingY / 2)
-        tiling
+        List(tiling)
       }
 
       // Display a pre-tiled image inside the report itself

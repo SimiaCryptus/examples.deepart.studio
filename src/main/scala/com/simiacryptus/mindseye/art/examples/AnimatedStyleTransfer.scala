@@ -43,7 +43,7 @@ class AnimatedStyleTransfer extends ArtSetup[Object] {
   val s3bucket: String = ""
   val minResolution = 300
   val maxResolution = 800
-  val magnification = 2
+  val magnification = Array(2.0)
   val steps = 2
   val keyframes = 3
 
@@ -72,7 +72,7 @@ class AnimatedStyleTransfer extends ArtSetup[Object] {
       log.onComplete(() => upload(log): Unit)
 
       // Fetch input images (user upload prompts) and display rescaled copies
-      ImageArtUtil.loadImages(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt).foreach(img => log.p(log.jpg(img, "Input Style")))
+      ImageArtUtil.loadImages(log, styleUrl, (maxResolution * Math.sqrt(magnification.head)).toInt).foreach(img => log.p(log.jpg(img, "Input Style")))
       log.p(log.jpg(ImageArtUtil.loadImage(log, contentUrl, maxResolution), "Input Content"))
 
       def frames = keyframes * 2 - 1

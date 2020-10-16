@@ -44,7 +44,7 @@ class StyleTransferSweep extends ArtSetup[Object] {
   val s3bucket: String = "test.deepartist.org"
   val minResolution = 300
   val maxResolution = 800
-  val magnification = 2
+  val magnification = Array(2.0)
   val steps = 3
   val separation = 10
   val frames = 1 + 6
@@ -76,8 +76,8 @@ class StyleTransferSweep extends ArtSetup[Object] {
       log.onComplete(() => upload(log): Unit)
       // Fetch input images (user upload prompts) and display rescaled copies
       log.p(log.jpg(ImageArtUtil.loadImage(log, contentUrl, maxResolution), "Input Content"))
-      log.p(log.jpg(ImageArtUtil.loadImage(log, styleAUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style A"))
-      log.p(log.jpg(ImageArtUtil.loadImage(log, styleBUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style B"))
+      log.p(log.jpg(ImageArtUtil.loadImage(log, styleAUrl, (maxResolution * Math.sqrt(magnification.head)).toInt), "Input Style A"))
+      log.p(log.jpg(ImageArtUtil.loadImage(log, styleBUrl, (maxResolution * Math.sqrt(magnification.head)).toInt), "Input Style B"))
 
 
       val canvases = (1 to frames).map(_ => new RefAtomicReference[Tensor](null)).toList.toBuffer

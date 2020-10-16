@@ -95,7 +95,7 @@ class HighResStyleTransfer extends ArtSetup[Object] {
               contentModifiers = List(
                 new ContentMatcher().scale(1e1)
               ),
-              magnification = 9
+              magnification = Array(9.0)
             ) + new VisualStyleNetwork(
               styleLayers = List(
                 VGG16.VGG16_0a
@@ -105,7 +105,7 @@ class HighResStyleTransfer extends ArtSetup[Object] {
                 new MomentMatcher()
               ).map(_.scale(1e2)),
               styleUrl = List(contentUrl),
-              magnification = 9
+              magnification = Array(9.0)
             ), optimizer = new BasicOptimizer {
               override val trainingMinutes: Int = 60
               override val trainingIterations: Int = 20
@@ -145,7 +145,7 @@ class HighResStyleTransfer extends ArtSetup[Object] {
               contentModifiers = List(
                 new ContentMatcher().scale(1e1)
               ),
-              magnification = 4
+              magnification = Array(4.0)
             ) + new VisualStyleNetwork(
               styleLayers = List(
                 VGG16.VGG16_0a
@@ -155,7 +155,7 @@ class HighResStyleTransfer extends ArtSetup[Object] {
                 new MomentMatcher()
               ).map(_.scale(1e2)),
               styleUrl = List(contentUrl),
-              magnification = 4
+              magnification = Array(4.0)
             ), optimizer = new BasicOptimizer {
               override val trainingMinutes: Int = 60
               override val trainingIterations: Int = 20
@@ -206,7 +206,7 @@ class HighResStyleTransfer extends ArtSetup[Object] {
                 new GramMatrixMatcher()
               ).map(_.scale(1e2)),
               styleUrl = List(contentUrl),
-              magnification = 2
+              magnification = Array(2.0)
             ),
             optimizer = new BasicOptimizer {
               override val trainingMinutes: Int = 90

@@ -81,7 +81,7 @@ abstract class AutoZoomingRotorBase extends RotorArt {
   def animation(keyFrame_files: Seq[File]) = {
     new ZoomingRotorBase {
       override val border: Double = 0.0
-      override val magnification: Int = 2
+      override val magnification = Array(2.0)
       override val rotationalSegments = AutoZoomingRotorBase.this.rotationalSegments
       override val rotationalChannelPermutation: Array[Int] = AutoZoomingRotorBase.this.rotationalChannelPermutation
       override val styles: Array[String] = Array(
@@ -106,7 +106,7 @@ abstract class AutoZoomingRotorBase extends RotorArt {
 
             override def trustRegion(layer: Layer): TrustRegion = null
 
-            override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray)
+            override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray).head
           }
         })
       }
@@ -134,7 +134,7 @@ abstract class AutoZoomingRotorBase extends RotorArt {
     }
   }
 
-  def getStyle(viewLayer: Seq[Int] => PipelineNetwork)(implicit log: NotebookOutput): VisualStyleNetwork = {
+  def getStyle(viewLayer: Seq[Int] => List[PipelineNetwork])(implicit log: NotebookOutput): VisualStyleNetwork = {
     new VisualStyleNetwork(
       styleLayers = List(
         visionLayer
@@ -143,7 +143,7 @@ abstract class AutoZoomingRotorBase extends RotorArt {
         new SingleChannelEnhancer(band, band + 1)
       ),
       styleUrls = Seq(""),
-      magnification = 1,
+      magnification = Array(1.0),
       viewLayer = viewLayer
     )
   }
@@ -155,7 +155,7 @@ abstract class AutoZoomingRotorBase extends RotorArt {
       override val maxResolution: Int = AutoZoomingRotorBase.this.resolution
       override val steps: Int = 3
       override val iterations: Int = 15
-      override val magnification: Int = 2
+      override val magnification = Array(2.0)
       override val rotationalSegments = AutoZoomingRotorBase.this.rotationalSegments
       override val rotationalChannelPermutation: Array[Int] = AutoZoomingRotorBase.this.rotationalChannelPermutation
 
@@ -163,7 +163,7 @@ abstract class AutoZoomingRotorBase extends RotorArt {
 
       override def className: String = AutoZoomingRotorBase.this.className
 
-      override def getStyle(viewLayer: Seq[Int] => PipelineNetwork)(implicit log: NotebookOutput) =
+      override def getStyle(viewLayer: Seq[Int] => List[PipelineNetwork])(implicit log: NotebookOutput) =
         AutoZoomingRotorBase.this.getStyle(viewLayer)
     }
 

@@ -109,7 +109,7 @@ class SmoothStyle_1 extends ArtSetup[Object] {
               new MomentMatcher()
             ),
             styleUrl = List(styleUrl),
-            magnification = 16
+            magnification = Array(16.0)
           ),
             new BasicOptimizer {
               override val trainingMinutes: Int = 60
@@ -139,7 +139,7 @@ class SmoothStyle_1 extends ArtSetup[Object] {
               new MomentMatcher()
             ),
             styleUrl = List(styleUrl),
-            magnification = 4
+            magnification = Array(4.0)
           ), new BasicOptimizer {
             override val trainingMinutes: Int = 90
             override val trainingIterations: Int = 20
@@ -164,7 +164,7 @@ class SmoothStyle_1 extends ArtSetup[Object] {
               new GramMatrixMatcher()
             ),
             styleUrl = List(styleUrl),
-            magnification = 1,
+            magnification = Array(1.0),
             maxWidth = 6000,
             maxPixels = 1e9,
             tileSize = 800

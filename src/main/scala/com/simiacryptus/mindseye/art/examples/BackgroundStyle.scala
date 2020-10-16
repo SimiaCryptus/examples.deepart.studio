@@ -109,7 +109,7 @@ class BackgroundStyle extends SegmentingSetup {
             contentModifiers = List(
               new ContentMatcher().scale(1e2)
             ).map(_.withMask(background)),
-            magnification = 2
+            magnification = Array(2.0)
           ),
           optimizer = new BasicOptimizer {
             override val trainingMinutes: Int = 60
@@ -151,7 +151,7 @@ class BackgroundStyle extends SegmentingSetup {
               new ContentMatcher().scale(1e1)
             ).map(_.withMask(background)),
             maxWidth = 2400,
-            magnification = 1
+            magnification = Array(1.0)
           ),
           optimizer = new BasicOptimizer {
             override val trainingMinutes: Int = 180
@@ -184,7 +184,7 @@ class BackgroundStyle extends SegmentingSetup {
             contentModifiers = List(
               new ContentMatcher().scale(1e1)
             ).map(_.withMask(background)),
-            magnification = 1,
+            magnification = Array(1.0),
             maxWidth = 4000,
             maxPixels = 1e8
           ),

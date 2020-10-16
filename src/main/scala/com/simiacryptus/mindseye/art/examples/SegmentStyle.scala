@@ -61,7 +61,7 @@ class SegmentStyle extends SegmentingSetup {
     if (Option(s3bucket).filter(!_.isEmpty).isDefined)
       log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
     log.onComplete(() => upload(log): Unit)
-    var magnification = 8
+    var magnification = Array(8.0)
     val contentCoeff = 5e0
     val displayRes = 500
     // Fetch input images (user upload prompts) and display a rescaled copies
@@ -70,12 +70,12 @@ class SegmentStyle extends SegmentingSetup {
     })
     val (foreground: Tensor, background: Tensor) = partition(contentImage)
     val styleImage_background = Tensor.fromRGB(log.eval(() => {
-      ImageArtUtil.loadImage(log, styleUrl_background, (displayRes * Math.sqrt(magnification)).toInt)
+      ImageArtUtil.loadImage(log, styleUrl_background, (displayRes * Math.sqrt(magnification.head)).toInt)
     }))
     val styleImage_foreground = Tensor.fromRGB(log.eval(() => {
-      ImageArtUtil.loadImage(log, styleUrl_foreground, (displayRes * Math.sqrt(magnification)).toInt)
+      ImageArtUtil.loadImage(log, styleUrl_foreground, (displayRes * Math.sqrt(magnification.head)).toInt)
     }))
-    magnification = 32
+    magnification = Array(32.0)
     val canvas = new RefAtomicReference[Tensor](null)
     val registration = registerWithIndexJPG(() => canvas.get())
     try {
@@ -149,7 +149,7 @@ class SegmentStyle extends SegmentingSetup {
             override val steps = 2
           }.toStream.map(_.round.toDouble))
 
-        magnification = 8
+        magnification = Array(8.0)
         paint(contentUrl, tensor => tensor, canvas, new VisualStyleContentNetwork(
           styleLayers = List(
             VGG19.VGG19_1a,
@@ -205,7 +205,7 @@ class SegmentStyle extends SegmentingSetup {
             override val steps = 1
           }.toStream.map(_.round.toDouble))
 
-        magnification = 1
+        magnification = Array(1.0)
         paint(contentUrl, (tensor: Tensor) => tensor, canvas, new VisualStyleContentNetwork(
           styleLayers = List(
             VGG19.VGG19_1a,

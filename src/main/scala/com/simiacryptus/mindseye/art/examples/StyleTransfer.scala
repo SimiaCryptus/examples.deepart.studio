@@ -44,7 +44,7 @@ class StyleTransfer extends ArtSetup[Object] {
   val s3bucket: String = "test.deepartist.org"
   val minResolution = 320
   val maxResolution = 1600
-  val magnification = 2
+  val magnification = Array(2.0)
   val steps = 4
 
   override def indexStr = "301"
@@ -70,7 +70,7 @@ class StyleTransfer extends ArtSetup[Object] {
         log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Fetch input images (user upload prompts) and display a rescaled copies
-      log.p(log.jpg(ImageArtUtil.loadImage(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
+      log.p(log.jpg(ImageArtUtil.loadImage(log, styleUrl, (maxResolution * Math.sqrt(magnification.head)).toInt), "Input Style"))
       log.p(log.jpg(ImageArtUtil.loadImage(log, contentUrl, maxResolution), "Input Content"))
       val canvas = new RefAtomicReference[Tensor](null)
       // Execute the main process while registered with the site index

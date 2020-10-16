@@ -26,7 +26,7 @@ import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.lang.{Layer, Tensor}
-import com.simiacryptus.mindseye.layers.java.{ImgTileAssemblyLayer, ImgViewLayer}
+import com.simiacryptus.mindseye.layers.java.{ImgTileAssemblyLayer, AffineImgViewLayer}
 import com.simiacryptus.mindseye.network.PipelineNetwork
 import com.simiacryptus.mindseye.opt.region.TrustRegion
 import com.simiacryptus.notebook.NotebookOutput
@@ -43,14 +43,14 @@ object TextureTiledRotor extends TextureTiledRotor with LocalRunner[Object] with
 class TextureTiledRotor extends RotorArt {
   override val rotationalSegments = 6
   override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
-  val styleUrl = ""
+  val styleUrl = "upload:Style"
   //  val initUrl: String = "50 + noise * 0.5"
   val initUrl: String = "plasma"
   //  val s3bucket: String = "test.deepartist.org"
   val s3bucket: String = ""
   val minResolution = 128
   val maxResolution = 800
-  val magnification = 2
+  val magnification = Array(2.0)
   val rowsAndCols = 2
   val steps = 3
   val aspectRatio = 1
@@ -84,7 +84,7 @@ class TextureTiledRotor extends RotorArt {
           log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
           log.onComplete(() => upload(log): Unit)
         }
-        ImageArtUtil.loadImages(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt)
+        ImageArtUtil.loadImages(log, styleUrl, (maxResolution * Math.sqrt(magnification.head)).toInt)
           .foreach(img => log.p(log.jpg(img, "Input Style")))
         (1 to repeat).map(_ => {
           val canvas = new RefAtomicReference[Tensor](null)
@@ -92,7 +92,7 @@ class TextureTiledRotor extends RotorArt {
           def rotatedCanvas = {
             var input = canvas.get()
             if (null == input) input else {
-              val viewLayer = getKaleidoscope(input.getDimensions)
+              val viewLayer = getKaleidoscope(input.getDimensions).head
               val result = viewLayer.eval(input)
               viewLayer.freeRef()
               val data = result.getData
@@ -105,7 +105,7 @@ class TextureTiledRotor extends RotorArt {
 
           // Generates a pretiled image (e.g. 3x3) to display
           def tiledCanvas = {
-            var input = rotatedCanvas
+            val input = rotatedCanvas
             if (null == input) input else {
               val layer = new ImgTileAssemblyLayer(rowsAndCols, rowsAndCols)
               val result = layer.eval((1 to (rowsAndCols * rowsAndCols)).map(_ => input.addRef()): _*)
@@ -122,14 +122,15 @@ class TextureTiledRotor extends RotorArt {
           // Kaleidoscope+Tiling layer used by the optimization engine.
           // Expands the canvas by a small amount, using tile wrap to draw in the expanded boundary.
           def viewLayer(dims: Seq[Int]) = {
-            val rotor = getKaleidoscope(dims.toArray)
-            val paddingX = Math.min(max_padding, Math.max(min_padding, dims(0) * border_factor)).toInt
-            val paddingY = Math.min(max_padding, Math.max(min_padding, dims(1) * border_factor)).toInt
-            val tiling = new ImgViewLayer(dims(0) + paddingX, dims(1) + paddingY, true)
-            tiling.setOffsetX(-paddingX / 2)
-            tiling.setOffsetY(-paddingY / 2)
-            rotor.add(tiling).freeRef()
-            rotor
+            for(rotor <- getKaleidoscope(dims.toArray)) yield {
+              val paddingX = Math.min(max_padding, Math.max(min_padding, dims(0) * border_factor)).toInt
+              val paddingY = Math.min(max_padding, Math.max(min_padding, dims(1) * border_factor)).toInt
+              val tiling = new AffineImgViewLayer(dims(0) + paddingX, dims(1) + paddingY, true)
+              tiling.setOffsetX(-paddingX / 2)
+              tiling.setOffsetY(-paddingY / 2)
+              rotor.add(tiling).freeRef()
+              rotor
+            }
           }
 
           // Execute the main process while registered with the site index
@@ -161,7 +162,7 @@ class TextureTiledRotor extends RotorArt {
 
                       override def trustRegion(layer: Layer): TrustRegion = null
 
-                      override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray)
+                      override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray).head
                     },
                     aspect = Option(aspectRatio),
                     resolutions = new GeometricSequence {
@@ -183,46 +184,15 @@ class TextureTiledRotor extends RotorArt {
     })()
   }
 
-  def getStyle(viewLayer: Seq[Int] => PipelineNetwork)(implicit log: NotebookOutput): VisualNetwork = {
+  def getStyle(viewLayer: Seq[Int] => List[PipelineNetwork])(implicit log: NotebookOutput): VisualNetwork = {
     new VisualStyleNetwork(
       styleLayers = List(
         VGG19.VGG19_1c4
       ),
       styleModifiers = List(
-        new SingleChannelEnhancer(130, 131)
-      ),
-      styleUrls = Seq(styleUrl),
-      magnification = magnification,
-      viewLayer = viewLayer
-    )
-  }
-
-  def widebandStyle(viewLayer: Seq[Int] => PipelineNetwork)(implicit log: NotebookOutput) = {
-    new VisualStyleNetwork(
-      styleLayers = List(
-        // We select all the lower-level layers to achieve a good balance between speed and accuracy.
-        VGG19.VGG19_0a,
-        VGG19.VGG19_0b,
-        VGG19.VGG19_1a,
-        VGG19.VGG19_1b1,
-        VGG19.VGG19_1b2,
-        VGG19.VGG19_1c1,
-        VGG19.VGG19_1c2,
-        VGG19.VGG19_1c3,
-        VGG19.VGG19_1e1,
-        VGG19.VGG19_1e2,
-        VGG19.VGG19_1e3
-      ),
-      styleModifiers = List(
-        // These two operators are a good combination for a vivid yet accurate style
-        {
-          new GramMatrixEnhancer()
-            .setMinMax(-5, 5)
-          //.scale(0.5)
-        },
-        {
-          new MomentMatcher()
-        }
+        new GramMatrixEnhancer(),
+        new GramMatrixMatcher()
+        //new SingleChannelEnhancer(130, 131)
       ),
       styleUrls = Seq(styleUrl),
       magnification = magnification,

@@ -49,7 +49,7 @@ object ZoomingRotor extends MeatRotor with LocalRunner[Object] with NotebookRunn
 
 trait WaterArt extends ArtSource {
   override val border: Double = 0.0
-  override val magnification: Int = 4
+  override val magnification = Array(4.0)
   override val rotationalSegments = 6
   override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
   override val styles: Array[String] = Array(
@@ -62,7 +62,7 @@ trait WaterArt extends ArtSource {
 
 trait CosmicArt extends ArtSource {
   override val border: Double = 0.15
-  override val magnification: Int = 4
+  override val magnification: Array[Double] = Array(4.0)
   override val rotationalSegments = 1
   override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
   override val styles: Array[String] = Array(
@@ -79,7 +79,7 @@ trait CosmicArt extends ArtSource {
 
 trait GrafitiArt extends ArtSource {
   override val border: Double = 0.0
-  override val magnification: Int = 2
+  override val magnification: Array[Double] = Array(2)
   override val rotationalSegments = 5
   override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
   override val styles: Array[String] = Array(
@@ -93,7 +93,7 @@ trait GrafitiArt extends ArtSource {
 
 trait MeatRotor extends ZoomingRotorBase {
   override val border: Double = 0.0
-  override val magnification: Int = 2
+  override val magnification = Array(2.0)
   override val rotationalSegments = 6
   override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
   override val styles: Array[String] = Array(
@@ -120,7 +120,7 @@ trait MeatRotor extends ZoomingRotorBase {
 
         override def trustRegion(layer: Layer): TrustRegion = null
 
-        override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray)
+        override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray).head
       }
     })
   }
@@ -153,7 +153,7 @@ trait MeatRotor extends ZoomingRotorBase {
 
 trait FlowersArt extends ArtSource {
   override val border: Double = 0.0
-  override val magnification: Int = 2
+  override val magnification = Array(2.0)
   override val rotationalSegments = 6
   override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
   override val styles: Array[String] = Array(
@@ -192,7 +192,7 @@ class ZoomingRotor extends ZoomingRotorBase with CosmicArt {
 
         override def trustRegion(layer: Layer): TrustRegion = null
 
-        override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray)
+        override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray).head
       }
     })
   }
@@ -297,7 +297,7 @@ class ZoomingRotor_altMask extends ZoomingRotorBase with GrafitiArt {
           super.lineSearchFactory
         }
 
-        override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray)
+        override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray).head
       }
     })
   }
@@ -359,7 +359,7 @@ class ZoomingRotor2 extends ZoomingRotorBase with GrafitiArt {
           super.lineSearchFactory
         }
 
-        override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray)
+        override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray).head
       }
     })
   }
@@ -427,7 +427,7 @@ class ZoomingRotorTest extends ZoomingRotorBase with CosmicArt {
 
         override def trustRegion(layer: Layer): TrustRegion = null
 
-        override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray)
+        override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray).head
       }
     })
   }
@@ -481,7 +481,7 @@ trait ArtSource extends RotorArt {
 
   def border: Double
 
-  def magnification: Int
+  def magnification: Array[Double]
 
   def rotationalSegments: Int
 
@@ -533,7 +533,7 @@ abstract class ZoomingRotorBase extends RotorArt with ArtSource {
       log.onComplete(() => upload(log): Unit)
     }
     log.subreport[Null]("Styles", (sub: NotebookOutput) => {
-      ImageArtUtil.loadImages(sub, styles.toList.asJava, (resolution * Math.sqrt(magnification)).toInt)
+      ImageArtUtil.loadImages(sub, styles.toList.asJava, (resolution * Math.sqrt(magnification.head)).toInt)
         .foreach(img => sub.p(sub.jpg(img, "Input Style")))
       null
     })
@@ -698,7 +698,7 @@ abstract class ZoomingRotorBase extends RotorArt with ArtSource {
     if (input == null) {
       null
     } else {
-      val viewLayer = getKaleidoscope(input.getDimensions)
+      val viewLayer = getKaleidoscope(input.getDimensions).head
       val result = viewLayer.eval(input)
       viewLayer.freeRef()
       val data = result.getData
@@ -710,9 +710,10 @@ abstract class ZoomingRotorBase extends RotorArt with ArtSource {
   }
 
   def getKaleidoscopeMask(canvasDims: Array[Int], mask: Tensor) = {
-    val network = getKaleidoscope(canvasDims)
-    network.add(new ProductLayer(), network.getHead, network.constValue(mask)).freeRef()
-    network
+    for(network <- getKaleidoscope(canvasDims)) yield {
+      network.add(new ProductLayer(), network.getHead, network.constValue(mask)).freeRef()
+      network
+    }
   }
 
   def getStyle(innerMask: Tensor)(implicit log: NotebookOutput): VisualNetwork

@@ -46,7 +46,7 @@ class AnimatedRotor extends RotorArt {
   val s3bucket: String = "test.deepartist.org"
   val minResolution = 200
   val maxResolution = 512
-  val magnification = 2
+  val magnification = Array(2.0)
   val steps = 2
   val keyframes = 2
 
@@ -75,7 +75,7 @@ class AnimatedRotor extends RotorArt {
       if (Option(s3bucket).filter(!_.isEmpty).isDefined)
         log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
-      ImageArtUtil.loadImages(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt).foreach(x => log.p(log.jpg(x, "Input Style")))
+      ImageArtUtil.loadImages(log, styleUrl, (maxResolution * Math.sqrt(magnification.head)).toInt).foreach(x => log.p(log.jpg(x, "Input Style")))
       log.p(log.jpg(ImageArtUtil.loadImage(log, contentUrl, maxResolution), "Input Content"))
 
       def frames = keyframes * 2 - 1
@@ -85,7 +85,7 @@ class AnimatedRotor extends RotorArt {
       val registration = registerWithIndexGIF_Cyclic(canvases.map(_.get())
         .filter(_ != null)
         .map(t => {
-          val kaleidoscope = getKaleidoscope(t.getDimensions)
+          val kaleidoscope = getKaleidoscope(t.getDimensions).head
           val result = kaleidoscope.eval(t)
           kaleidoscope.freeRef()
           val tensorList = result.getData
@@ -132,7 +132,7 @@ class AnimatedRotor extends RotorArt {
             override val maxRate = 1e9
 
             // The canvas result should be processed by the kaliedoscope
-            override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray)
+            override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray).head
 
             // By default, we use a trust region that constrains the canvas pixel values from 0-256.
             // This conflicts with using a kaliedoscope, whose output is bounded and input may be out of that range.
@@ -143,7 +143,7 @@ class AnimatedRotor extends RotorArt {
             override val max: Double = maxResolution
             override val steps = AnimatedRotor.this.steps
           }.toStream.map(_.round.toDouble),
-          renderingFn = (dims: Seq[Int]) => getKaleidoscope(dims.toArray))
+          renderingFn = (dims: Seq[Int]) => getKaleidoscope(dims.toArray).head)
         null
       } finally {
         registration.foreach(_.stop()(s3client, ec2client))

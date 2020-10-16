@@ -48,7 +48,7 @@ class SeedImageSurvey extends ArtSetup[Object] {
   val s3bucket: String = "test.deepartist.org"
   val resolution = 800
   val animationDelay = 1000
-  val magnification = 4
+  val magnification = Array(4.0)
 
   override def indexStr = "104"
 
@@ -73,14 +73,14 @@ class SeedImageSurvey extends ArtSetup[Object] {
         log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Fetch input images (user upload prompts) and display rescaled copies
-      log.p(log.jpg(ImageArtUtil.loadImage(log, styleUrl, (resolution * Math.sqrt(magnification)).toInt), "Input Style"))
+      log.p(log.jpg(ImageArtUtil.loadImage(log, styleUrl, (resolution * Math.sqrt(magnification.head)).toInt), "Input Style"))
       val contentUrl = "upload:Content"
       val seeds = Array(
         contentUrl,
         "plasma",
         "50 + noise * 0.5"
       )
-      for (seed <- seeds) log.p(log.jpg(ImageArtUtil.loadImage(log, seed, (resolution * Math.sqrt(magnification)).toInt), "Seed"))
+      for (seed <- seeds) log.p(log.jpg(ImageArtUtil.loadImage(log, seed, (resolution * Math.sqrt(magnification.head)).toInt), "Seed"))
       val renderedCanvases = new ArrayBuffer[() => BufferedImage]
       // Execute the main process while registered with the site index
       val registration = registerWithIndexGIF(renderedCanvases.map(_ ()), delay = animationDelay)

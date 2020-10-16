@@ -27,7 +27,7 @@ import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.ImageArtUtil._
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
-import com.simiacryptus.mindseye.layers.java.{ImgTileAssemblyLayer, ImgViewLayer}
+import com.simiacryptus.mindseye.layers.java.{ImgTileAssemblyLayer, AffineImgViewLayer}
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.NotebookRunner.withMonitoredJpg
@@ -46,7 +46,7 @@ class TiledTexture extends ArtSetup[Object] {
   val s3bucket: String = "test.deepartist.org"
   val minResolution = 120
   val maxResolution = 400
-  val magnification = 3
+  val magnification = Array(3.0)
   val rowsAndCols = 2
   val steps = 2
   val aspectRatio = 1.0
@@ -79,7 +79,7 @@ class TiledTexture extends ArtSetup[Object] {
           log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
         log.onComplete(() => upload(log): Unit)
         // Fetch image (user upload prompt) and display a rescaled copy
-        loadImages(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt).foreach(img => log.p(log.jpg(img, "Input Style")))
+        loadImages(log, styleUrl, (maxResolution * Math.sqrt(magnification.head)).toInt).foreach(img => log.p(log.jpg(img, "Input Style")))
         val canvas = new RefAtomicReference[Tensor](null)
 
         // Generates a pretiled image (e.g. 3x3) to display
@@ -100,13 +100,13 @@ class TiledTexture extends ArtSetup[Object] {
 
         // Tiling layer used by the optimization engine.
         // Expands the canvas by a small amount, using tile wrap to draw in the expanded boundary.
-        def viewLayer(dims: Seq[Int]): ImgViewLayer = {
+        def viewLayer(dims: Seq[Int]) = {
           val paddingX = Math.min(max_padding, Math.max(min_padding, dims(0) * border_factor)).toInt
           val paddingY = Math.min(max_padding, Math.max(min_padding, dims(1) * border_factor)).toInt
-          val layer = new ImgViewLayer(dims(0) + paddingX, dims(1) + paddingY, true)
+          val layer = new AffineImgViewLayer(dims(0) + paddingX, dims(1) + paddingY, true)
           layer.setOffsetX(-paddingX / 2)
           layer.setOffsetY(-paddingY / 2)
-          layer
+          List(layer)
         }
 
         // Execute the main process while registered with the site index
@@ -120,7 +120,7 @@ class TiledTexture extends ArtSetup[Object] {
             image
           }) {
             withMonitoredJpg(() => Option(canvas.get()).map(tensor => {
-              val imgViewLayer = viewLayer(tensor.getDimensions)
+              val imgViewLayer = viewLayer(tensor.getDimensions).head
               val result = imgViewLayer.eval(tensor)
               imgViewLayer.freeRef()
               val tensorList = result.getData

@@ -29,7 +29,7 @@ import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.lang.{Coordinate, Tensor}
-import com.simiacryptus.mindseye.layers.java.ImgViewLayer
+import com.simiacryptus.mindseye.layers.java.AffineImgViewLayer
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.NotebookRunner._
@@ -51,7 +51,7 @@ class TextureStereogram extends ArtSetup[Object] {
   val minWidth = 50
   val maxWidth = 100
   val maxHeight = 1200
-  val magnification = 4
+  val magnification = Array(4.0)
   val depthFactor = 10
   val maxAspect = 2
   val text_padding = 256
@@ -80,7 +80,7 @@ class TextureStereogram extends ArtSetup[Object] {
         log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
       // Fetch image (user upload prompt) and display a rescaled copy
-      log.out(log.jpg(ImageArtUtil.loadImage(log, styleUrl, (maxWidth * Math.sqrt(magnification)).toInt), "Input Style"))
+      log.out(log.jpg(ImageArtUtil.loadImage(log, styleUrl, (maxWidth * Math.sqrt(magnification.head)).toInt), "Input Style"))
       // Render and display the depth map
       val depthImage = depthMap((maxHeight * maxAspect).toInt, maxHeight, text)
       log.out(log.jpg(depthImage.toImage, "Depth Map"))
@@ -98,10 +98,10 @@ class TextureStereogram extends ArtSetup[Object] {
       // Expands the canvas by a small amount, using tile wrap to draw in the expanded boundary.
       def tiled(dims: Seq[Int]) = {
         val padding = Math.min(256, Math.max(16, dims(0) / 2))
-        val layer = new ImgViewLayer(dims(0) + padding, dims(1) + padding, true)
+        val layer = new AffineImgViewLayer(dims(0) + padding, dims(1) + padding, true)
         layer.setOffsetX(-padding / 2)
         layer.setOffsetY(-padding / 2)
-        layer
+        List(layer)
       }
 
       // Execute the main process while registered with the site index

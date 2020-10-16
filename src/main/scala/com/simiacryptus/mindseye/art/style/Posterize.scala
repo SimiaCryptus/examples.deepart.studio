@@ -19,32 +19,20 @@
 
 package com.simiacryptus.mindseye.art.style
 
-import java.awt.image.BufferedImage
 import java.net.URI
 
 import com.simiacryptus.mindseye.art.TiledTrainable
-import com.simiacryptus.mindseye.art.models.VGG19
-import com.simiacryptus.mindseye.art.ops._
-import com.simiacryptus.mindseye.art.photo.{SmoothSolver, SmoothSolver_EJML}
-import com.simiacryptus.mindseye.art.photo.affinity.RelativeAffinity
+import com.simiacryptus.mindseye.art.photo.affinity.{RasterAffinity, RelativeAffinity}
 import com.simiacryptus.mindseye.art.photo.cuda.SmoothSolver_Cuda
 import com.simiacryptus.mindseye.art.photo.topology.SearchRadiusTopology
+import com.simiacryptus.mindseye.art.photo.{SmoothSolver, SmoothSolver_EJML}
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
-import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
-import com.simiacryptus.mindseye.eval.ArrayTrainable
-import com.simiacryptus.mindseye.lang.{Layer, Tensor}
-import com.simiacryptus.mindseye.layers.cudnn._
-import com.simiacryptus.mindseye.layers.cudnn.conv.SimpleConvolutionLayer
-import com.simiacryptus.mindseye.layers.java.BoundedActivationLayer
-import com.simiacryptus.mindseye.network.PipelineNetwork
-import com.simiacryptus.mindseye.opt.IterativeTrainer
+import com.simiacryptus.mindseye.art.util._
+import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.mindseye.util.ImageUtil
 import com.simiacryptus.notebook.NotebookOutput
-import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.NotebookRunner
-import com.simiacryptus.sparkbook.NotebookRunner._
 import com.simiacryptus.sparkbook.util.LocalRunner
-
 
 object Posterize extends Posterize with LocalRunner[Object] with NotebookRunner[Object] {
   override def http_port: Int = 1081
@@ -53,18 +41,23 @@ object Posterize extends Posterize with LocalRunner[Object] with NotebookRunner[
 class Posterize extends ArtSetup[Object] {
 
   val contentUrl = "upload:Image"
+//  val contentUrl = "file:///C:/Users/andre/code/all-projects/report/Posterize/458e2c1e-9c18-469c-8a37-68db079a4967/etc/44dfdba2-76b1-430f-ab49-1511aa3d6c72.jpg"
   val s3bucket: String = ""
-  val useCuda = false
-  val tile_size = 800
+  val useCuda = true
+  val tile_size = 400
   val tile_padding = 64
+  val lambda = 1e-4
+  val contrast = 50
+  val mixing = 0.1
+  val freshRecoloring = true
 
   override def indexStr = "301"
 
   override def description = <div>
-    High quality content smoothing via iterative connectivity matrix methods
+    High quality content smoothing via tiled spare connectivity matrix analysis
   </div>.toString.trim
 
-  override def inputTimeoutSeconds = 1
+  override def inputTimeoutSeconds = 600
 
 
   def solver: SmoothSolver = if(useCuda) new SmoothSolver_Cuda() else new SmoothSolver_EJML()
@@ -85,31 +78,44 @@ class Posterize extends ArtSetup[Object] {
       var recolored = recolor(smallContent)(smallContent.addRef())
       log.out(log.jpg(recolored.toRgbImage, "Recolored Small Image"))
 
-      for(width <- new GeometricSequence {
+      val priorTiles = List[String](
+      ).map(ImageUtil.getTensor(_)).toBuffer
+
+      for(res <- new GeometricSequence {
         override val min: Double = tile_size
         override val max: Double = fullContent.getDimensions()(0)
-        override val steps = 3
+        override val steps = 2
       }.toStream.drop(1).map(_.toInt)) {
-        val content = Tensor.fromRGB(ImageUtil.resize(fullContent.toRgbImage, width, true))
+
+        val content = Tensor.fromRGB(ImageUtil.resize(fullContent.toRgbImage, res, true))
+        val width = content.getDimensions()(0)
         val height = content.getDimensions()(1)
         val selectors_fade = TiledTrainable.selectors(tile_padding, width, height, tile_size, true)
         val selectors_sharp = TiledTrainable.selectors(tile_padding, width, height, tile_size, false)
 
         val enlarged = Tensor.fromRGB(ImageUtil.resize(recolored.toRgbImage, width, height))
         val tiles = for ((tileView_sharp, tileView_fade) <- selectors_sharp.zip(selectors_fade)) yield {
-          var recoloredTile = tileView_sharp.eval(enlarged.addRef()).getData.get(0)
-          val contentTile = tileView_sharp.eval(content).getData.get(0)
-          log.out(log.jpg(recoloredTile.toRgbImage, "Coarse Recoloring Tile"))
-          log.out(log.jpg(contentTile.toRgbImage, "Content Tile"))
-          recoloredTile = recolor(contentTile)(recoloredTile)
-          log.out(log.jpg(recoloredTile.toRgbImage, "Recolored Tile"))
-          val maskTile = tileView_fade.eval(enlarged.map(x => 1)).getData.get(0)
-          log.out(log.jpg(maskTile.toRgbImage, "Tile Mask"))
-          val product = recoloredTile.mapCoords(c => recoloredTile.get(c) * maskTile.get(c))
-          log.out(log.jpg(product.toRgbImage, "Tile Product"))
-          product
+          if(priorTiles.isEmpty) withRetry() {
+            var recoloredTile = tileView_sharp.eval(enlarged.addRef()).getData.get(0)
+            val contentTile = tileView_sharp.eval(content.addRef()).getData.get(0)
+            log.out(log.jpg(recoloredTile.toRgbImage, "Coarse Recoloring Tile"))
+            log.out(log.jpg(contentTile.toRgbImage, "Content Tile"))
+            recoloredTile = recolor(contentTile)(if(freshRecoloring) contentTile else recoloredTile)
+            log.out(log.jpg(recoloredTile.toRgbImage, "Recolored Tile"))
+            val maskTile = tileView_fade.eval(enlarged.map(x => 1)).getData.get(0)
+            require(maskTile.getDimensions.toList == recoloredTile.getDimensions.toList)
+            val product = recoloredTile.mapCoords(c => recoloredTile.get(c) * maskTile.get(c))
+            log.out(log.jpg(product.toRgbImage, "Tile Product"))
+            product
+          } else {
+            val prior = priorTiles.remove(0)
+            log.out(log.jpg(prior.toRgbImage, "Tile Product"))
+            prior
+          }
         }
-        recolored = reassemble(enlarged, selectors_fade, tiles, log)
+        recolored = TiledTrainable.reassemble(width, height, tiles, tile_padding, tile_size, true, false)
+        //recolored = reassemble(enlarged, selectors_fade, tiles, log)
+        log.out(log.jpg(recolored.toRgbImage, "Reassembled"))
       }
 
       null
@@ -118,77 +124,34 @@ class Posterize extends ArtSetup[Object] {
     }
   }
 
+  def withRetry[T](n:Int=3)(fn: =>T):T = {
+    try {
+      fn
+    } catch {
+      case e : Throwable if(n>0) =>
+        System.gc()
+        withRetry(n-1)(fn)
+    }
+  }
+
   private def recolor(source: Tensor)(target: Tensor) = {
     val topology = new SearchRadiusTopology(source.addRef())
     topology.setSelfRef(true)
     topology.setVerbose(true)
-    var affinity = new RelativeAffinity(source, topology)
-    affinity.setContrast(20)
-    affinity.setGraphPower1(2)
-    affinity.setMixing(0.1)
-    //val wrapper = affinity.wrap((graphEdges, innerResult) => adjust(graphEdges, innerResult, degree(innerResult), 0.2))
-    val operator = solver.solve(topology, affinity, 1e-4)
+    topology.setSpatialPriority(true)
+    topology.setNeighborhoodSize(6)
+    topology.setInitialRadius(2)
+    val affinity = {
+      val affinity = new RelativeAffinity(source, topology)
+      affinity.setContrast(contrast)
+      affinity.setGraphPower1(2)
+      affinity.setMixing(mixing)
+      affinity.wrap((graphEdges, innerResult) => RasterAffinity.adjust(graphEdges, innerResult, RasterAffinity.degree(innerResult), 0.5))
+    }
+    val operator = solver.solve(topology, affinity, lambda)
     val recoloredTensor = operator.apply(target)
     operator.freeRef()
     recoloredTensor
   }
-
-  private def reassemble(contentTensor: Tensor, selectors: Array[Layer], tiles: Array[Tensor], log: NotebookOutput) = {
-    val reassemblyNetwork = new PipelineNetwork(1 + tiles.size)
-    reassemblyNetwork.add(new SumInputsLayer(), (
-      for ((selector, index) <- selectors.zipWithIndex) yield {
-        reassemblyNetwork.add(
-          lossFunction(selector.addRef().asInstanceOf[Layer], () => new PipelineNetwork(1)),
-          reassemblyNetwork.getInput(index + 1),
-          reassemblyNetwork.getInput(0))
-      }): _*).freeRef()
-    val trainable = new ArrayTrainable(reassemblyNetwork, 1)
-    trainable.setTrainingData(Array(Array(contentTensor.addRef()) ++ tiles.map(_.addRef())))
-    trainable.setMask(Array(true) ++ tiles.map(_ => false): _*)
-    val trainer = new IterativeTrainer(trainable)
-    trainer.setMaxIterations(100)
-    trainer.run()
-    log.out(log.jpg(contentTensor.toRgbImage, "Combined Image"))
-    contentTensor
-  }
-
-  def lossFunction(colorMappingLayer: Layer, summarizer: ()=>Layer) = {
-    val network = new PipelineNetwork(2)
-    network.add(
-      new AvgReducerLayer(),
-      network.add(
-        new SquareActivationLayer(),
-        network.add(
-          new BinarySumLayer(1.0, -1.0),
-          network.add(
-            summarizer(),
-            network.getInput(0)),
-          network.add(
-            summarizer(),
-            network.add(
-              colorMappingLayer,
-              network.getInput(1)
-            ))
-        ))
-    ).freeRef()
-    network
-  }
-
-
-
-  def getCanvas(canvas: RefAtomicReference[Tensor], content:BufferedImage, log: NotebookOutput) = {
-    var originalCanvas = canvas.get()
-    val width = content.getWidth
-    val height = content.getHeight
-    if (originalCanvas == null) {
-      originalCanvas = Tensor.fromRGB(ImageArtUtil.loadImage(log, contentUrl, width, height))
-      canvas.set(originalCanvas)
-    } else if (originalCanvas.getDimensions()(0) != width) {
-      originalCanvas = Tensor.fromRGB(ImageUtil.resize(originalCanvas.toRgbImage, width, height))
-      canvas.set(originalCanvas)
-    }
-    originalCanvas
-  }
-
 
 }

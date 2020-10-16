@@ -52,7 +52,7 @@ class TextureGrowth extends ArtSetup[Object] {
   val minResolution = 200
   val maxResolution = 800
   val animationDelay = 1000
-  val magnification = 4
+  val magnification = Array(4.0)
 
   override def indexStr = "103"
 
@@ -75,7 +75,7 @@ class TextureGrowth extends ArtSetup[Object] {
       if (Option(s3bucket).filter(!_.isEmpty).isDefined)
         log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
-      log.out(log.jpg(ImageArtUtil.loadImage(log, styleUrl, (maxResolution * Math.sqrt(magnification)).toInt), "Input Style"))
+      log.out(log.jpg(ImageArtUtil.loadImage(log, styleUrl, (maxResolution * Math.sqrt(magnification.head)).toInt), "Input Style"))
       val renderedCanvases = new ArrayBuffer[() => BufferedImage]
       val registration = registerWithIndexGIF(renderedCanvases.map(_ ()), delay = animationDelay)
       NotebookRunner.withMonitoredGif(() => {

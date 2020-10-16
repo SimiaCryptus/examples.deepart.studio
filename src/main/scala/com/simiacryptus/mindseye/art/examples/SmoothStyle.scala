@@ -140,7 +140,7 @@ class SmoothStyle extends ArtSetup[Object] {
             contentModifiers = List(
               new ContentMatcher().scale(1e1)
             ),
-            magnification = 1
+            magnification = Array(1.0)
           ),
           optimizer = new BasicOptimizer {
             override val trainingMinutes: Int = 90
@@ -179,7 +179,7 @@ class SmoothStyle extends ArtSetup[Object] {
             contentModifiers = List(
               new ContentMatcher().scale(1e0)
             ),
-            magnification = 1
+            magnification = Array(1.0)
           ),
           optimizer = new BasicOptimizer {
             override val trainingMinutes: Int = 180

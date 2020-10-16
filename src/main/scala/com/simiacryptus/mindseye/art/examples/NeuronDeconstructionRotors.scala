@@ -29,7 +29,7 @@ import com.simiacryptus.mindseye.art.registry.JobRegistration
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.lang.{Layer, Tensor}
-import com.simiacryptus.mindseye.layers.java.ImgViewLayer
+import com.simiacryptus.mindseye.layers.java.AffineImgViewLayer
 import com.simiacryptus.mindseye.util.ImageUtil
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.ref.wrappers.RefAtomicReference
@@ -145,7 +145,7 @@ class NeuronDeconstructionRotors extends RotorArt {
       def rotatedCanvas = {
         var input = canvas.get()
         if (null == input) input else {
-          val viewLayer = getKaleidoscope(input.getDimensions)
+          val viewLayer = getKaleidoscope(input.getDimensions).head
           val result = viewLayer.eval(input)
           viewLayer.freeRef()
           val data = result.getData
@@ -159,14 +159,15 @@ class NeuronDeconstructionRotors extends RotorArt {
       // Kaleidoscope+Tiling layer used by the optimization engine.
       // Expands the canvas by a small amount, using tile wrap to draw in the expanded boundary.
       def viewLayer(dims: Seq[Int]) = {
-        val rotor = getKaleidoscope(dims.toArray)
-        val paddingX = Math.min(max_padding, Math.max(min_padding, dims(0) * border_factor)).toInt
-        val paddingY = Math.min(max_padding, Math.max(min_padding, dims(1) * border_factor)).toInt
-        val tiling = new ImgViewLayer(dims(0) + paddingX, dims(1) + paddingY, true)
-        tiling.setOffsetX(-paddingX / 2)
-        tiling.setOffsetY(-paddingY / 2)
-        rotor.add(tiling).freeRef()
-        rotor
+        for(rotor <- getKaleidoscope(dims.toArray)) yield {
+          val paddingX = Math.min(max_padding, Math.max(min_padding, dims(0) * border_factor)).toInt
+          val paddingY = Math.min(max_padding, Math.max(min_padding, dims(1) * border_factor)).toInt
+          val tiling = new AffineImgViewLayer(dims(0) + paddingX, dims(1) + paddingY, true)
+          tiling.setOffsetX(-paddingX / 2)
+          tiling.setOffsetY(-paddingY / 2)
+          rotor.add(tiling).freeRef()
+          rotor
+        }
       }
 
       // Display a pre-tiled image inside the report itself
@@ -197,7 +198,7 @@ class NeuronDeconstructionRotors extends RotorArt {
 
               //override def trustRegion(layer: Layer): TrustRegion = null
 
-              override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray)
+              override def renderingNetwork(dims: Seq[Int]) = getKaleidoscope(dims.toArray).head
             },
             aspect = Option(aspectRatio),
             resolutions = resolutions.toList.map(_.round.toDouble))(sub)
