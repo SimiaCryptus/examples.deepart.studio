@@ -26,7 +26,6 @@ import com.simiacryptus.mindseye.art.TiledTrainable
 import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
-import com.simiacryptus.mindseye.art.util.ArtUtil.load
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.eval.{ArrayTrainable, Trainable}
 import com.simiacryptus.mindseye.lang.cudnn.{CudaSettings, Precision}
@@ -37,10 +36,8 @@ import com.simiacryptus.mindseye.layers.java.BoundedActivationLayer
 import com.simiacryptus.mindseye.network.PipelineNetwork
 import com.simiacryptus.mindseye.opt.IterativeTrainer
 import com.simiacryptus.mindseye.util.ImageUtil
-import com.simiacryptus.mindseye.util.ImageUtil.getTensor
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.ref.lang.RefUtil
-import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.NotebookRunner
 import com.simiacryptus.sparkbook.NotebookRunner._
 import com.simiacryptus.sparkbook.util.LocalRunner
@@ -51,18 +48,16 @@ class StyleTransferPainting extends ArtSetup[Object] {
 
   val contentUrl = "upload:Content"
   val styleUrl = "upload:Style"
-  val initUrl: String = "upload:Content"
-//  val contentUrl = "file:///C:/Users/andre/code/all-projects/report/Posterize/3df53615-96a2-46da-a969-c07267f88446/etc/20150926_180731.jpg"
-//  val styleUrl = "file:///C:/Users/andre/code/all-projects/report/StyleTransferPainting/63cd2a02-f40e-40df-8572-2a41a22b80a5/etc/shutterstock_1012656667.jpg"
-//  val initUrl: String = "file:///C:/Users/andre/code/all-projects/report/StyleTransferPainting/46e06e09-7dd2-4215-a880-3839a80fb455/etc/2d231a91-2de1-4b50-9297-34eb37f18d27.jpg"
 //  val initUrl: String = "upload:Content"
-//  val contentUrl = "file:///C:/Users/andre/code/all-projects/report/Posterize/819d9008-90dc-4c1a-b447-ed29c9f4f5e3/etc/3ef16ff6-5205-4ab0-8246-ddec552a78cb.jpg"
-//  val styleUrl = "file:///C:/Users/andre/code/all-projects/report/StyleTransferPainting/3b8b7186-987a-49d8-a6f2-b12f20a20724/etc/Clouds.jpg"//,file:///C:/Users/andre/code/all-projects/report/StyleTransferPainting/3b8b7186-987a-49d8-a6f2-b12f20a20724/etc/Cloud or Smoke Close-Up.jpg"
-//    val initUrl: String = "50 + noise * 0.5 "
+//  val styleUrl = "file:///C:/Users/andre/code/all-projects/report/StyleTransferPainting/7d8a97ac-eaaa-4062-8401-58a80840d420/etc/as2gf6b9zv041.jpg"
+//  val contentUrl = "file:///C:/Users/andre/code/all-projects/report/StyleTransferPainting/7d8a97ac-eaaa-4062-8401-58a80840d420/etc/Taj-Mahal.jpg"
+//  val initUrl: String = "file:///C:/Users/andre/code/all-projects/report/StyleTransferPainting/7d8a97ac-eaaa-4062-8401-58a80840d420/etc/Taj-Mahal.jpg"
+    val initUrl: String = "50 + noise * 0.5 "
   val s3bucket: String = ""
-  val contentWeight = 1e0
+  val contentWeight = 1e1
   val adjustColors = true
   val skipResolution = -1
+  val magnification = 4.0
   val tiles = List(
     // For failed runs, put tiles here
   )
@@ -95,6 +90,7 @@ class StyleTransferPainting extends ArtSetup[Object] {
     }
   }
 
+
   override def postConfigure(log: NotebookOutput) = {
 
     implicit val implicitLog = log
@@ -121,46 +117,48 @@ class StyleTransferPainting extends ArtSetup[Object] {
       "file:///" + log.jpgFile(img.toRgbImage).getAbsolutePath
     }
 
+    val styleLayers = List(
+      VGG19.VGG19_1b1,
+      VGG19.VGG19_1b2,
+      VGG19.VGG19_1c1,
+      VGG19.VGG19_1c2,
+      VGG19.VGG19_1c3,
+      VGG19.VGG19_1c4,
+      VGG19.VGG19_1d1,
+      VGG19.VGG19_1d2,
+      VGG19.VGG19_1d3,
+      VGG19.VGG19_1d4,
+//      VGG19.VGG19_1e1,
+//      VGG19.VGG19_1e2,
+//      VGG19.VGG19_1e3,
+//      VGG19.VGG19_1e4
+    )
+    val contentLayers = List(
+      VGG19.VGG19_1c1
+    )
+
     log.p(log.jpg(contentImage, "Input Content"))
     var canvas: Tensor = null
     val registration = registerWithIndexJPG(() => canvas)
     try {
       withMonitoredJpg(() => canvas.toImage) {
         val styleContentNetwork = new VisualStyleContentNetwork(
-          styleLayers = List(
-            VGG19.VGG19_1b1,
-            VGG19.VGG19_1b2,
-            VGG19.VGG19_1c1,
-            VGG19.VGG19_1c2,
-            VGG19.VGG19_1c3,
-            VGG19.VGG19_1c4,
-            VGG19.VGG19_1d1,
-            VGG19.VGG19_1d2,
-            VGG19.VGG19_1d3,
-            VGG19.VGG19_1d4,
-            VGG19.VGG19_1e1,
-            VGG19.VGG19_1e2,
-            VGG19.VGG19_1e3,
-            VGG19.VGG19_1e4
-          ),
+          styleLayers = styleLayers,
           styleModifiers = List(
-            new GramMatrixEnhancer(),
+            new GramMatrixEnhancer().setMinMax(-10, 10),
             new GramMatrixMatcher()
           ),
           styleUrls = styleAdjustedFiles,
-          magnification = Array(16.0),
+          magnification = Array(magnification),
           contentModifiers = List(
             new ContentMatcher().scale(contentWeight)
           ),
-          contentLayers = List(
-            VGG19.VGG19_0a.prependAvgPool(1)//.appendMaxPool(1)
-            //VGG19.VGG19_1c1
-          )
+          contentLayers = contentLayers
         )
         (for (res <- new GeometricSequence {
-          override val min: Double = 320
+          override val min: Double = 120
           override val max: Double = 800
-          override val steps = 2
+          override val steps = 3
         }.toStream
           .dropWhile(x => skipResolution >= x)
           .map(_.round.toDouble).toArray) yield {
@@ -186,43 +184,38 @@ class StyleTransferPainting extends ArtSetup[Object] {
 
         val tile_padding = 64
         val tile_size = 800
-        val rawContent = getTensor(contentUrl)
+        val rawContent = ImageArtUtil.getImageTensor(contentUrl, log, -1)
         for (
           content <- new GeometricSequence {
             override val min: Double = 1600
-            override val max: Double = 6400
+            override val max: Double = 5000
             override val steps = 3
           }.toStream
-            .dropWhile(x => skipResolution >= x.toInt)
-            .map(w => ImageUtil.resize(rawContent.toRgbImage, w.toInt, true))
+            .dropWhile(x => null == x || (null != skipResolution && skipResolution >= x.toInt))
+            .map(w => {
+              if(rawContent==null) null else {
+                val image = rawContent.toRgbImage
+                if(null==w) image else {
+                  val width = w.toInt
+                  ImageUtil.resize(image, width, true)
+                }
+              }
+            })
         ) {
           canvas = updateCanvas(canvas, content.getWidth, content.getHeight)
           log.out(log.jpg(canvas.toRgbImage, "Canvas"))
           val selectors_fade = TiledTrainable.selectors(tile_padding, content.getWidth, content.getHeight, tile_size, true)
           val selectors_sharp = TiledTrainable.selectors(tile_padding, content.getWidth, content.getHeight, tile_size, false)
           val styleContentNetwork = new VisualStyleContentNetwork(
-            styleLayers = List(
-              VGG19.VGG19_1b1,
-              VGG19.VGG19_1b2,
-              VGG19.VGG19_1c1,
-              VGG19.VGG19_1c2,
-              VGG19.VGG19_1c3,
-              VGG19.VGG19_1c4,
-              VGG19.VGG19_1d1,
-              VGG19.VGG19_1d2,
-              VGG19.VGG19_1d3,
-              VGG19.VGG19_1d4
-            ),
+            styleLayers = styleLayers,
             styleModifiers = List(
-              new GramMatrixEnhancer(),
+              new GramMatrixEnhancer().setMinMax(-0.1, 0.1),
               new GramMatrixMatcher()
             ),
             styleUrls = styleAdjustedFiles,
             //maxWidth = 2048,
-            magnification = Array(content.getWidth / tile_size),
-            contentLayers = List(
-              VGG19.VGG19_1c1.appendMaxPool(1).prependAvgPool(1)
-            ),
+            magnification = Array(magnification * content.getWidth.toDouble / tile_size),
+            contentLayers = contentLayers.map(_.appendMaxPool(1).prependAvgPool(1)),
             contentModifiers = List(
               new ContentMatcher().scale(contentWeight)
             )

@@ -25,6 +25,7 @@ import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.ArtUtil.load
+import com.simiacryptus.mindseye.art.util.view.{ImageView, TransformVector}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, Permutation, _}
 import com.simiacryptus.mindseye.lang.{Layer, Tensor}
 import com.simiacryptus.mindseye.layers.java.{AffineImgViewLayer, ImgTileAssemblyLayer}
@@ -42,7 +43,7 @@ object ToroidalTexture extends ToroidalTexture with LocalRunner[Object] with Not
 
   case class JobDetails(
                          aspectRatio: Double,
-                         views: Array[Array[SymmetryTransform]],
+                         views: Array[Array[ImageView]],
                          resolutions: Map[Int,Seq[Double]] = new GeometricSequence {
                            override val min: Double = 320
                            override val max: Double = 640
@@ -172,18 +173,36 @@ class ToroidalTexture extends ArtSetup[Object] with GeometricArt {
       //      resolutions = Array(320, 640)
       //    ),
 
-      "1/12 Echo" -> JobDetails(
-        aspectRatio = 8.0,
-        views = Array(Array(
-          //TransformVector(offset = Map(Array(0.5, 0) -> Permutation.unity(3))),
-          TransformVector(offset = (1 until 2).map(x => Array(0, x.toDouble / 8) -> Permutation.unity(3)).toMap)
-        )),
-        resolutions = Map(
-          90 -> Array(2400.0),
-          180 -> Array(600.0),
-          320 -> Array(150.0)
-        ).mapValues(_.flatMap(x => Array(x * 0.9, x, x * 1.1)))
-      )
+
+            "1/4 Square" -> JobDetails(
+              aspectRatio = 1.0,
+              views = Array(Array(
+                //TransformVector(offset = Map(Array(0.5, 0) -> Permutation.unity(3))),
+                TransformVector(offset = (1 until 2).map(x => Array(0, x.toDouble / 4) -> Permutation.unity(3)).toMap),
+                TransformVector(offset = (1 until 2).map(x => Array(x.toDouble / 4, 0) -> Permutation.unity(3)).toMap)
+              )),
+              resolutions = Map(
+                300 -> Array(16),
+                600 -> Array(16),
+                1200 -> Array(16)
+              ).mapValues(_.flatMap(x => Array(x * 0.9, x, x * 1.1)))
+            ),
+
+
+            "1/8 Echo" -> JobDetails(
+              aspectRatio = 8.0,
+              views = Array(Array(
+                //TransformVector(offset = Map(Array(0.5, 0) -> Permutation.unity(3))),
+                TransformVector(offset = (1 until 2).map(x => Array(0, x.toDouble / 8) -> Permutation.unity(3)).toMap)
+              )),
+              resolutions = Map(
+                90 -> Array(15*15),
+                180 -> Array(15*15),
+                320 -> Array(15*15)
+              ).mapValues(_.flatMap(x => Array(x * 0.9, x, x * 1.1)))
+            )
+
+
     )
     )
 

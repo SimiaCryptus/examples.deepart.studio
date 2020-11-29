@@ -23,9 +23,8 @@ import java.net.URI
 
 import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
-import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.ArtUtil.load
-import com.simiacryptus.mindseye.art.util.view.{HyperbolicTileView, ImageView, RetiledView, RotatedVector, SphericalView, TunnelView}
+import com.simiacryptus.mindseye.art.util.view.{HyperbolicTileView, ImageView, RetiledView, RotatedVector, TunnelView}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.eval.Trainable
 import com.simiacryptus.mindseye.lang.cudnn.{CudaSettings, Precision}
@@ -40,7 +39,7 @@ import com.simiacryptus.sparkbook.NotebookRunner._
 import com.simiacryptus.sparkbook.util.LocalRunner
 import com.simiacryptus.util.FastRandom
 
-object HyperbolicTexture extends HyperbolicTexture with LocalRunner[Object] with NotebookRunner[Object] {
+object TileSetTexture extends TileSetTexture with LocalRunner[Object] with NotebookRunner[Object] {
   override def http_port: Int = 1080
 
   case class JobDetails(
@@ -63,9 +62,9 @@ object HyperbolicTexture extends HyperbolicTexture with LocalRunner[Object] with
 
 }
 
-import com.simiacryptus.mindseye.art.style.HyperbolicTexture.JobDetails
+import com.simiacryptus.mindseye.art.style.TileSetTexture.JobDetails
 
-class HyperbolicTexture extends ArtSetup[Object] with GeometricArt {
+class TileSetTexture extends ArtSetup[Object] with GeometricArt {
   val styleUrl = "upload:Style"
   //  val styleUrl = "file:///C:/Users/andre/code/all-projects/report/HyperbolicTexture/72299ff9-9e6b-4c4d-88be-f537737b1434/etc/shutterstock_87165334.jpg"
   //  val styleUrl = "file:///C:/Users/andre/code/all-projects/report/HyperbolicTexture/9288abca-8e6c-446d-9d95-ba1941f20fb7/etc/the-starry-night.jpg"
@@ -86,212 +85,28 @@ class HyperbolicTexture extends ArtSetup[Object] with GeometricArt {
   //    Random.shuffle(Map(
   {
     List(
-
-      //      "6-fold angular symmetry" -> JobDetails(
-      //        aspectRatio = 1.0,
-      //        views = Array(Array(
-      //          RotatedVector(rotation = List(1, 2, 3, 4, 5).map(_ * Math.PI / 3 -> Permutation.unity(3)).toMap),
-      //        )),
-      //        resolutions = Map(
-      //          300 -> stdMagnification,
-      //          //900 -> stdMagnification
-      //        ).mapValues(_.flatMap(x => Array(x)))
-      //      ),
-      //      "2-fold angular symmetry" -> JobDetails(
-      //        aspectRatio = 1.0,
-      //        views = Array(Array(
-      //          RotatedVector(rotation = List(1).map(_ * Math.PI -> Permutation.unity(3)).toMap),
-      //        )),
-      //        resolutions = Map(
-      //          300 -> stdMagnification,
-      //          //900 -> stdMagnification
-      //        ).mapValues(_.flatMap(x => Array(x)))
-      //      ),
-      //      "4/6 no symmetry" -> JobDetails(
-      //        aspectRatio = 1.0,
-      //        views = Array(Array(
-      //          HyperbolicTileView(4, 6, 6),
-      //        )),
-      //        resolutions = Map(
-      //          300 -> stdMagnification,
-      //          //900 -> stdMagnification
-      //        ).mapValues(_.flatMap(x => Array(x)))
-      //      ),
-      //      "Sphere" -> JobDetails(
-      //        aspectRatio = 1.0,
-      //        views = Array(
-      //          SphericalView(0,0),
-      //          SphericalView(Math.PI / 4,Math.PI / 4),
-      //          SphericalView(Math.PI / 4 ,Math.PI / 2),
-      //          SphericalView(Math.PI / 2,Math.PI / 2)
-      //        ).map(Array[ImageView](_)),
-      //        finalView = Array(),
-      //        resolutions = Map(
-      //          300 -> stdMagnification,
-      //          900 -> stdMagnification
-      //        ).mapValues(_.flatMap(x => Array(x)))
-      //      ),
-      "3/8 weak rotational symmetry" -> JobDetails(
+      "Retiled" -> JobDetails(
         aspectRatio = 1.0,
-        views = Array(Array(
-          RotatedVector(rotation = List(1).map(_ * Math.PI * 2 / 3 -> Permutation.unity(3)).toMap),
-          HyperbolicTileView(3, 8),
-        )),
-        finalView = Array(
-          RotatedVector(rotation = List(1).map(_ * Math.PI * 2 / 3 -> Permutation.unity(3)).toMap),
-          HyperbolicTileView(3, 8, maxRadius = 1)
+        views = Array(
+          Array(),
+          Array(RetiledView())
         ),
         resolutions = Map(
           300 -> stdMagnification,
           900 -> stdMagnification
         ).mapValues(_.flatMap(x => Array(x)))
       ),
-      "3/8 strong rotational symmetry" -> JobDetails(
+      "Tunnel Triangular" -> JobDetails(
         aspectRatio = 1.0,
         views = Array(Array(
+          TunnelView(),
           RotatedVector(rotation = List(1, 2).map(_ * Math.PI * 2 / 3 -> Permutation.unity(3)).toMap),
-          HyperbolicTileView(3, 8),
         )),
-        finalView = Array(
-          RotatedVector(rotation = List(1, 2).map(_ * Math.PI * 2 / 3 -> Permutation.unity(3)).toMap),
-          HyperbolicTileView(3, 8, maxRadius = 1)
-        ),
         resolutions = Map(
           300 -> stdMagnification,
           900 -> stdMagnification
         ).mapValues(_.flatMap(x => Array(x)))
-      ),
-      "3/20 weak rotational symmetry" -> JobDetails(
-        aspectRatio = 1.0,
-        views = Array(Array(
-          RotatedVector(rotation = List(1).map(_ * Math.PI * 2 / 3 -> Permutation.unity(3)).toMap),
-          HyperbolicTileView(3, 20, maxRadius = .95),
-        )),
-        finalView = Array(
-          RotatedVector(rotation = List(1).map(_ * Math.PI * 2 / 3 -> Permutation.unity(3)).toMap),
-          HyperbolicTileView(3, 20, maxRadius = 1)
-        ),
-        resolutions = Map(
-          300 -> stdMagnification,
-          900 -> stdMagnification
-        ).mapValues(_.flatMap(x => Array(x)))
-      ),
-      "5/6 weak rotational symmetry" -> JobDetails(
-        aspectRatio = 1.0,
-        views = Array(Array(
-          RotatedVector(rotation = List(1).map(_ * Math.PI * 2 / 5 -> Permutation.unity(3)).toMap),
-          HyperbolicTileView(5, 6),
-        )),
-        finalView = Array(
-          RotatedVector(rotation = List(1).map(_ * Math.PI * 2 / 5 -> Permutation.unity(3)).toMap),
-          HyperbolicTileView(5, 6, maxRadius = 1)
-        ),
-        resolutions = Map(
-          300 -> stdMagnification,
-          900 -> stdMagnification
-        ).mapValues(_.flatMap(x => Array(x)))
-      ),
-      "5/6 strong rotational symmetry" -> JobDetails(
-        aspectRatio = 1.0,
-        views = Array(Array(
-          RotatedVector(rotation = List(1, 2, 3, 4).map(_ * Math.PI * 2 / 5 -> Permutation.unity(3)).toMap),
-          HyperbolicTileView(5, 6),
-        )),
-        finalView = Array(
-          RotatedVector(rotation = List(1, 2, 3, 4).map(_ * Math.PI * 2 / 5 -> Permutation.unity(3)).toMap),
-          HyperbolicTileView(5, 6, maxRadius = 1)
-        ),
-        resolutions = Map(
-          300 -> stdMagnification,
-          900 -> stdMagnification
-        ).mapValues(_.flatMap(x => Array(x)))
-      ),
-      "6/8 weak rotational symmetry" -> JobDetails(
-        aspectRatio = 1.0,
-        views = Array(Array(
-          RotatedVector(rotation = List(1).map(_ * Math.PI / 3 -> Permutation.unity(3)).toMap),
-          HyperbolicTileView(6, 8),
-        )),
-        finalView = Array(
-          RotatedVector(rotation = List(1).map(_ * Math.PI / 3 -> Permutation.unity(3)).toMap),
-          HyperbolicTileView(6, 8, maxRadius = 1)
-        ),
-        resolutions = Map(
-          300 -> stdMagnification,
-          900 -> stdMagnification
-        ).mapValues(_.flatMap(x => Array(x)))
-      ),
-      "6/8 strong rotational symmetry" -> JobDetails(
-        aspectRatio = 1.0,
-        views = Array(Array(
-          RotatedVector(rotation = List(1, 2, 3, 4, 5).map(_ * Math.PI / 3 -> Permutation.unity(3)).toMap),
-          HyperbolicTileView(6, 8),
-        )),
-        finalView = Array(
-          RotatedVector(rotation = List(1, 2, 3, 4, 5).map(_ * Math.PI / 3 -> Permutation.unity(3)).toMap),
-          HyperbolicTileView(6, 8, maxRadius = 1)
-        ),
-        resolutions = Map(
-          300 -> stdMagnification,
-          900 -> stdMagnification
-        ).mapValues(_.flatMap(x => Array(x)))
-      ),
-      "4/6 4-fold rotational symmetry" -> JobDetails(
-        aspectRatio = 1.0,
-        views = Array(Array(
-          RotatedVector(rotation = List(1, 2, 3).map(_ * Math.PI / 2 -> Permutation.unity(3)).toMap),
-          HyperbolicTileView(4, 6),
-        )),
-        finalView = Array(
-          RotatedVector(rotation = List(1, 2, 3).map(_ * Math.PI / 2 -> Permutation.unity(3)).toMap),
-          HyperbolicTileView(4, 6, maxRadius = 1)
-        ),
-        resolutions = Map(
-          300 -> stdMagnification,
-          900 -> stdMagnification
-        ).mapValues(_.flatMap(x => Array(x)))
-      ),
-      "4/6 2-fold rotational symmetry" -> JobDetails(
-        aspectRatio = 1.0,
-        views = Array(Array(
-          RotatedVector(rotation = List(2).map(_ * Math.PI / 2 -> Permutation.unity(3)).toMap),
-          HyperbolicTileView(4, 6),
-        )),
-        finalView = Array(
-          RotatedVector(rotation = List(2).map(_ * Math.PI / 2 -> Permutation.unity(3)).toMap),
-          HyperbolicTileView(4, 6, maxRadius = 1)
-        ),
-        resolutions = Map(
-          300 -> stdMagnification,
-          900 -> stdMagnification
-        ).mapValues(_.flatMap(x => Array(x)))
-      ),
-      "4/6 weak rotational symmetry" -> JobDetails(
-        aspectRatio = 1.0,
-        views = Array(Array(
-          RotatedVector(rotation = List(2).map(_ * Math.PI / 2 -> Permutation.unity(3)).toMap),
-          HyperbolicTileView(4, 6),
-        )),
-        finalView = Array(
-          RotatedVector(rotation = List(2).map(_ * Math.PI / 2 -> Permutation.unity(3)).toMap),
-          HyperbolicTileView(4, 6, maxRadius = 1)
-        ),
-        resolutions = Map(
-          300 -> stdMagnification,
-          900 -> stdMagnification
-        ).mapValues(_.flatMap(x => Array(x)))
-      ),
-      //      "4/6 Nonsymetric" -> JobDetails(
-      //        aspectRatio = 1.0,
-      //        views = Array(Array(
-      //          HyperbolicTileView(4, 6, 3)
-      //        )),
-      //        resolutions = Map(
-      //          200 -> Array(16.0),
-      //          400 -> Array(16.0),
-      //          800 -> Array(16.0)
-      //        ).mapValues(_.flatMap(x => Array(x)))
-      //      )
+      )
     )
   }
 
@@ -438,9 +253,9 @@ class HyperbolicTexture extends ArtSetup[Object] with GeometricArt {
             for (canvas <- canvases) {
               trainable.setData(RefArrays.asList(Array(canvas.get())))
               new BasicOptimizer {
-                override val trainingMinutes: Int = 90
-                override val trainingIterations: Int = 30
-                override val maxRate = 1e8
+                override val trainingMinutes: Int = 180
+                override val trainingIterations: Int = 50
+                override val maxRate = 2e4
 
                 override def trustRegion(layer: Layer): TrustRegion = null
 
