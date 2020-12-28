@@ -46,19 +46,19 @@ object HyperbolicTexture extends HyperbolicTexture with LocalRunner[Object] with
   case class JobDetails(
                          aspectRatio: Double,
                          views: Array[Array[ImageView]],
-                         finalView: Array[ImageView] = Array.empty,
-                         resolutions: Map[Int, Seq[Double]] = new GeometricSequence {
+                         auxViews: Array[Array[ImageView]] = Array.empty,
+                         resolutions: Seq[(Int, Seq[Double])] = new GeometricSequence {
                            override val min: Double = 320
                            override val max: Double = 640
                            override val steps = 2
                          }.toStream.map(x => {
                            x.round.toInt -> Array(8.0)
-                         }: (Int, Seq[Double])).toMap
+                         }: (Int, Seq[Double]))
                        ) extends GeometricArt {
 
-    def buildViews(dimensions: Array[Int]) = views.map(views => PipelineNetwork.build(1, views.map(_.getSymmetricView(dimensions)): _*))
+    def buildViews(dimensions: Array[Int]) = views.map(views => PipelineNetwork.build(1, views.map(_.getView(dimensions)): _*))
 
-    def buildFinalView(dimensions: Array[Int]) = PipelineNetwork.build(1, finalView.map(_.getSymmetricView(dimensions)): _*)
+    def buildFinalViews(dimensions: Array[Int]) = auxViews.map(auxView=>PipelineNetwork.build(1, auxView.map(_.getView(dimensions)): _*))
   }
 
 }
@@ -86,6 +86,32 @@ class HyperbolicTexture extends ArtSetup[Object] with GeometricArt {
   //    Random.shuffle(Map(
   {
     List(
+      "Square Color and Spacial Symmetry" -> JobDetails(
+        aspectRatio = 1.0,
+        views = Array(Array(
+          HyperbolicTileView(4, 6, mode = "square"),
+          RotatedVector(rotation = Map(
+            Math.PI / 2 -> Permutation(-1,-2,-3),
+            Math.PI -> Permutation(1,2,3),
+            3 * Math.PI / 2 -> Permutation(-1,-2,-3)
+          )),
+        )),
+        auxViews = Array(Array(
+          HyperbolicTileView(4, 6, maxRadius = 1, mode = "square"),
+          RotatedVector(rotation = Map(
+            Math.PI / 2 -> Permutation(-1,-2,-3),
+            Math.PI -> Permutation(1,2,3),
+            3 * Math.PI / 2 -> Permutation(-1,-2,-3)
+          )),
+        )),
+        resolutions = List(
+          64 -> stdMagnification,
+          128 -> stdMagnification,
+          256 -> stdMagnification,
+          512 -> stdMagnification,
+          1024 -> stdMagnification
+        )
+      ),
 
       //      "6-fold angular symmetry" -> JobDetails(
       //        aspectRatio = 1.0,
@@ -137,14 +163,17 @@ class HyperbolicTexture extends ArtSetup[Object] with GeometricArt {
           RotatedVector(rotation = List(1).map(_ * Math.PI * 2 / 3 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(3, 8),
         )),
-        finalView = Array(
+        auxViews = Array(Array(
           RotatedVector(rotation = List(1).map(_ * Math.PI * 2 / 3 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(3, 8, maxRadius = 1)
-        ),
-        resolutions = Map(
-          300 -> stdMagnification,
-          900 -> stdMagnification
-        ).mapValues(_.flatMap(x => Array(x)))
+        )),
+        resolutions = List(
+          64 -> stdMagnification,
+          128 -> stdMagnification,
+          256 -> stdMagnification,
+          512 -> stdMagnification,
+          1024 -> stdMagnification
+        )
       ),
       "3/8 strong rotational symmetry" -> JobDetails(
         aspectRatio = 1.0,
@@ -152,14 +181,14 @@ class HyperbolicTexture extends ArtSetup[Object] with GeometricArt {
           RotatedVector(rotation = List(1, 2).map(_ * Math.PI * 2 / 3 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(3, 8),
         )),
-        finalView = Array(
+        auxViews = Array(Array(
           RotatedVector(rotation = List(1, 2).map(_ * Math.PI * 2 / 3 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(3, 8, maxRadius = 1)
-        ),
-        resolutions = Map(
+        )),
+        resolutions = List(
           300 -> stdMagnification,
           900 -> stdMagnification
-        ).mapValues(_.flatMap(x => Array(x)))
+        )
       ),
       "3/20 weak rotational symmetry" -> JobDetails(
         aspectRatio = 1.0,
@@ -167,14 +196,14 @@ class HyperbolicTexture extends ArtSetup[Object] with GeometricArt {
           RotatedVector(rotation = List(1).map(_ * Math.PI * 2 / 3 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(3, 20, maxRadius = .95),
         )),
-        finalView = Array(
+        auxViews = Array(Array(
           RotatedVector(rotation = List(1).map(_ * Math.PI * 2 / 3 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(3, 20, maxRadius = 1)
-        ),
-        resolutions = Map(
+        )),
+        resolutions = List(
           300 -> stdMagnification,
           900 -> stdMagnification
-        ).mapValues(_.flatMap(x => Array(x)))
+        )
       ),
       "5/6 weak rotational symmetry" -> JobDetails(
         aspectRatio = 1.0,
@@ -182,14 +211,14 @@ class HyperbolicTexture extends ArtSetup[Object] with GeometricArt {
           RotatedVector(rotation = List(1).map(_ * Math.PI * 2 / 5 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(5, 6),
         )),
-        finalView = Array(
+        auxViews = Array(Array(
           RotatedVector(rotation = List(1).map(_ * Math.PI * 2 / 5 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(5, 6, maxRadius = 1)
-        ),
-        resolutions = Map(
+        )),
+        resolutions = List(
           300 -> stdMagnification,
           900 -> stdMagnification
-        ).mapValues(_.flatMap(x => Array(x)))
+        )
       ),
       "5/6 strong rotational symmetry" -> JobDetails(
         aspectRatio = 1.0,
@@ -197,14 +226,14 @@ class HyperbolicTexture extends ArtSetup[Object] with GeometricArt {
           RotatedVector(rotation = List(1, 2, 3, 4).map(_ * Math.PI * 2 / 5 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(5, 6),
         )),
-        finalView = Array(
+        auxViews = Array(Array(
           RotatedVector(rotation = List(1, 2, 3, 4).map(_ * Math.PI * 2 / 5 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(5, 6, maxRadius = 1)
-        ),
-        resolutions = Map(
+        )),
+        resolutions = List(
           300 -> stdMagnification,
           900 -> stdMagnification
-        ).mapValues(_.flatMap(x => Array(x)))
+        )
       ),
       "6/8 weak rotational symmetry" -> JobDetails(
         aspectRatio = 1.0,
@@ -212,14 +241,14 @@ class HyperbolicTexture extends ArtSetup[Object] with GeometricArt {
           RotatedVector(rotation = List(1).map(_ * Math.PI / 3 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(6, 8),
         )),
-        finalView = Array(
+        auxViews = Array(Array(
           RotatedVector(rotation = List(1).map(_ * Math.PI / 3 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(6, 8, maxRadius = 1)
-        ),
-        resolutions = Map(
+        )),
+        resolutions = List(
           300 -> stdMagnification,
           900 -> stdMagnification
-        ).mapValues(_.flatMap(x => Array(x)))
+        )
       ),
       "6/8 strong rotational symmetry" -> JobDetails(
         aspectRatio = 1.0,
@@ -227,14 +256,14 @@ class HyperbolicTexture extends ArtSetup[Object] with GeometricArt {
           RotatedVector(rotation = List(1, 2, 3, 4, 5).map(_ * Math.PI / 3 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(6, 8),
         )),
-        finalView = Array(
+        auxViews = Array(Array(
           RotatedVector(rotation = List(1, 2, 3, 4, 5).map(_ * Math.PI / 3 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(6, 8, maxRadius = 1)
-        ),
-        resolutions = Map(
+        )),
+        resolutions = List(
           300 -> stdMagnification,
           900 -> stdMagnification
-        ).mapValues(_.flatMap(x => Array(x)))
+        )
       ),
       "4/6 4-fold rotational symmetry" -> JobDetails(
         aspectRatio = 1.0,
@@ -242,14 +271,14 @@ class HyperbolicTexture extends ArtSetup[Object] with GeometricArt {
           RotatedVector(rotation = List(1, 2, 3).map(_ * Math.PI / 2 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(4, 6),
         )),
-        finalView = Array(
+        auxViews = Array(Array(
           RotatedVector(rotation = List(1, 2, 3).map(_ * Math.PI / 2 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(4, 6, maxRadius = 1)
-        ),
-        resolutions = Map(
+        )),
+        resolutions = List(
           300 -> stdMagnification,
           900 -> stdMagnification
-        ).mapValues(_.flatMap(x => Array(x)))
+        )
       ),
       "4/6 2-fold rotational symmetry" -> JobDetails(
         aspectRatio = 1.0,
@@ -257,14 +286,14 @@ class HyperbolicTexture extends ArtSetup[Object] with GeometricArt {
           RotatedVector(rotation = List(2).map(_ * Math.PI / 2 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(4, 6),
         )),
-        finalView = Array(
+        auxViews = Array(Array(
           RotatedVector(rotation = List(2).map(_ * Math.PI / 2 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(4, 6, maxRadius = 1)
-        ),
-        resolutions = Map(
+        )),
+        resolutions = List(
           300 -> stdMagnification,
           900 -> stdMagnification
-        ).mapValues(_.flatMap(x => Array(x)))
+        )
       ),
       "4/6 weak rotational symmetry" -> JobDetails(
         aspectRatio = 1.0,
@@ -272,14 +301,14 @@ class HyperbolicTexture extends ArtSetup[Object] with GeometricArt {
           RotatedVector(rotation = List(2).map(_ * Math.PI / 2 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(4, 6),
         )),
-        finalView = Array(
+        auxViews = Array(Array(
           RotatedVector(rotation = List(2).map(_ * Math.PI / 2 -> Permutation.unity(3)).toMap),
           HyperbolicTileView(4, 6, maxRadius = 1)
-        ),
-        resolutions = Map(
+        )),
+        resolutions = List(
           300 -> stdMagnification,
           900 -> stdMagnification
-        ).mapValues(_.flatMap(x => Array(x)))
+        )
       ),
       //      "4/6 Nonsymetric" -> JobDetails(
       //        aspectRatio = 1.0,
@@ -359,17 +388,20 @@ class HyperbolicTexture extends ArtSetup[Object] with GeometricArt {
 
         def withMonitoredCanvases[T]()(fn: => T): T = {
           canvases.foldLeft((_: Any) => fn)((fn: Any => T, canvas) => { (x: Any) => {
-            ((0 until canvasViews(canvas.get()).size).map(i => () => canvasViews(canvas.get())(i)()) ++ List(() => {
-              var canvasTensor = canvas.get()
-              val dimensions = canvasTensor.getDimensions
-              val mag = 2
-              canvasTensor = Tensor.fromRGB(ImageUtil.resize(canvasTensor.toRgbImage, dimensions(0) * mag, dimensions(1) * mag))
-              val viewLayer = details.buildFinalView(Array(dimensions(0) * mag, dimensions(1) * mag))
-              var result = getResult(viewLayer.eval(canvasTensor))
-              viewLayer.freeRef()
-              result = Tensor.fromRGB(ImageUtil.resize(result.toRgbImage, dimensions(0), dimensions(1)))
-              result
-            })).foldLeft((_: Any) => fn(x))((fn: Any => T, function: () => Tensor) => { (x: Any) => {
+            def canvasTensor = canvas.get()
+
+            def finalViews = details.buildFinalViews(getDims(canvasTensor))
+            def workingViews = canvasViews(canvas.get())
+            ((0 until workingViews.size).map(i => () => workingViews(i)()) ++
+              (0 until finalViews.size).map(i => () => {
+                val dimensions = getDims(canvasTensor)
+                val viewLayer = details.buildFinalViews(dimensions)(i)
+                val result = getResult(viewLayer.eval(canvasTensor))
+                viewLayer.freeRef()
+                val image = result.toRgbImage
+                result.freeRef()
+                Tensor.fromRGB(ImageUtil.resize(image, dimensions(0), dimensions(1)))
+              })).foldLeft((_: Any) => fn(x))((fn: Any => T, function: () => Tensor) => { (x: Any) => {
               withMonitoredJpg(() => {
                 val canvasTensor = function()
                 try {
@@ -412,7 +444,7 @@ class HyperbolicTexture extends ArtSetup[Object] with GeometricArt {
                 //new SingleChannelEnhancer(130, 131)
               ),
               styleUrls = Seq(styleUrl),
-              magnification = mag.toArray,
+              magnification = mag.toList,
               viewLayer = dims => details.buildViews(dims.toArray).toList
             )
             for (canvas <- canvases) {
@@ -457,6 +489,14 @@ class HyperbolicTexture extends ArtSetup[Object] with GeometricArt {
       null
     }
     null
+  }
+
+  private def getDims[T](tensor: Tensor) = {
+    try {
+      tensor.getDimensions
+    } finally {
+      tensor.freeRef()
+    }
   }
 
   private def getResult(result: Result) = {

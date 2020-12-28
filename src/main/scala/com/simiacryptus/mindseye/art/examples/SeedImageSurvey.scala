@@ -83,8 +83,8 @@ class SeedImageSurvey extends ArtSetup[Object] {
       for (seed <- seeds) log.p(log.jpg(ImageArtUtil.loadImage(log, seed, (resolution * Math.sqrt(magnification.head)).toInt), "Seed"))
       val renderedCanvases = new ArrayBuffer[() => BufferedImage]
       // Execute the main process while registered with the site index
-      val registration = registerWithIndexGIF(renderedCanvases.map(_ ()), delay = animationDelay)
-      withMonitoredGif(() => renderedCanvases.map(_ ()), delay = animationDelay) {
+      val registration = registerWithIndexGIF(renderedCanvases.map(_ ()).toList, delay = animationDelay)
+      withMonitoredGif(() => renderedCanvases.map(_ ()).toList, delay = animationDelay) {
         try {
           for (seed <- seeds) {
             val canvas = new RefAtomicReference[Tensor](null)

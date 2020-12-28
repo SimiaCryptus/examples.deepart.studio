@@ -85,9 +85,9 @@ class NeuronDeconstructionRotors extends RotorArt {
         val animationDelay = 1000
         val renderedCanvases = new ArrayBuffer[() => BufferedImage]
         // Execute the main process while registered with the site index
-        val registration = registerWithIndexGIF(renderedCanvases.filter(_ != null).map(_ ()), delay = animationDelay)
+        val registration = registerWithIndexGIF(renderedCanvases.filter(_ != null).map(_ ()).toList, delay = animationDelay)
         try {
-          withMonitoredGif(() => renderedCanvases.filter(_ != null).map(_ ()), delay = animationDelay) {
+          withMonitoredGif(() => renderedCanvases.filter(_ != null).map(_ ()).toList, delay = animationDelay) {
             val allData: List[(pipelineType, Int, Double, Double)] = (for (
               res <- new GeometricSequence {
                 override def min: Double = 256

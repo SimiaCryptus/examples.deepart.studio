@@ -55,9 +55,9 @@ object TileSetTexture extends TileSetTexture with LocalRunner[Object] with Noteb
                          }: (Int, Seq[Double])).toMap
                        ) extends GeometricArt {
 
-    def buildViews(dimensions: Array[Int]) = views.map(views => PipelineNetwork.build(1, views.map(_.getSymmetricView(dimensions)): _*))
+    def buildViews(dimensions: Array[Int]) = views.map(views => PipelineNetwork.build(1, views.map(_.getView(dimensions)): _*))
 
-    def buildFinalView(dimensions: Array[Int]) = PipelineNetwork.build(1, finalView.map(_.getSymmetricView(dimensions)): _*)
+    def buildFinalView(dimensions: Array[Int]) = PipelineNetwork.build(1, finalView.map(_.getView(dimensions)): _*)
   }
 
 }
@@ -94,7 +94,7 @@ class TileSetTexture extends ArtSetup[Object] with GeometricArt {
         resolutions = Map(
           300 -> stdMagnification,
           900 -> stdMagnification
-        ).mapValues(_.flatMap(x => Array(x)))
+        ).mapValues(_.flatMap(x => Array(x)).toList)
       ),
       "Tunnel Triangular" -> JobDetails(
         aspectRatio = 1.0,
@@ -105,7 +105,7 @@ class TileSetTexture extends ArtSetup[Object] with GeometricArt {
         resolutions = Map(
           300 -> stdMagnification,
           900 -> stdMagnification
-        ).mapValues(_.flatMap(x => Array(x)))
+        ).mapValues(_.flatMap(x => Array(x)).toList)
       )
     )
   }
@@ -227,7 +227,7 @@ class TileSetTexture extends ArtSetup[Object] with GeometricArt {
                 //new SingleChannelEnhancer(130, 131)
               ),
               styleUrls = Seq(styleUrl),
-              magnification = mag.toArray,
+              magnification = mag.toList,
               viewLayer = dims => details.buildViews(dims.toArray).toList
             )
             for (canvas <- canvases) {

@@ -77,10 +77,10 @@ class TextureGrowth extends ArtSetup[Object] {
       log.onComplete(() => upload(log): Unit)
       log.out(log.jpg(ImageArtUtil.loadImage(log, styleUrl, (maxResolution * Math.sqrt(magnification.head)).toInt), "Input Style"))
       val renderedCanvases = new ArrayBuffer[() => BufferedImage]
-      val registration = registerWithIndexGIF(renderedCanvases.map(_ ()), delay = animationDelay)
+      val registration = registerWithIndexGIF(renderedCanvases.map(_ ()).toList, delay = animationDelay)
       NotebookRunner.withMonitoredGif(() => {
         renderedCanvases.map(_ ())
-      }, delay = animationDelay) {
+      }.toList, delay = animationDelay) {
         try {
           val pipeline = VGG16.getVisionPipeline
           import scala.collection.JavaConverters._

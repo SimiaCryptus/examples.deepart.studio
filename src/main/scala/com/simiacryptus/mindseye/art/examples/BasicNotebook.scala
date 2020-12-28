@@ -50,8 +50,8 @@ class BasicNotebook extends ArtSetup[Object] {
   override def inputTimeoutSeconds = 3600
 
   override def postConfigure(log: NotebookOutput) = log.eval { () =>
+    implicit val l = log
     () => {
-      implicit val _ = log
       // First, basic configuration so we publish to our s3 site
       if (Option(s3bucket).filter(!_.isEmpty).isDefined)
         log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))

@@ -92,8 +92,8 @@ class NeuronTiledRotor extends RotorArt {
           val animationDelay = 1000
           val renderedCanvases = new ArrayBuffer[() => BufferedImage]
           // Execute the main process while registered with the site index
-          val registration = registerWithIndexGIF(renderedCanvases.filter(_ != null).map(_ ()), delay = animationDelay)
-          withMonitoredGif(() => renderedCanvases.filter(_ != null).map(_ ()), delay = animationDelay) {
+          val registration = registerWithIndexGIF(renderedCanvases.filter(_ != null).map(_ ()).toList, delay = animationDelay)
+          withMonitoredGif(() => renderedCanvases.filter(_ != null).map(_ ()).toList, delay = animationDelay) {
             try {
               log.subreport("Neurons in " + layer.name(), (sub: NotebookOutput) => {
                 for ((list, page) <- (fromDim until toDim).toStream.grouped(8).zipWithIndex.toStream) {

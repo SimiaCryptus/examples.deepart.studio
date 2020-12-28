@@ -78,8 +78,8 @@ class ContentReconstructionSurvey extends ArtSetup[Object] {
       log.out(log.jpg(ImageArtUtil.loadImage(log, contentUrl, resolution.toInt), "Input Style"))
       val renderedCanvases = new ArrayBuffer[() => BufferedImage]
       // Execute the main process while registered with the site index
-      val registration = registerWithIndexGIF(renderedCanvases.map(_ ()), delay = animationDelay)
-      withMonitoredGif(() => renderedCanvases.map(_ ()), delay = animationDelay) {
+      val registration = registerWithIndexGIF(renderedCanvases.map(_ ()).toList, delay = animationDelay)
+      withMonitoredGif(() => renderedCanvases.map(_ ()).toList, delay = animationDelay) {
         try {
           for (pipeline <- List(
             VGG19.getVisionPipeline

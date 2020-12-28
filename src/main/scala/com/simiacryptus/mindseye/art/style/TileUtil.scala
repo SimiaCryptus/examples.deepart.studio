@@ -32,6 +32,8 @@ import com.simiacryptus.mindseye.opt.orient.GradientDescent
 import com.simiacryptus.notebook.NotebookOutput
 
 import scala.util.Random
+import scala.collection.JavaConverters._
+//import scala.collection.parallel.CollectionConverters._
 
 object TileUtil {
   def lossFunction(colorMappingLayer: Layer, summarizer: ()=>Layer) = {

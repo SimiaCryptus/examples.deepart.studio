@@ -82,7 +82,7 @@ class StyleTransferSweep extends ArtSetup[Object] {
 
       val canvases = (1 to frames).map(_ => new RefAtomicReference[Tensor](null)).toList.toBuffer
       // Execute the main process while registered with the site index
-      val registration = registerWithIndexGIF_Cyclic(canvases.map(_.get()), delay = delay)
+      val registration = registerWithIndexGIF_Cyclic(canvases.map(_.get()).toList, delay = delay)
       try {
         def paramFn: Double => VisualNetwork = log.eval(() => {
           (f: Double) => {

@@ -93,7 +93,7 @@ class AnimatedRotor extends RotorArt {
           val transformed = tensorList.get(0)
           tensorList.freeRef()
           transformed
-        }))
+        }).toList)
       try {
         animate(
           contentUrl = contentUrl,

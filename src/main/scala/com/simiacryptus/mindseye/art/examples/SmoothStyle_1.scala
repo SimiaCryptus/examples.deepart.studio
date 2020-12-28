@@ -62,7 +62,7 @@ class SmoothStyle_1 extends ArtSetup[Object] {
 
   override def postConfigure(log: NotebookOutput) = log.eval { () =>
     () => {
-      implicit val _ = log
+      implicit val l = log
       // First, basic configuration so we publish to our s3 site
       if (Option(s3bucket).filter(!_.isEmpty).isDefined)
         log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
@@ -73,7 +73,7 @@ class SmoothStyle_1 extends ArtSetup[Object] {
       log.p(log.jpg(ImageArtUtil.loadImage(log, styleUrl, 1200), "Input Style"))
       val canvas = new RefAtomicReference[Tensor](null)
       // Execute the main process while registered with the site index
-      val registration = registerWithIndexJPG(() => canvas.get())
+      val registration = registerWithIndexJPG(() => canvas.get()).toList
       try {
         withMonitoredJpg(() => canvas.get().toImage) {
           paint(styleUrl, contentDims => {

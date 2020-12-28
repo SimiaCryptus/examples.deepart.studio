@@ -548,9 +548,9 @@ abstract class ZoomingRotorBase extends RotorArt with ArtSource {
     }
 
     val flipbook: ArrayBuffer[Tensor] = new ArrayBuffer[Tensor]()
-    val indexRegistration = registerWithIndexGIF(flipbook.map(_.addRef()).map(toRGB(_)), 1000)
+    val indexRegistration = registerWithIndexGIF(flipbook.map(_.addRef()).map(toRGB(_)).toList, 1000)
     try {
-      val result = withMonitoredGif(() => flipbook.map(_.addRef()).map(toRGB(_)), 1000) {
+      val result = withMonitoredGif(() => flipbook.map(_.addRef()).map(toRGB(_)).toList, 1000) {
         renderTransitionLinearSeq(flipbook, keyframes ++ List(keyframes.head)).map(file => {
           Util.pathTo(log.getRoot, file).toString
         }).toArray
@@ -630,7 +630,7 @@ abstract class ZoomingRotorBase extends RotorArt with ArtSource {
     flipbook += Tensor.fromRGB(outerImage)
     var zoomedInner = zoomInner()
     var currentImageTensor = zoomOuter(outerImage, zoomedInner.addRef())
-    withMonitoredGif(() => (flipbook.map(_.addRef()) ++ Option(currentImageTensor).map(x => rotatedCanvas(x.addRef())).toList).map(toRGB(_)), 1000) {
+    withMonitoredGif(() => (flipbook.map(_.addRef()) ++ Option(currentImageTensor).map(x => rotatedCanvas(x.addRef())).toList).map(toRGB(_)).toList, 1000) {
       try {
         List(
           log.jpgFile(outerImage)
