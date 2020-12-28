@@ -3,6 +3,7 @@
 # Avoid ignoring Maven wrapper jar file (.jar files are usually ignored)
 *.h5
 *.hprof
+*.pem
 *.zip
 .idea/
 .mvn/timing.properties
