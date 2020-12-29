@@ -115,18 +115,12 @@ object SegmentStyleNotebook {
     )
 
     val history = new ArrayBuffer[(Long, Long, Double, Double)]()
-    val optlog = new ArrayBuffer[(Long, String)]()
     val canvasRef = new AtomicReference[Tensor](null)
 
     val optimizer = new BasicOptimizer {
       override val trainingMinutes = 60
       override val trainingIterations = 20
       override val maxRate = 1e9
-
-      override def log(msg: String): Unit = {
-        optlog ++= List((com.simiacryptus.ref.wrappers.RefSystem.currentTimeMillis(), msg))
-        super.log(msg)
-      }
 
       override def onStepComplete(trainable: Trainable, currentPoint: Step): Boolean = {
         history ++= List((

@@ -42,7 +42,7 @@ class TrianglarRainbow extends SymmetricTexture {
     override val steps = 2
   }.toStream.map(x => {
     x.round.toInt -> Array(8.0)
-  }: (Int, Seq[Double])).toMap
+  }: (Int, Seq[Double])).toList.sortBy(_._1)
 
 
 }

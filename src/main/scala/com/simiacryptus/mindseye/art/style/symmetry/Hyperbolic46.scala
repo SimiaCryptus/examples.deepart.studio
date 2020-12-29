@@ -15,13 +15,15 @@ object Hyperbolic46 extends Hyperbolic46
 
 class Hyperbolic46 extends SymmetricTexture {
 
-  def aspectRatio = 1.732
   override def name: String = "4/6 Hyperbolic"
   override def indexStr = "202"
   override def inputTimeoutSeconds = 1
+  def aspectRatio = 1
+  override val rowsAndCols = 1
 
   override def description = <div>
     Creates a basic 4/6 hyperbolic pattern with strict 90-degree radial symmetry.
+    Any patterns or symbols produced are purely random and do not imply a political philosophy.
   </div>.toString.trim
 
   def views(implicit log: NotebookOutput) = {
@@ -41,9 +43,9 @@ class Hyperbolic46 extends SymmetricTexture {
   override def auxViews(implicit log: NotebookOutput): Array[Array[ImageView]] = Array(Array(
     HyperbolicTileView(4, 6, maxRadius = 1, mode = "square"),
     RotatedVector(rotation = Map(
-      Math.PI / 2 -> Permutation(-1,-2,-3),
+      Math.PI / 2 -> Permutation(1,2,3),
       Math.PI -> Permutation(1,2,3),
-      3 * Math.PI / 2 -> Permutation(-1,-2,-3)
+      3 * Math.PI / 2 -> Permutation(1,2,3)
     )),
   ))
 
@@ -53,7 +55,7 @@ class Hyperbolic46 extends SymmetricTexture {
     override val steps = 5
   }.toStream.map(x => {
     x.round.toInt -> Array(6).map(Math.pow(_, 2)).flatMap(x => Array(x * 0.9, x))
-  }: (Int, Seq[Double])).toMap
+  }: (Int, Seq[Double])).toList.sortBy(_._1)
 
 
 }

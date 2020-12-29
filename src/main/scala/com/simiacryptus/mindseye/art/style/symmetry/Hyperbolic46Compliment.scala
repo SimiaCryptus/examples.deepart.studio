@@ -8,7 +8,7 @@ import com.simiacryptus.sparkbook.aws.{P2_XL, P3_2XL}
 
 
 object Hyperbolic46Compliment extends Hyperbolic46Compliment
-  with P3_2XL
+  with P2_XL
   //  with NotebookRunner[Object] with LocalRunner[Object]
 {
   override val s3bucket: String = "symmetry.deepartist.org"
@@ -16,10 +16,15 @@ object Hyperbolic46Compliment extends Hyperbolic46Compliment
 
 class Hyperbolic46Compliment extends SymmetricTexture {
 
-  def aspectRatio = 1.732
   override def name: String = "4/6 Hyperbolic Complimentary Colors"
+
   override def indexStr = "202"
+
   override def inputTimeoutSeconds = 1
+
+  def aspectRatio = 1
+
+  override val rowsAndCols = 1
 
   override def description = <div>
     Creates a basic 4/6 hyperbolic pattern with strict 90-degree radial symmetry, and a 180-degree color-negative symmetry.
@@ -31,9 +36,9 @@ class Hyperbolic46Compliment extends SymmetricTexture {
       Array(Array[ImageView](
         HyperbolicTileView(4, 6, mode = "square"),
         RotatedVector(rotation = Map(
-          Math.PI / 2 -> Permutation(-1,-2,-3),
-          Math.PI -> Permutation(1,2,3),
-          3 * Math.PI / 2 -> Permutation(-1,-2,-3)
+          Math.PI / 2 -> Permutation(-1, -2, -3),
+          Math.PI -> Permutation(1, 2, 3),
+          3 * Math.PI / 2 -> Permutation(-1, -2, -3)
         )),
       ))
     })
@@ -42,9 +47,9 @@ class Hyperbolic46Compliment extends SymmetricTexture {
   override def auxViews(implicit log: NotebookOutput): Array[Array[ImageView]] = Array(Array(
     HyperbolicTileView(4, 6, maxRadius = 1, mode = "square"),
     RotatedVector(rotation = Map(
-      Math.PI / 2 -> Permutation(-1,-2,-3),
-      Math.PI -> Permutation(1,2,3),
-      3 * Math.PI / 2 -> Permutation(-1,-2,-3)
+      Math.PI / 2 -> Permutation(-1, -2, -3),
+      Math.PI -> Permutation(1, 2, 3),
+      3 * Math.PI / 2 -> Permutation(-1, -2, -3)
     )),
   ))
 
@@ -54,7 +59,7 @@ class Hyperbolic46Compliment extends SymmetricTexture {
     override val steps = 5
   }.toStream.map(x => {
     x.round.toInt -> Array(6).map(Math.pow(_, 2)).flatMap(x => Array(x * 0.9, x))
-  }: (Int, Seq[Double])).toMap
+  }: (Int, Seq[Double])).toList.sortBy(_._1)
 
 
 }

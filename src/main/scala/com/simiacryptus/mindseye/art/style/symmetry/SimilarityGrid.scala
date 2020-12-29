@@ -9,7 +9,7 @@ import com.simiacryptus.sparkbook.aws.{P2_XL, P3_2XL}
 import com.simiacryptus.sparkbook.util.LocalRunner
 
 object SimilarityGrid extends SimilarityGrid
-  with P2_XL
+  with P3_2XL
 //  with NotebookRunner[Object] with LocalRunner[Object]
 {
   override val s3bucket: String = "symmetry.deepartist.org"
@@ -23,7 +23,8 @@ class SimilarityGrid extends SymmetricTexture
   override val rowsAndCols = 1
 
   override def description = <div>
-    Creates a square texture with a degeneracy which ensures repeating, similar but gradually evolving repeating patterns.
+    Creates a square texture with a degeneracy which ensures repeating, similar but gradually evolving
+    repeating patterns on both horizontal and vertical offset axes.
   </div>.toString.trim
 
   override def inputTimeoutSeconds = 1
@@ -41,8 +42,10 @@ class SimilarityGrid extends SymmetricTexture
   }
 
   override def resolutions = Map(
-    400 -> Array(9),
-    800 -> Array(9)
-  ).mapValues(_.flatMap(x => Array(x * 0.9, x, x * 1.1)).toSeq)
+    100 -> Array(16),
+    200 -> Array(16),
+    400 -> Array(16),
+    800 -> Array(16)
+  ).mapValues(_.flatMap(x => Array(x * 0.9, x, x * 1.1)).toSeq).toList.sortBy(_._1)
 
 }
