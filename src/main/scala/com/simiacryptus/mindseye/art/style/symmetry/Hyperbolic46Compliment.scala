@@ -30,7 +30,7 @@ class Hyperbolic46Compliment extends SymmetricTexture {
     Creates a basic 4/6 hyperbolic pattern with strict 90-degree radial symmetry, and a 180-degree color-negative symmetry.
   </div>.toString.trim
 
-  def views(implicit log: NotebookOutput) = {
+  def optimizerViews(implicit log: NotebookOutput) = {
     log.out("Symmetry Spec:")
     log.code(() => {
       Array(Array[ImageView](
@@ -44,7 +44,7 @@ class Hyperbolic46Compliment extends SymmetricTexture {
     })
   }
 
-  override def auxViews(implicit log: NotebookOutput): Array[Array[ImageView]] = Array(Array(
+  override def displayViews(implicit log: NotebookOutput): Array[Array[ImageView]] = Array(Array(
     HyperbolicTileView(4, 6, maxRadius = 1, mode = "square"),
     RotatedVector(rotation = Map(
       Math.PI / 2 -> Permutation(-1, -2, -3),

@@ -30,7 +30,7 @@ class SimpleTriangle extends SymmetricTexture {
 
   def aspectRatio = 1.0
 
-  def views(implicit log: NotebookOutput) = {
+  def optimizerViews(implicit log: NotebookOutput) = {
     log.out("Symmetry Spec:")
     log.code(() => {
       Array(Array[ImageView](

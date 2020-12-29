@@ -30,14 +30,13 @@ class SimilarityGrid extends SymmetricTexture
   override def inputTimeoutSeconds = 1
   def aspectRatio = 1.0
 
-  def views(implicit log: NotebookOutput) = {
+  def optimizerViews(implicit log: NotebookOutput) = {
     log.out("Symmetry Spec:")
     log.code(() => {
       Array(Array[ImageView](
-        //TransformVector(offset = Map(Array(0.5, 0.5) -> Permutation.unity(3))),
-        TransformVector(offset = List(1).map(x => Array(0, x.toDouble / 5) -> Permutation.unity(3)).toMap),
-        TransformVector(offset = List(1).map(x => Array(x.toDouble / 5, 0) -> Permutation.unity(3)).toMap)
-      ))
+        TransformVector(offset = List(1).map(x => Array(0, 3 * x.toDouble / 5) -> Permutation.unity(3)).toMap),
+        TransformVector(offset = List(1).map(x => Array(3 * x.toDouble / 5, 0) -> Permutation.unity(3)).toMap)
+      )).flatMap(x=>List(x,x++List(TransformVector(offset = Map(Array(0.5, 0.5) -> Permutation.unity(3))))))
     })
   }
 

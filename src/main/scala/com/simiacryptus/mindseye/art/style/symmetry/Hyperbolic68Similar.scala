@@ -30,7 +30,7 @@ class Hyperbolic68Similar extends SymmetricTexture {
     Produces self-similar repetition on 60-degree rotation.
   </div>.toString.trim
 
-  def views(implicit log: NotebookOutput) = {
+  def optimizerViews(implicit log: NotebookOutput) = {
     log.out("Symmetry Spec:")
     log.code(() => {
       Array(Array[ImageView](
@@ -40,7 +40,7 @@ class Hyperbolic68Similar extends SymmetricTexture {
     })
   }
 
-  override def auxViews(implicit log: NotebookOutput): Array[Array[ImageView]] = Array(Array[ImageView](
+  override def displayViews(implicit log: NotebookOutput): Array[Array[ImageView]] = Array(Array[ImageView](
     RotatedVector(rotation = List(1).map(_ * Math.PI * 2 / 6 -> Permutation.unity(3)).toMap),
     HyperbolicTileView(6, 8, maxRadius = 1),
   ))

@@ -26,7 +26,7 @@ class Hyperbolic46 extends SymmetricTexture {
     Any patterns or symbols produced are purely random and do not imply a political philosophy.
   </div>.toString.trim
 
-  def views(implicit log: NotebookOutput) = {
+  def optimizerViews(implicit log: NotebookOutput) = {
     log.out("Symmetry Spec:")
     log.code(() => {
       Array(Array[ImageView](
@@ -40,7 +40,7 @@ class Hyperbolic46 extends SymmetricTexture {
     })
   }
 
-  override def auxViews(implicit log: NotebookOutput): Array[Array[ImageView]] = Array(Array(
+  override def displayViews(implicit log: NotebookOutput): Array[Array[ImageView]] = Array(Array(
     HyperbolicTileView(4, 6, maxRadius = 1, mode = "square"),
     RotatedVector(rotation = Map(
       Math.PI / 2 -> Permutation(1,2,3),

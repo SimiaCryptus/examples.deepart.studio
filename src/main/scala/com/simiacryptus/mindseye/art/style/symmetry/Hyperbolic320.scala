@@ -34,7 +34,7 @@ class Hyperbolic320 extends SymmetricTexture {
     Creates a 3/20 hyperbolic tiling with perfect 3-fold rotational symmetry.
   </div>.toString.trim
 
-  def views(implicit log: NotebookOutput) = {
+  def optimizerViews(implicit log: NotebookOutput) = {
     log.out("Symmetry Spec:")
     log.code(() => {
       Array(Array[ImageView](
@@ -44,7 +44,7 @@ class Hyperbolic320 extends SymmetricTexture {
     })
   }
 
-  override def auxViews(implicit log: NotebookOutput): Array[Array[ImageView]] = Array(Array[ImageView](
+  override def displayViews(implicit log: NotebookOutput): Array[Array[ImageView]] = Array(Array[ImageView](
     RotatedVector(rotation = List(1, 2).map(_ * Math.PI * 2 / 3 -> Permutation.unity(3)).toMap),
     HyperbolicTileView(3, 20, maxRadius = 1),
   ))

@@ -26,7 +26,7 @@ class TrianglarRainbow extends SymmetricTexture {
     Creates a tiled pattern with a triangular, color-permuted symmetry.
   </div>.toString.trim
 
-  def views(implicit log: NotebookOutput) = {
+  def optimizerViews(implicit log: NotebookOutput) = {
     log.out("Symmetry Spec:")
     log.code(() => {
       Array(
