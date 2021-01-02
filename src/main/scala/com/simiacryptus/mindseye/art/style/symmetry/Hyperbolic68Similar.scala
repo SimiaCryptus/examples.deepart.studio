@@ -4,13 +4,17 @@ import com.simiacryptus.mindseye.art.style.SymmetricTexture
 import com.simiacryptus.mindseye.art.util.view.{HyperbolicTileView, ImageView, RotatedVector}
 import com.simiacryptus.mindseye.art.util.{GeometricSequence, Permutation}
 import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.sparkbook.NotebookRunner
 import com.simiacryptus.sparkbook.aws.{P2_XL, P3_2XL}
+import com.simiacryptus.sparkbook.util.LocalRunner
 
 object Hyperbolic68Similar extends Hyperbolic68Similar
-  with P3_2XL
-  //  with NotebookRunner[Object] with LocalRunner[Object]
+//  with P2_XL
+    with NotebookRunner[Object] with LocalRunner[Object]
 {
   override val s3bucket: String = "symmetry.deepartist.org"
+  override def name: String = Hyperbolic68Similar.super.name
+
 }
 
 class Hyperbolic68Similar extends SymmetricTexture {
@@ -18,8 +22,6 @@ class Hyperbolic68Similar extends SymmetricTexture {
   override def name: String = "6/8 Hyperbolic Rotationally Similar"
 
   override def indexStr = "202"
-
-  override def inputTimeoutSeconds = 1
 
   def aspectRatio = 1
 

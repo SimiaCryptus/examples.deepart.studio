@@ -8,7 +8,6 @@ import com.simiacryptus.sparkbook.NotebookRunner
 import com.simiacryptus.sparkbook.aws.P3_2XL
 import com.simiacryptus.sparkbook.util.LocalRunner
 
-
 object Hyperbolic38Similar extends Hyperbolic38Similar
   //  with P3_2XL
   with NotebookRunner[Object] with LocalRunner[Object] {
@@ -22,8 +21,6 @@ class Hyperbolic38Similar extends SymmetricTexture {
   override def name: String = "3/8 Hyperbolic Rotationally Similar"
 
   override def indexStr = "202"
-
-  override def inputTimeoutSeconds = 1
 
   def aspectRatio = 1
 

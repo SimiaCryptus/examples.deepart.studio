@@ -26,8 +26,6 @@ class SimpleSquare extends SymmetricTexture {
     Creates a simple square-tiling texture.
   </div>.toString.trim
 
-  override def inputTimeoutSeconds = 1
-
   def aspectRatio = 1.0
 
   def optimizerViews(implicit log: NotebookOutput) = {

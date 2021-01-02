@@ -26,8 +26,6 @@ class HexTiledTriangle extends SymmetricTexture {
     Creates a hexagonally-tiled texture with 3-fold rotational symmetry.
   </div>.toString.trim
 
-  override def inputTimeoutSeconds = 1
-
   def aspectRatio = 1.732
 
   def optimizerViews(implicit log: NotebookOutput) = {

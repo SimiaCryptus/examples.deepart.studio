@@ -17,7 +17,6 @@ class Hyperbolic46 extends SymmetricTexture {
 
   override def name: String = "4/6 Hyperbolic"
   override def indexStr = "202"
-  override def inputTimeoutSeconds = 1
   def aspectRatio = 1
   override val rowsAndCols = 1
 

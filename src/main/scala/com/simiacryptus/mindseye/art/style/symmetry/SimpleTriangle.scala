@@ -26,8 +26,6 @@ class SimpleTriangle extends SymmetricTexture {
     Creates a simple rotationally-symmetric texture.
   </div>.toString.trim
 
-  override def inputTimeoutSeconds = 1
-
   def aspectRatio = 1.0
 
   def optimizerViews(implicit log: NotebookOutput) = {

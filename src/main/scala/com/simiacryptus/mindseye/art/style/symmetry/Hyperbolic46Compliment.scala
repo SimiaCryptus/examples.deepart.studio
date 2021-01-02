@@ -20,8 +20,6 @@ class Hyperbolic46Compliment extends SymmetricTexture {
 
   override def indexStr = "202"
 
-  override def inputTimeoutSeconds = 1
-
   def aspectRatio = 1
 
   override val rowsAndCols = 1

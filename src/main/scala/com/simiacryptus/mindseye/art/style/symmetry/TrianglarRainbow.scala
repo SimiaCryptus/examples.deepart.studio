@@ -20,7 +20,6 @@ class TrianglarRainbow extends SymmetricTexture {
   def aspectRatio = 1.732
   override def name: String = "Triangle Rainbow"
   override def indexStr = "202"
-  override def inputTimeoutSeconds = 1
 
   override def description = <div>
     Creates a tiled pattern with a triangular, color-permuted symmetry.

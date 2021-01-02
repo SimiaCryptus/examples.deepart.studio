@@ -50,6 +50,8 @@ abstract class SymmetricTexture extends ArtSetup[Object] with GeometricArt {
   val trainingMinutes = 60
   val trainingIterations = 20
 
+  override def inputTimeoutSeconds = 60
+
   def animationDelay = 15 seconds
 
   def name: String
@@ -82,12 +84,6 @@ abstract class SymmetricTexture extends ArtSetup[Object] with GeometricArt {
     }
   }
 
-  def getDims(tensor: Tensor): Array[Int] = try {
-    tensor.getDimensions
-  } finally {
-    tensor.freeRef()
-  }
-
   override def postConfigure(log: NotebookOutput) = {
     if (Option(s3bucket).filter(!_.isEmpty).isDefined) {
       log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
@@ -98,22 +94,29 @@ abstract class SymmetricTexture extends ArtSetup[Object] with GeometricArt {
     try {
       val optimizerViews = this.optimizerViews(log)
       val displayViews = this.displayViews(log)
+      val defaultViews: Array[Array[ImageView]] = if(displayViews.isEmpty) optimizerViews else displayViews
+
+      log.subreport("Symmetry View Demonstration", (sublog: NotebookOutput) => {
+        val width = 600
+        val height = (aspectRatio * width).toInt
+        val views = sublog.eval(()=>{
+          defaultViews.map(_.map(_.getView(Array(width, height))).toList).toList
+        })
+        for(testImage <- List("plasma")) {
+          val source = Tensor.fromRGB(ImageArtUtil.loadImage(sublog, testImage, width, height))
+          for (image <- views.map(_.foldLeft(source.addRef())((tensor, layer) => getResult(layer.eval(tensor))))) {
+            sublog.p(sublog.jpg(image.toRgbImage, ""))
+          }
+        }
+      })
 
       log.subreport("Style Images", (sublog: NotebookOutput) => {
         ImageArtUtil.loadImages(sublog, styleUrl, 1280).foreach(img => sublog.p(sublog.jpg(img, "Input Style")))
       })
 
-      def bounded(dimensions: Array[Int], views: Array[ImageView]) = {
-        val boundedActivationLayer = new BoundedActivationLayer()
-        boundedActivationLayer.setMinValue(0);
-        boundedActivationLayer.setMaxValue(255);
-        PipelineNetwork.build(1, (views.map(_.getView(dimensions)) ++ List(boundedActivationLayer)): _*)
-      }
-
-
       val canvases = (1 to count).map(_ => new RefAtomicReference[Tensor](null)).toList
 
-      def viewContent(res: Int)(implicit log: NotebookOutput): Tensor = {
+      def initCanvas(res: Int)(implicit log: NotebookOutput): Tensor = {
         val content = if (Option(this.aspectRatio).map(a => (w: Int) => (w * a).toInt).isDefined) {
           ImageArtUtil.loadImage(log, initUrl, res.toInt, Option(this.aspectRatio).map(a => (w: Int) => (w * a).toInt).get.apply(res.toInt))
         } else {
@@ -140,14 +143,12 @@ abstract class SymmetricTexture extends ArtSetup[Object] with GeometricArt {
             viewLayer.freeRef()
           }
 
-          (if(displayViews.isEmpty) {
-            (0 until optimizerViews.size).map(i => () => view(bounded(dimensions, optimizerViews(i)), dimensions))
-          } else {
-            (0 until displayViews.size).map(i => () => view(bounded(dimensions, displayViews(i)), dimensions))
-          }).foldLeft((_: Any) => fn(x))((fn: Any => T, function: () => Tensor) => { (x: Any) => {
+          (0 until defaultViews.size)
+            .map(i => () => view(compileView(dimensions, defaultViews(i)), dimensions))
+            .foldLeft((_: Any) => fn(x))((fn: Any => T, function: () => Tensor) => { (x: Any) => {
             withMonitoredJpg(() => getImage(function())) {
               if (rowsAndCols > 1) {
-                withMonitoredJpg(() => image(tile(function()))) {
+                withMonitoredJpg(() => getImage(tile(function()))) {
                   fn(x)
                 }
               } else {
@@ -161,12 +162,8 @@ abstract class SymmetricTexture extends ArtSetup[Object] with GeometricArt {
       }
 
       for (canvas <- canvases) {
-        canvas.set(load(viewContent(this.resolutions.head._1.toInt)(log).addRef(), initUrl)(log))
-        registeredImages ++= List(() => {
-          val tensor = canvas.get()
-          val renderingNetwork = bounded(tensor.getDimensions, displayViews.headOption.orElse(optimizerViews.headOption).orNull)
-          getResult(renderingNetwork.eval(tensor)).toRgbImage
-        })
+        canvas.set(load(initCanvas(this.resolutions.head._1.toInt)(log).addRef(), initUrl)(log))
+        registeredImages ++= animate(canvas, defaultViews)
       }
       withMonitoredCanvases() {
         for ((res, mag) <- this.resolutions) {
@@ -175,10 +172,11 @@ abstract class SymmetricTexture extends ArtSetup[Object] with GeometricArt {
               CudaSettings.INSTANCE().setDefaultPrecision(Precision.Float)
               require(null != canvas)
               canvas.set({
-                val content = viewContent(res.toInt)(log).toImage
                 val currentCanvas: Tensor = canvas.get()
+                // We need to adjust size here to guard against occasional off-by-one errors
+                val content = initCanvas(res.toInt)(log).toImage
                 val width = if (null == content) res.toInt else content.getWidth
-                val height = if (null == content) res.toInt else content.getHeight
+                val height = if (null == content) (res.toInt*aspectRatio).toInt else content.getHeight
                 if (width == currentCanvas.getDimensions()(0) && height == currentCanvas.getDimensions()(1)) {
                   currentCanvas
                 } else {
@@ -197,6 +195,7 @@ abstract class SymmetricTexture extends ArtSetup[Object] with GeometricArt {
             }
 
             val styleLayers = this.styleLayers(res)(log)
+            log.p("Generating Style Network")
             val trainable = log.eval(()=>{
               getTrainable(new VisualStyleNetwork(
                 styleLayers = styleLayers,
@@ -207,10 +206,11 @@ abstract class SymmetricTexture extends ArtSetup[Object] with GeometricArt {
                 ),
                 styleUrls = Seq(styleUrl),
                 magnification = mag.toList,
-                viewLayer = dims => optimizerViews.map(bounded(dims.toArray, _)).toList
+                viewLayer = dims => optimizerViews.map(compileView(dims.toArray, _)).toList
               )(log))
             })
-            for (canvas <- canvases) {
+            for ((canvas,idx) <- canvases.zipWithIndex) {
+              log.p(s"Rendering Canvas $idx")
               trainable.setData(RefArrays.asList(Array(canvas.get())))
               new BasicOptimizer {
                 override val trainingMinutes: Int = SymmetricTexture.this.trainingMinutes
@@ -219,7 +219,7 @@ abstract class SymmetricTexture extends ArtSetup[Object] with GeometricArt {
 
                 override def trustRegion(layer: Layer): TrustRegion = null
 
-                override def renderingNetwork(dims: Seq[Int]) = bounded(dims.toArray, displayViews.headOption.orElse(optimizerViews.headOption).orNull)
+                override def renderingNetwork(dims: Seq[Int]) = compileView(dims.toArray, defaultViews.head)
               }.optimize(canvas.get(), trainable.addRef().asInstanceOf[Trainable])(log)
             }
           })
@@ -232,12 +232,14 @@ abstract class SymmetricTexture extends ArtSetup[Object] with GeometricArt {
     null
   }
 
-  private def getImage[T](tensor: Tensor) = {
-    try {
-      tensor.toRgbImage
-    } finally {
-      tensor.freeRef()
-    }
+  def animate(canvas: RefAtomicReference[Tensor], views: Array[Array[ImageView]]) = {
+    List(() => {
+      val tensor = canvas.get()
+      val renderingNetwork = compileView(tensor.getDimensions, views.head)
+      val image = getImage(getResult(renderingNetwork.eval(tensor)))
+      renderingNetwork.freeRef()
+      image
+    })
   }
 
   def styleLayers(res: Int)(implicit log: NotebookOutput) = {
@@ -259,19 +261,33 @@ abstract class SymmetricTexture extends ArtSetup[Object] with GeometricArt {
     })
   }
 
-  private def image[T](tensor: Tensor) = {
+  def getImage[T](tensor: Tensor) = {
     try {
-      tensor.toImage
+      tensor.toRgbImage
     } finally {
       tensor.freeRef()
     }
   }
 
-  private def getResult(result: Result) = {
+  def getDims(tensor: Tensor): Array[Int] = try {
+    tensor.getDimensions
+  } finally {
+    tensor.freeRef()
+  }
+
+  def getResult(result: Result) = {
     val data = result.getData
     result.freeRef()
     val tensor = data.get(0)
     data.freeRef()
     tensor
   }
+
+  def compileView(dimensions: Array[Int], views: Array[ImageView]) = {
+    val boundedActivationLayer = new BoundedActivationLayer()
+    boundedActivationLayer.setMinValue(0);
+    boundedActivationLayer.setMaxValue(255);
+    PipelineNetwork.build(1, (views.map(_.getView(dimensions)) ++ List(boundedActivationLayer)): _*)
+  }
+
 }
