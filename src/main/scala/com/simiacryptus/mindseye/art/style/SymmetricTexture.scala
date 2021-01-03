@@ -47,10 +47,10 @@ abstract class SymmetricTexture extends ArtSetup[Object] with GeometricArt {
   val s3bucket: String = "symmetry.deepartist.org"
   val count = 2
   val rowsAndCols = 3
-  val trainingMinutes = 60
+  val trainingMinutes = 90
   val trainingIterations = 20
 
-  override def inputTimeoutSeconds = 60
+  override def inputTimeoutSeconds = 5*60
 
   def animationDelay = 15 seconds
 
@@ -209,18 +209,22 @@ abstract class SymmetricTexture extends ArtSetup[Object] with GeometricArt {
                 viewLayer = dims => optimizerViews.map(compileView(dims.toArray, _)).toList
               )(log))
             })
-            for ((canvas,idx) <- canvases.zipWithIndex) {
-              log.p(s"Rendering Canvas $idx")
-              trainable.setData(RefArrays.asList(Array(canvas.get())))
-              new BasicOptimizer {
-                override val trainingMinutes: Int = SymmetricTexture.this.trainingMinutes
-                override val trainingIterations: Int = SymmetricTexture.this.trainingIterations
-                override val maxRate = 1e8
+            try {
+              for ((canvas,idx) <- canvases.zipWithIndex) {
+                log.p(s"Rendering Canvas $idx")
+                trainable.setData(RefArrays.asList(Array(canvas.get())))
+                new BasicOptimizer {
+                  override val trainingMinutes: Int = SymmetricTexture.this.trainingMinutes
+                  override val trainingIterations: Int = SymmetricTexture.this.trainingIterations
+                  override val maxRate = 1e8
 
-                override def trustRegion(layer: Layer): TrustRegion = null
+                  override def trustRegion(layer: Layer): TrustRegion = null
 
-                override def renderingNetwork(dims: Seq[Int]) = compileView(dims.toArray, defaultViews.head)
-              }.optimize(canvas.get(), trainable.addRef().asInstanceOf[Trainable])(log)
+                  override def renderingNetwork(dims: Seq[Int]) = compileView(dims.toArray, defaultViews.head)
+                }.optimize(canvas.get(), trainable.addRef().asInstanceOf[Trainable])(log)
+              }
+            } finally {
+              trainable.freeRef()
             }
           })
         }

@@ -1,32 +1,34 @@
 package com.simiacryptus.mindseye.art.style.symmetry
 
 import java.awt.image.BufferedImage
+import java.io.{ByteArrayInputStream, InputStreamReader}
 
+import com.google.gson.GsonBuilder
 import com.simiacryptus.mindseye.art.style.SymmetricTexture
-import com.simiacryptus.mindseye.art.util.view.{HyperbolicTileView, ImageView, RotatedVector, SphericalView}
-import com.simiacryptus.mindseye.art.util.{GeometricSequence, Permutation}
+import com.simiacryptus.mindseye.art.style.symmetry.RotationalGroupView.ICOSOHEDRON
+import com.simiacryptus.mindseye.art.util.GeometricSequence
+import com.simiacryptus.mindseye.art.util.view.{ImageView, SphericalView}
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.NotebookRunner
-import com.simiacryptus.sparkbook.aws.P3_2XL
 import com.simiacryptus.sparkbook.util.LocalRunner
 
-import scala.concurrent.duration._
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{FiniteDuration, _}
 import scala.util.Random
 
 
-object SphericalTexture extends SphericalTexture
-//  with P3_2XL
-    with NotebookRunner[Object] with LocalRunner[Object]
-{
+object IcosohedronTexture extends IcosohedronTexture
+  //  with P3_2XL
+  with NotebookRunner[Object] with LocalRunner[Object] {
   override val s3bucket: String = "symmetry.deepartist.org"
 
-  override def name: String = SphericalTexture.super.name
+  override def name: String = IcosohedronTexture.super.name
+
+  override def inputTimeoutSeconds: Int = 1
 }
 
-class SphericalTexture extends SymmetricTexture {
+class IcosohedronTexture extends SymmetricTexture {
 
   override def name: String = "Spherical Texture Map"
 
@@ -34,6 +36,7 @@ class SphericalTexture extends SymmetricTexture {
 
   def aspectRatio = 1
 
+  val animationFrames = 32
   val optimizationViewLimit = 8
   override val rowsAndCols = 1
   override val count: Int = 1
@@ -42,27 +45,26 @@ class SphericalTexture extends SymmetricTexture {
     Creates a texture map which can be wrapped around a sphere, by painting several rendered views of the sphere.
   </div>.toString.trim
 
-  def optimizerViews(implicit log: NotebookOutput) = {
+  def optimizerViews(implicit log: NotebookOutput): Array[Array[ImageView]] = {
     log.out("Symmetry Spec:")
     log.code(() => {
       val steps = optimizationViewLimit * optimizationViewLimit
       Random.shuffle((for (x <- (0 until steps).map(_ * 2 * Math.PI / steps)) yield {
         for (y <- (0 until steps).map(_ * 2 * Math.PI / steps)) yield {
-          SphericalView(x, y)
+          new RotationalGroupView(x, y, ICOSOHEDRON)
         }
       }).flatten.zipWithIndex).take(optimizationViewLimit).sortBy(_._2).map(_._1).map(Array[ImageView](_)).toArray
     })
   }
 
-  val animationFrames = 32
   override def displayViews(implicit log: NotebookOutput): Array[Array[ImageView]] = {
-    Array(Array.empty[ImageView]) ++ (0 to animationFrames).map(_*2*Math.PI/animationFrames).map(theta=>SphericalView(theta, theta)).toArray.map(Array[ImageView](_))
+    Array(Array.empty[ImageView]) ++ (0 to animationFrames).map(_ * 2 * Math.PI / animationFrames).map(theta => new RotationalGroupView(theta, theta, ICOSOHEDRON)).toArray.map(Array[ImageView](_))
   }
 
   override def animationDelay: FiniteDuration = 250 milliseconds
 
   override def animate(canvas: RefAtomicReference[Tensor], views: Array[Array[ImageView]]): List[() => BufferedImage] = {
-    views.drop(1).map(view=>() => {
+    views.drop(1).map(view => () => {
       val tensor = canvas.get()
       val renderingNetwork = compileView(tensor.getDimensions, view)
       val image = getImage(getResult(renderingNetwork.eval(tensor)))
@@ -81,3 +83,4 @@ class SphericalTexture extends SymmetricTexture {
 
 
 }
+
