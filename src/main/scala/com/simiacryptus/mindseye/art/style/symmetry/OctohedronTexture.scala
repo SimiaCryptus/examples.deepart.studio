@@ -13,7 +13,6 @@ object OctohedronTexture extends OctohedronTexture
 
   override def name: String = OctohedronTexture.super.name
 
-  override def inputTimeoutSeconds: Int = 1
 }
 class OctohedronTexture extends PolyhedralTexture {
 

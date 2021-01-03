@@ -1,11 +1,9 @@
 package com.simiacryptus.mindseye.art.style.symmetry
 
-import com.simiacryptus.mindseye.art.style.SymmetricTexture
 import com.simiacryptus.mindseye.art.util.view.{HyperbolicTileView, ImageView, RotatedVector}
 import com.simiacryptus.mindseye.art.util.{GeometricSequence, Permutation}
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.sparkbook.NotebookRunner
-import com.simiacryptus.sparkbook.aws.P3_2XL
 import com.simiacryptus.sparkbook.util.LocalRunner
 
 object Hyperbolic38Similar extends Hyperbolic38Similar

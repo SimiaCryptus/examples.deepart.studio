@@ -2,7 +2,6 @@ package com.simiacryptus.mindseye.art.style.symmetry
 
 import java.awt.image.BufferedImage
 
-import com.simiacryptus.mindseye.art.style.SymmetricTexture
 import com.simiacryptus.mindseye.art.util.GeometricSequence
 import com.simiacryptus.mindseye.art.util.view.{ImageView, RotationalGroupView}
 import com.simiacryptus.mindseye.lang.Tensor
@@ -14,7 +13,9 @@ import scala.util.Random
 abstract class PolyhedralTexture extends SymmetricTexture {
 
   def group: Int
+
   def animationFrames: Int
+
   def optimizationViewLimit: Int
 
   def optimizerViews(implicit log: NotebookOutput): Array[Array[ImageView]] = {
@@ -35,17 +36,20 @@ abstract class PolyhedralTexture extends SymmetricTexture {
     ))
   }
 
+  lazy val animationSequence: List[RotationalGroupView] = {
+    val animationFrames = this.animationFrames / 2
+    (0 to animationFrames).map(_ * 2 * Math.PI / animationFrames).toList.map(theta => new RotationalGroupView(theta, 0, group))
+    ++(0 to animationFrames).map(_ * 2 * Math.PI / animationFrames).toList.map(theta => new RotationalGroupView(0, theta, group))
+  }
+
   override def animate(canvas: RefAtomicReference[Tensor])(implicit log: NotebookOutput): List[() => BufferedImage] = {
-    (0 to animationFrames).map(_ * 2 * Math.PI / animationFrames)
-      .map(theta => new RotationalGroupView(0, theta, group))
-      .toList.map(Array[ImageView](_))
-      .map(view => () => {
-        val tensor = canvas.get()
-        val renderingNetwork = compileView(tensor.getDimensions, view)
-        val image = getImage(getResult(renderingNetwork.eval(tensor)))
-        renderingNetwork.freeRef()
-        image
-      }).toList
+    animationSequence.map(Array[ImageView](_)).map(view => () => {
+      val tensor = canvas.get()
+      val renderingNetwork = compileView(tensor.getDimensions, view)
+      val image = getImage(getResult(renderingNetwork.eval(tensor)))
+      renderingNetwork.freeRef()
+      image
+    })
   }
 
   override def resolutions = new GeometricSequence {

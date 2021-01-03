@@ -21,18 +21,16 @@ package com.simiacryptus.mindseye.art.style
 
 import java.util.concurrent.TimeUnit
 
-import com.simiacryptus.mindseye.art.TiledTrainable
 import com.simiacryptus.mindseye.eval.ArrayTrainable
 import com.simiacryptus.mindseye.lang.{Layer, Tensor}
 import com.simiacryptus.mindseye.layers.cudnn._
 import com.simiacryptus.mindseye.network.PipelineNetwork
-import com.simiacryptus.mindseye.opt.{IterativeTrainer, Step, TrainingMonitor}
 import com.simiacryptus.mindseye.opt.line.QuadraticSearch
 import com.simiacryptus.mindseye.opt.orient.GradientDescent
+import com.simiacryptus.mindseye.opt.{IterativeTrainer, Step, TrainingMonitor}
 import com.simiacryptus.notebook.NotebookOutput
 
 import scala.util.Random
-import scala.collection.JavaConverters._
 //import scala.collection.parallel.CollectionConverters._
 
 object TileUtil {

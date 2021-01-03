@@ -1,7 +1,6 @@
 package com.simiacryptus.mindseye.art.style.symmetry
 
-import com.simiacryptus.mindseye.art.style.SymmetricTexture
-import com.simiacryptus.mindseye.art.util.view.{HyperbolicTileView, ImageView, RotatedVector, TransformVector}
+import com.simiacryptus.mindseye.art.util.view.{HyperbolicTileView, ImageView, RotatedVector}
 import com.simiacryptus.mindseye.art.util.{GeometricSequence, Permutation}
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.sparkbook.aws.P2_XL

@@ -1,6 +1,5 @@
 package com.simiacryptus.mindseye.art.style.symmetry
 
-import com.simiacryptus.mindseye.art.style.SymmetricTexture
 import com.simiacryptus.mindseye.art.util.Permutation
 import com.simiacryptus.mindseye.art.util.view.{ImageView, TransformVector}
 import com.simiacryptus.notebook.NotebookOutput

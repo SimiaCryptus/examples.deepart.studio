@@ -24,7 +24,7 @@ import java.net.URI
 import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtUtil.load
-import com.simiacryptus.mindseye.art.util.view.{HyperbolicTileView, ImageView, RetiledView, RotatedVector, TunnelView}
+import com.simiacryptus.mindseye.art.util.view.{ImageView, RetiledView, RotatedVector, TunnelView}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.eval.Trainable
 import com.simiacryptus.mindseye.lang.cudnn.{CudaSettings, Precision}
@@ -42,7 +42,7 @@ import com.simiacryptus.util.FastRandom
 object TileSetTexture extends TileSetTexture with LocalRunner[Object] with NotebookRunner[Object] {
   override def http_port: Int = 1080
 
-  case class JobDetails(
+  case class TileSetDetails(
                          aspectRatio: Double,
                          views: Array[Array[ImageView]],
                          finalView: Array[ImageView] = Array.empty,
@@ -62,7 +62,7 @@ object TileSetTexture extends TileSetTexture with LocalRunner[Object] with Noteb
 
 }
 
-import com.simiacryptus.mindseye.art.style.TileSetTexture.JobDetails
+import com.simiacryptus.mindseye.art.style.TileSetTexture.TileSetDetails
 
 class TileSetTexture extends ArtSetup[Object] with GeometricArt {
   val styleUrl = "upload:Style"
@@ -85,7 +85,7 @@ class TileSetTexture extends ArtSetup[Object] with GeometricArt {
   //    Random.shuffle(Map(
   {
     List(
-      "Retiled" -> JobDetails(
+      "Retiled" -> TileSetDetails(
         aspectRatio = 1.0,
         views = Array(
           Array(),
@@ -96,7 +96,7 @@ class TileSetTexture extends ArtSetup[Object] with GeometricArt {
           900 -> stdMagnification
         ).mapValues(_.flatMap(x => Array(x)).toList)
       ),
-      "Tunnel Triangular" -> JobDetails(
+      "Tunnel Triangular" -> TileSetDetails(
         aspectRatio = 1.0,
         views = Array(Array(
           TunnelView(),

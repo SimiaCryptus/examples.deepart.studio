@@ -27,7 +27,7 @@ class IcosohedronTexture extends PolyhedralTexture {
 
   def aspectRatio = 1
 
-  val animationFrames = 32
+  val animationFrames = 64
   val optimizationViewLimit = 2
   override val rowsAndCols = 1
   override val count: Int = 1

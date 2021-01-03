@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package com.simiacryptus.mindseye.art.style
+package com.simiacryptus.mindseye.art.style.symmetry
 
 import java.awt.image.BufferedImage
 import java.net.URI
@@ -39,6 +39,7 @@ import com.simiacryptus.ref.wrappers.{RefArrays, RefAtomicReference}
 import com.simiacryptus.sparkbook.NotebookRunner._
 import com.simiacryptus.util.FastRandom
 
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 
 abstract class SymmetricTexture extends ArtSetup[Object] with GeometricArt {
@@ -89,13 +90,13 @@ abstract class SymmetricTexture extends ArtSetup[Object] with GeometricArt {
       log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
       log.onComplete(() => upload(log): Unit)
     }
-    val registeredImages = Seq[() => BufferedImage]().toBuffer
+    val registeredImages = new ArrayBuffer[() => BufferedImage]()
     val registration = registerWithIndexGIF(registeredImages.map(_.apply()), delay = animationDelay.toMillis.toInt)(log)
-    withMonitoredGif(()=>registeredImages.map(_.apply()), delay = animationDelay.toMillis.toInt){
+    withMonitoredGif(()=>registeredImages.toList.map(_.apply()), delay = animationDelay.toMillis.toInt){
       try {
         val optimizerViews = this.optimizerViews(log).toList
-        val displayViews = this.displayViews(log).toList
-        val defaultViews = if(displayViews.isEmpty) optimizerViews else displayViews
+        val displayViews = this.displayViews(log)
+        mainView = displayViews.headOption.getOrElse(optimizerViews.head)
 
         log.subreport("Symmetry View Demonstration", (sublog: NotebookOutput) => {
           val width = 600
@@ -105,9 +106,13 @@ abstract class SymmetricTexture extends ArtSetup[Object] with GeometricArt {
           })
           for(testImage <- List("plasma")) {
             val source = Tensor.fromRGB(ImageArtUtil.loadImage(sublog, testImage, width, height))
-            for (image <- views.map(_.foldLeft(source.addRef())((tensor, layer) => getResult(layer.eval(tensor))))) {
-              sublog.p(sublog.jpg(image.toRgbImage, ""))
-            }
+            val ref = new RefAtomicReference[Tensor](source.addRef())
+            val images = animate(ref)(sublog).zipWithIndex
+            withMonitoredGif(()=> images.map(_._1.apply())){
+              for (image <- views.map(_.foldLeft(source.addRef())((tensor, layer) => getResult(layer.eval(tensor))))) {
+                sublog.p(sublog.jpg(image.toRgbImage, ""))
+              }
+            }(sublog)
           }
         })
 
@@ -133,40 +138,12 @@ abstract class SymmetricTexture extends ArtSetup[Object] with GeometricArt {
           }
         }
 
-        def withMonitoredCanvases[T]()(fn: => T)(implicit log: NotebookOutput): T = {
-          canvases.foldLeft((_: Any) => fn)((fn: Any => T, canvas: RefAtomicReference[Tensor]) => { (x: Any) => {
-            def canvasTensor = canvas.get()
-            def dimensions = getDims(canvasTensor)
-
-            def view(viewLayer: PipelineNetwork, dimensions: Array[Int]) =  try {
-              Tensor.fromRGB(ImageUtil.resize(getImage(getResult(viewLayer.eval(canvasTensor))), dimensions(0), dimensions(1)))
-            } finally {
-              viewLayer.freeRef()
-            }
-
-            (0 until defaultViews.size)
-              .map(i => () => view(compileView(dimensions, defaultViews(i)), dimensions))
-              .foldLeft((_: Any) => fn(x))((fn: Any => T, function: () => Tensor) => { (x: Any) => {
-                withMonitoredJpg(() => getImage(function())) {
-                  if (rowsAndCols > 1) {
-                    withMonitoredJpg(() => getImage(tile(function()))) {
-                      fn(x)
-                    }
-                  } else {
-                    fn(x)
-                  }
-                }
-              }
-              }).apply(null)
-          }
-          }).apply(null)
-        }
 
         for (canvas <- canvases) {
           canvas.set(load(initCanvas(this.resolutions.head._1.toInt)(log).addRef(), initUrl)(log))
           registeredImages ++= animate(canvas)(log)
         }
-        withMonitoredCanvases() {
+        withMonitoredCanvases(canvases, if (displayViews.isEmpty) optimizerViews else displayViews) {
           for ((res, mag) <- this.resolutions) {
             log.subreport("Resolution " + res, (log: NotebookOutput) => {
               for (canvas <- canvases) {
@@ -212,19 +189,21 @@ abstract class SymmetricTexture extends ArtSetup[Object] with GeometricArt {
                 )(log))
               })
               try {
-                for ((canvas,idx) <- canvases.zipWithIndex) {
-                  log.p(s"Rendering Canvas $idx")
-                  trainable.setData(RefArrays.asList(Array(canvas.get())))
-                  new BasicOptimizer {
-                    override val trainingMinutes: Int = SymmetricTexture.this.trainingMinutes
-                    override val trainingIterations: Int = SymmetricTexture.this.trainingIterations
-                    override val maxRate = 1e8
+                withMonitoredGif(()=>registeredImages.toList.map(_.apply()), delay = animationDelay.toMillis.toInt){
+                  for ((canvas,idx) <- canvases.zipWithIndex) {
+                    log.p(s"Rendering Canvas $idx")
+                    trainable.setData(RefArrays.asList(Array(canvas.get())))
+                    new BasicOptimizer {
+                      override val trainingMinutes: Int = SymmetricTexture.this.trainingMinutes
+                      override val trainingIterations: Int = SymmetricTexture.this.trainingIterations
+                      override val maxRate = 1e8
 
-                    override def trustRegion(layer: Layer): TrustRegion = null
+                      override def trustRegion(layer: Layer): TrustRegion = null
 
-                    override def renderingNetwork(dims: Seq[Int]) = compileView(dims.toArray, defaultViews.head)
-                  }.optimize(canvas.get(), trainable.addRef().asInstanceOf[Trainable])(log)
-                }
+                      override def renderingNetwork(dims: Seq[Int]) = compileView(dims.toArray, mainView)
+                    }.optimize(canvas.get(), trainable.addRef().asInstanceOf[Trainable])(log)
+                  }
+                }(log)
               } finally {
                 trainable.freeRef()
               }
@@ -238,11 +217,41 @@ abstract class SymmetricTexture extends ArtSetup[Object] with GeometricArt {
     }(log)
     null
   }
+  def withMonitoredCanvases[T](canvases: List[RefAtomicReference[Tensor]], views: List[Array[ImageView]])(fn: => T)(implicit log: NotebookOutput): T = {
+    canvases.foldLeft((_: Any) => fn)((fn: Any => T, canvas: RefAtomicReference[Tensor]) => { (x: Any) => {
+      def canvasTensor = canvas.get()
+      def dimensions = getDims(canvasTensor)
 
-  def animate(canvas: RefAtomicReference[Tensor])(implicit log:NotebookOutput) = {
+      (0 until views.size)
+        .map(i => () => {
+          val network = compileView(dimensions, views(i))
+          try {
+            Tensor.fromRGB(ImageUtil.resize(getImage(getResult(network.eval(canvasTensor))), dimensions(0), dimensions(1)))
+          } finally {
+            network.freeRef()
+          }
+        }).foldLeft((_: Any) => fn(x))((fn: Any => T, function: () => Tensor) => { (x: Any) => {
+          withMonitoredJpg(() => getImage(function())) {
+            if (rowsAndCols > 1) {
+              withMonitoredJpg(() => getImage(tile(function()))) {
+                fn(x)
+              }
+            } else {
+              fn(x)
+            }
+          }
+        }
+        }).apply(null)
+    }
+    }).apply(null)
+  }
+
+  private var mainView: Array[ImageView] = null
+
+  def animate(canvas: RefAtomicReference[Tensor])(implicit log:NotebookOutput): List[() => BufferedImage] = {
     List(() => {
       val tensor = canvas.get()
-      val renderingNetwork = compileView(tensor.getDimensions, displayViews(log).headOption.getOrElse(optimizerViews(log).head))
+      val renderingNetwork = compileView(tensor.getDimensions, mainView)
       val image = getImage(getResult(renderingNetwork.eval(tensor)))
       renderingNetwork.freeRef()
       image

@@ -2,19 +2,14 @@ package com.simiacryptus.mindseye.art.style.symmetry
 
 import java.awt.image.BufferedImage
 
-import com.simiacryptus.mindseye.art.style.SymmetricTexture
-import com.simiacryptus.mindseye.art.util.view.RotationalGroupView.OCTOHEDRON
-import com.simiacryptus.mindseye.art.util.view.{HyperbolicTileView, ImageView, RotatedVector, RotationalGroupView, SphericalView}
-import com.simiacryptus.mindseye.art.util.{GeometricSequence, Permutation}
+import com.simiacryptus.mindseye.art.util.GeometricSequence
+import com.simiacryptus.mindseye.art.util.view.{ImageView, SphericalView}
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.ref.wrappers.RefAtomicReference
-import com.simiacryptus.sparkbook.NotebookRunner
-import com.simiacryptus.sparkbook.aws.{P2_XL, P3_2XL}
-import com.simiacryptus.sparkbook.util.LocalRunner
+import com.simiacryptus.sparkbook.aws.P2_XL
 
-import scala.concurrent.duration._
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{FiniteDuration, _}
 import scala.util.Random
 
 

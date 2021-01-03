@@ -1,12 +1,9 @@
 package com.simiacryptus.mindseye.art.style.symmetry
 
-import com.simiacryptus.mindseye.art.style.SymmetricTexture
 import com.simiacryptus.mindseye.art.util.Permutation
 import com.simiacryptus.mindseye.art.util.view.{ImageView, TransformVector}
 import com.simiacryptus.notebook.NotebookOutput
-import com.simiacryptus.sparkbook.NotebookRunner
-import com.simiacryptus.sparkbook.aws.{P2_XL, P3_2XL}
-import com.simiacryptus.sparkbook.util.LocalRunner
+import com.simiacryptus.sparkbook.aws.P3_2XL
 
 object SimilarityGrid extends SimilarityGrid
   with P3_2XL
