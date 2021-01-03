@@ -42,7 +42,7 @@ class Hyperbolic320 extends SymmetricTexture {
     })
   }
 
-  override def displayViews(implicit log: NotebookOutput): Array[Array[ImageView]] = Array(Array[ImageView](
+  override def displayViews(implicit log: NotebookOutput): List[Array[ImageView]] = List(Array[ImageView](
     RotatedVector(rotation = List(1, 2).map(_ * Math.PI * 2 / 3 -> Permutation.unity(3)).toMap),
     HyperbolicTileView(3, 20, maxRadius = 1),
   ))

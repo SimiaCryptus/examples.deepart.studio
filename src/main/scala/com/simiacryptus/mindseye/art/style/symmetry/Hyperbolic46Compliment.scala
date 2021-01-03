@@ -42,7 +42,7 @@ class Hyperbolic46Compliment extends SymmetricTexture {
     })
   }
 
-  override def displayViews(implicit log: NotebookOutput): Array[Array[ImageView]] = Array(Array(
+  override def displayViews(implicit log: NotebookOutput): List[Array[ImageView]] = List(Array(
     HyperbolicTileView(4, 6, maxRadius = 1, mode = "square"),
     RotatedVector(rotation = Map(
       Math.PI / 2 -> Permutation(-1, -2, -3),

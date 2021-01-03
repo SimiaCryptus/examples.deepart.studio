@@ -17,15 +17,14 @@
  * under the License.
  */
 
-package com.simiacryptus.mindseye.art.style
+package com.simiacryptus.mindseye.art.style.symmetry
 
 import java.net.URI
 
 import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
-import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
 import com.simiacryptus.mindseye.art.util.ArtUtil.load
-import com.simiacryptus.mindseye.art.util.view.{HyperbolicTileView, ImageView, RetiledView, RotatedVector, SphericalView, TunnelView}
+import com.simiacryptus.mindseye.art.util.view.{HyperbolicTileView, ImageView, RotatedVector}
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.eval.Trainable
 import com.simiacryptus.mindseye.lang.cudnn.{CudaSettings, Precision}
@@ -62,8 +61,6 @@ object HyperbolicTexture extends HyperbolicTexture with LocalRunner[Object] with
   }
 
 }
-
-import com.simiacryptus.mindseye.art.style.HyperbolicTexture.JobDetails
 
 class HyperbolicTexture extends ArtSetup[Object] with GeometricArt {
   val styleUrl = "upload:Style"
