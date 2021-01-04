@@ -36,10 +36,10 @@ abstract class PolyhedralTexture extends SymmetricTexture {
     ))
   }
 
-  lazy val animationSequence: List[RotationalGroupView] = {
+  private lazy val animationSequence: List[RotationalGroupView] = {
     val animationFrames = this.animationFrames / 2
-    (0 to animationFrames).map(_ * 2 * Math.PI / animationFrames).toList.map(theta => new RotationalGroupView(theta, 0, group))
-    ++(0 to animationFrames).map(_ * 2 * Math.PI / animationFrames).toList.map(theta => new RotationalGroupView(0, theta, group))
+    (0 to animationFrames).map(_ * 2 * Math.PI / animationFrames).toList.map(theta => new RotationalGroupView(theta, 0, group)) ++
+      (0 to animationFrames).map(_ * 2 * Math.PI / animationFrames).toList.map(theta => new RotationalGroupView(0, theta, group))
   }
 
   override def animate(canvas: RefAtomicReference[Tensor])(implicit log: NotebookOutput): List[() => BufferedImage] = {
