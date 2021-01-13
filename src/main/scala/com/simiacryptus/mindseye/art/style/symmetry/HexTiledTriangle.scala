@@ -3,14 +3,18 @@ package com.simiacryptus.mindseye.art.style.symmetry
 import com.simiacryptus.mindseye.art.util.Permutation
 import com.simiacryptus.mindseye.art.util.view.{ImageView, RotatedVector, TransformVector}
 import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.sparkbook.NotebookRunner
 import com.simiacryptus.sparkbook.aws.P3_2XL
+import com.simiacryptus.sparkbook.util.LocalRunner
 
 
 object HexTiledTriangle extends HexTiledTriangle
-  with P3_2XL
-  //  with NotebookRunner[Object] with LocalRunner[Object]
+//  with P3_2XL
+    with NotebookRunner[Object] with LocalRunner[Object]
 {
   override val s3bucket: String = "symmetry.deepartist.org"
+
+  override def name: String = HexTiledTriangle.super.name
 }
 
 class HexTiledTriangle extends SymmetricTexture {
@@ -22,7 +26,7 @@ class HexTiledTriangle extends SymmetricTexture {
   override val rowsAndCols = 2
 
   override def description = <div>
-    Creates a hexagonally-tiled texture with 3-fold rotational symmetry.
+    Creates a hexagonally-tiled texture with 3-fold color-permuted rotational symmetry.
   </div>.toString.trim
 
   def aspectRatio = 1.732
@@ -33,7 +37,7 @@ class HexTiledTriangle extends SymmetricTexture {
       Array(
         Array.empty[ImageView],
         Array(TransformVector(offset = Map(Array(0.5, 0.5) -> Permutation.unity(3)), symmetry = false))
-      ).map(x => x ++ Array(RotatedVector(rotation = Map(Math.PI -> Permutation.unity(3)))))
+      ).map(x => Array(RotatedVector(rotation = (1 until 3).map(i=>(i * 2 * Math.PI / 3) -> (Permutation(2,3,1) ^ i)).toMap)) ++ x)
     })
   }
 

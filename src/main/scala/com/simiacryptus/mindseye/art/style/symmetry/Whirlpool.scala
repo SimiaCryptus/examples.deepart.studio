@@ -1,32 +1,31 @@
 package com.simiacryptus.mindseye.art.style.symmetry
 
 import com.simiacryptus.mindseye.art.util.Permutation
-import com.simiacryptus.mindseye.art.util.view.{ImageView, TransformVector}
+import com.simiacryptus.mindseye.art.util.view.{ImageView, RotatedVector, TunnelView, WhirlpoolView}
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.sparkbook.NotebookRunner
-import com.simiacryptus.sparkbook.aws.P3_2XL
 import com.simiacryptus.sparkbook.util.LocalRunner
 
 
-object SimpleSquare extends SimpleSquare
-//  with P3_2XL
-    with NotebookRunner[Object] with LocalRunner[Object]
+object Whirlpool extends Whirlpool
+  //  with P3_2XL
+  with NotebookRunner[Object] with LocalRunner[Object]
 {
   override val s3bucket: String = "symmetry.deepartist.org"
 
-  override def name: String = SimpleSquare.super.name
+  override def name: String = Whirlpool.super.name
 }
 
-class SimpleSquare extends SymmetricTexture {
+class Whirlpool extends SymmetricTexture {
 
-  override def name: String = "Simple repeating texture"
+  override def name: String = "Tunnel Texture with 3-way symmetry (single degeneracy)"
 
   override def indexStr = "202"
 
-  override val rowsAndCols = 2
+  override val rowsAndCols = 1
 
   override def description = <div>
-    Creates a simple square-tiling texture.
+    Creates a texture with 180-degree rotational symmetry.
   </div>.toString.trim
 
   def aspectRatio = 1.0
@@ -34,11 +33,10 @@ class SimpleSquare extends SymmetricTexture {
   def optimizerViews(implicit log: NotebookOutput) = {
     log.out("Symmetry Spec:")
     log.code(() => {
-      Array(
-        Array.empty[ImageView],
-        Array[ImageView](
-          TransformVector(offset = Map(Array(0.5, 0.5) -> Permutation.unity(3)), symmetry = false)
-        ))
+      Array(Array[ImageView](
+        RotatedVector(rotation = (1 until 2).map(i=>(i * 2 * Math.PI / 4) -> (Permutation.unity(3) ^ i)).toMap),
+        WhirlpoolView()
+      ))
     })
   }
 

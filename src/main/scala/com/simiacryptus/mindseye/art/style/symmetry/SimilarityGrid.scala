@@ -3,13 +3,17 @@ package com.simiacryptus.mindseye.art.style.symmetry
 import com.simiacryptus.mindseye.art.util.Permutation
 import com.simiacryptus.mindseye.art.util.view.{ImageView, TransformVector}
 import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.sparkbook.NotebookRunner
 import com.simiacryptus.sparkbook.aws.{P2_XL, P3_2XL}
+import com.simiacryptus.sparkbook.util.LocalRunner
 
 object SimilarityGrid extends SimilarityGrid
-  with P2_XL
-//  with NotebookRunner[Object] with LocalRunner[Object]
+//  with P2_XL
+  with NotebookRunner[Object] with LocalRunner[Object]
 {
   override val s3bucket: String = "symmetry.deepartist.org"
+
+  override def name: String = SimilarityGrid.super.name
 }
 
 class SimilarityGrid extends SymmetricTexture
@@ -17,7 +21,7 @@ class SimilarityGrid extends SymmetricTexture
 
   override def name: String = "1/5 Square 1st-order degeneracy"
   override def indexStr = "202"
-  override val rowsAndCols = 1
+  override val rowsAndCols = 2
   val magnification = 16
 
   override def description = <div>
@@ -31,8 +35,8 @@ class SimilarityGrid extends SymmetricTexture
     log.out("Symmetry Spec:")
     log.code(() => {
       Array(Array[ImageView](
-        TransformVector(offset = List(1).map(x => Array(0, 3 * x.toDouble / 5) -> Permutation.unity(3)).toMap),
-        TransformVector(offset = List(1).map(x => Array(3 * x.toDouble / 5, 0) -> Permutation.unity(3)).toMap)
+        TransformVector(offset = List(1).map(x => Array(0, x.toDouble / 5) -> Permutation.unity(3)).toMap),
+        TransformVector(offset = List(1).map(x => Array(x.toDouble / 5, 0) -> Permutation.unity(3)).toMap)
       )).flatMap(x=>List(x,x++List(TransformVector(offset = Map(Array(0.5, 0.5) -> Permutation.unity(3))))))
     })
   }
