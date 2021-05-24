@@ -4,12 +4,14 @@ import com.simiacryptus.mindseye.art.util.Permutation
 import com.simiacryptus.mindseye.art.util.view.{ImageView, RotatedVector, TunnelView, WhirlpoolView}
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.sparkbook.NotebookRunner
+import com.simiacryptus.sparkbook.aws.P2_XL
 import com.simiacryptus.sparkbook.util.LocalRunner
 
 
 object Whirlpool extends Whirlpool
+  with P2_XL
   //  with P3_2XL
-  with NotebookRunner[Object] with LocalRunner[Object]
+//  with NotebookRunner[Object] with LocalRunner[Object]
 {
   override val s3bucket: String = "symmetry.deepartist.org"
 
@@ -34,10 +36,17 @@ class Whirlpool extends SymmetricTexture {
     log.out("Symmetry Spec:")
     log.code(() => {
       Array(Array[ImageView](
-        RotatedVector(rotation = (1 until 2).map(i=>(i * 2 * Math.PI / 4) -> (Permutation.unity(3) ^ i)).toMap),
+        //RotatedVector(rotation = (1 until 2).map(i=>(i * 2 * Math.PI / 4) -> (Permutation.unity(3) ^ i)).toMap),
         WhirlpoolView()
       ))
     })
+  }
+
+  override def displayViews(implicit log: NotebookOutput): List[Array[ImageView]] = {
+    List(Array[ImageView](
+      //RotatedVector(rotation = (1 until 2).map(i=>(i * 2 * Math.PI / 4) -> (Permutation.unity(3) ^ i)).toMap),
+      WhirlpoolView(trim = 0.0)
+    ))
   }
 
   override def resolutions = Map(
