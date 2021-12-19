@@ -22,7 +22,9 @@ package com.simiacryptus.mindseye.art.examples
 import java.awt.{Font, Graphics2D}
 import java.net.URI
 
-import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
+import com.amazonaws.services.s3.AmazonS3
+import com.simiacryptus.aws.S3Util
+import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client
 import com.simiacryptus.mindseye.art.util._
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.notebook.NotebookOutput
@@ -32,7 +34,7 @@ import com.simiacryptus.sparkbook.util.LocalRunner
 
 object BasicNotebook extends BasicNotebook with LocalRunner[Object] with NotebookRunner[Object]
 
-class BasicNotebook extends ArtSetup[Object] {
+class BasicNotebook extends ArtSetup[Object, BasicNotebook] {
 
   val styleUrl = "upload:Image"
   val s3bucket: String = "test.deepartist.org"
@@ -51,6 +53,7 @@ class BasicNotebook extends ArtSetup[Object] {
 
   override def postConfigure(log: NotebookOutput) = log.eval { () =>
     implicit val l = log
+    implicit val s3client: AmazonS3 = S3Util.getS3(log.getArchiveHome)
     () => {
       // First, basic configuration so we publish to our s3 site
       if (Option(s3bucket).filter(!_.isEmpty).isDefined)

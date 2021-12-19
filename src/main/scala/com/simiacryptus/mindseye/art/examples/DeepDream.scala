@@ -21,9 +21,11 @@ package com.simiacryptus.mindseye.art.examples
 
 import java.net.URI
 
+import com.amazonaws.services.s3.AmazonS3
+import com.simiacryptus.aws.S3Util
 import com.simiacryptus.mindseye.art.models.VGG16
 import com.simiacryptus.mindseye.art.ops._
-import com.simiacryptus.mindseye.art.util.ArtSetup.{ec2client, s3client}
+import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client
 import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.notebook.NotebookOutput
@@ -36,7 +38,7 @@ import com.simiacryptus.sparkbook.util.LocalRunner
 
 object DeepDream extends DeepDream with LocalRunner[Object] with NotebookRunner[Object]
 
-class DeepDream extends ArtSetup[Object] {
+class DeepDream extends ArtSetup[Object, DeepDream] {
 
   val contentUrl = "upload:Content"
   val s3bucket: String = "test.deepartist.org"
@@ -60,6 +62,7 @@ class DeepDream extends ArtSetup[Object] {
   override def postConfigure(log: NotebookOutput) = log.eval { () =>
     () => {
       implicit val implicitLog = log
+      implicit val s3client: AmazonS3 = S3Util.getS3(log.getArchiveHome)
       // First, basic configuration so we publish to our s3 site
       if (Option(s3bucket).filter(!_.isEmpty).isDefined)
         log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
