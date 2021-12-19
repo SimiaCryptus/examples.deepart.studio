@@ -24,7 +24,6 @@ import java.net.URI
 
 import com.amazonaws.services.s3.AmazonS3
 import com.simiacryptus.aws.S3Util
-import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client
 import com.simiacryptus.mindseye.art.util._
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.notebook.NotebookOutput
@@ -69,7 +68,7 @@ class BasicNotebook extends ArtSetup[Object, BasicNotebook] {
         canvas
       })
       // Usually not on one line, this code publishes our result to the site's index so it is linked from the homepage.
-      registerWithIndexJPG(() => Tensor.fromRGB(canvas)).foreach(_.stop()(s3client, ec2client))
+      registerWithIndexJPG(() => Tensor.fromRGB(canvas)).foreach(_.stop()(s3client, ArtSetup.ec2client))
       null
     }
   }()
