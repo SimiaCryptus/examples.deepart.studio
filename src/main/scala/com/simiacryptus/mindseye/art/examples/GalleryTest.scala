@@ -19,25 +19,24 @@
 
 package com.simiacryptus.mindseye.art.examples
 
-import java.awt.{Font, Graphics2D}
 import java.net.URI
 
 import com.amazonaws.services.s3.AmazonS3
 import com.simiacryptus.aws.S3Util
+import com.simiacryptus.mindseye.art.util.ImageArtUtil.loadImages
 import com.simiacryptus.mindseye.art.util._
-import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.notebook.NotebookOutput
-import com.simiacryptus.sparkbook._
-import com.simiacryptus.sparkbook.util.Java8Util._
+import com.simiacryptus.sparkbook.NotebookRunner
 import com.simiacryptus.sparkbook.util.LocalRunner
 
 import scala.collection.JavaConverters.seqAsJavaListConverter
 
-object BasicNotebook extends BasicNotebook with LocalRunner[Object] with NotebookRunner[Object] {
+
+object GalleryTest extends GalleryTest with LocalRunner[Object] with NotebookRunner[Object] {
   override def http_port: Int = 1081
 }
 
-class BasicNotebook extends ArtSetup[Object, BasicNotebook] with ArtworkStyleGalleries {
+class GalleryTest extends ArtSetup[Object, GalleryTest] with ArtworkStyleGalleries {
 
   val styleUrls = Array(
     //"upload:Image"
@@ -50,8 +49,7 @@ class BasicNotebook extends ArtSetup[Object, BasicNotebook] with ArtworkStyleGal
   override def indexStr = "000"
 
   override def description = <div>
-    A very basic notebook that displays images with a simple edit.
-    No AI code, just a demo of the publishing system used.
+    A basic notebook that displays an Artwork Style Gallery.
   </div>.toString.trim
 
   override def inputTimeoutSeconds = 3600
@@ -63,20 +61,21 @@ class BasicNotebook extends ArtSetup[Object, BasicNotebook] with ArtworkStyleGal
     if (Option(s3bucket).filter(!_.isEmpty).isDefined)
       log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
     log.onComplete(() => upload(log): Unit)
-    // Now we evaluate the drawing code inside a logged eval block.
-    // This will publish the code, the result, any logs, the duration, and also link to github.
-    val canvas = (for (canvas <- ImageArtUtil.loadImages(log, styleGalleries_lowRes(styleUrls).asJava, resolution.toInt)) yield {
-      log.eval(() => {
-        if(message.nonEmpty) {
-          val graphics = canvas.getGraphics.asInstanceOf[Graphics2D]
-          graphics.setFont(new Font("Calibri", Font.BOLD, 42))
-          graphics.drawString(message, 10, 50)
-        }
-        canvas
-      })
-    }).head
-    // Usually not on one line, this code publishes our result to the site's index so it is linked from the homepage.
-    registerWithIndexJPG(() => Tensor.fromRGB(canvas)).foreach(_.stop()(s3client, ArtSetup.ec2client))
+    val lowRes = styleGalleries_lowRes(styleUrls).filter(!styleUrls.contains(_))
+    val nonGallery = styleUrls.filter(lowRes.contains(_))
+    log.h1("Styles")
+    if(nonGallery.nonEmpty) {
+      loadImages(log, nonGallery.toList.asJava, -1).foreach(img => log.p(log.jpg(img, "Input Style")))
+    }
+    if(lowRes.nonEmpty) {
+      log.h2("Low Res Galleries")
+      loadImages(log, lowRes.asJava, -1).foreach(img => log.p(log.jpg(img, "Input Style")))
+    }
+    val highRes = styleGalleries_highRes(styleUrls).filter(!styleUrls.contains(_)).filter(!lowRes.contains(_))
+    if(highRes.nonEmpty) {
+      log.h2("High Res Galleries")
+      loadImages(log, highRes.asJava, -1).foreach(img => log.p(log.jpg(img, "Input Style")))
+    }
     null
   }
 }

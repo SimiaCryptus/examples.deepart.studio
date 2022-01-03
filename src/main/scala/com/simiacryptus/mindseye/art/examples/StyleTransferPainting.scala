@@ -190,7 +190,7 @@ class StyleTransferPainting extends ArtSetup[Object, StyleTransferPainting] {
             CudaSettings.INSTANCE().setDefaultPrecision(Precision.Float)
             val content: BufferedImage = ImageArtUtil.loadImage(log, contentUrl, res.toInt)
             if (null == canvas) {
-              canvas = ImageArtUtil.getImageTensor(initUrl, log, content.getWidth, content.getHeight)
+              canvas = ImageArtUtil.getImageTensors(initUrl, log, content.getWidth, content.getHeight).head
               //canvas.watch()
             } else {
               canvas = updateCanvas(canvas, content)
@@ -245,7 +245,7 @@ class StyleTransferPainting extends ArtSetup[Object, StyleTransferPainting] {
             CudaSettings.INSTANCE().setDefaultPrecision(Precision.Float)
             val content: BufferedImage = ImageArtUtil.loadImage(log, contentUrl, res.toInt)
             if (null == canvas) {
-              canvas = ImageArtUtil.getImageTensor(initUrl, log, content.getWidth, content.getHeight)
+              canvas = ImageArtUtil.getImageTensors(initUrl, log, content.getWidth, content.getHeight).head
             } else {
               canvas = updateCanvas(canvas, content)
             }
@@ -298,7 +298,7 @@ class StyleTransferPainting extends ArtSetup[Object, StyleTransferPainting] {
             CudaSettings.INSTANCE().setDefaultPrecision(Precision.Float)
             val content: BufferedImage = ImageArtUtil.loadImage(log, contentUrl, res.toInt)
             if (null == canvas) {
-              canvas = ImageArtUtil.getImageTensor(initUrl, log, content.getWidth, content.getHeight)
+              canvas = ImageArtUtil.getImageTensors(initUrl, log, content.getWidth, content.getHeight).head
             } else {
               canvas = updateCanvas(canvas, content)
             }
@@ -343,7 +343,7 @@ class StyleTransferPainting extends ArtSetup[Object, StyleTransferPainting] {
         // Final Phase
         val tile_padding = 64
         val tile_size = 800
-        val rawContent = ImageArtUtil.getImageTensor(contentUrl, log, -1)
+        val rawContent = ImageArtUtil.getImageTensors(contentUrl, log, -1).head
         for (
           content <- new GeometricSequence {
             override val min: Double = 1400
@@ -362,7 +362,7 @@ class StyleTransferPainting extends ArtSetup[Object, StyleTransferPainting] {
             })
         ) {
           if (null == canvas) {
-            canvas = ImageArtUtil.getImageTensor(initUrl, log, content.getWidth, content.getHeight)
+            canvas = ImageArtUtil.getImageTensors(initUrl, log, content.getWidth, content.getHeight).head
           } else {
             canvas = updateCanvas(canvas, content.getWidth, content.getHeight)
           }

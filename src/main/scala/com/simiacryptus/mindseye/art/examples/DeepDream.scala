@@ -89,7 +89,7 @@ class DeepDream extends ArtSetup[Object, DeepDream] {
                 // This operator increases the RMS power of any signal
                 new ChannelPowerEnhancer()
               ),
-              styleUrl = List(contentUrl)
+              styleUrls = List(contentUrl)
             ),
             optimizer = new BasicOptimizer {
               override val trainingMinutes: Int = 180

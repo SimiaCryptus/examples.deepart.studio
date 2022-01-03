@@ -42,8 +42,8 @@ object Posterize extends Posterize with LocalRunner[Object] with NotebookRunner[
 
 class Posterize extends ArtSetup[Object, Posterize] {
 
-  val contentUrl = "upload:Image"
-//  val contentUrl = "file:///C:/Users/andre/code/all-projects/report/Posterize/458e2c1e-9c18-469c-8a37-68db079a4967/etc/44dfdba2-76b1-430f-ab49-1511aa3d6c72.jpg"
+//  val contentUrl = "upload:Image"
+  val contentUrl = "file:///C:/Users/andre/Pictures/Johns Pics/IMG_20160312_122220887.jpg"
   val s3bucket: String = ""
   val useCuda = true
   val tile_size = 400
@@ -69,7 +69,7 @@ class Posterize extends ArtSetup[Object, Posterize] {
     if (Option(s3bucket).filter(!_.isEmpty).isDefined)
       log.setArchiveHome(URI.create(s"s3://$s3bucket/$className/${log.getId}/"))
     log.onComplete(() => upload(log): Unit)
-    var fullContent = ImageArtUtil.getTensor(log, contentUrl)
+    var fullContent = ImageArtUtil.loadImageFile(contentUrl)
     //fullContent = Tensor.fromRGB(ImageUtil.resize(fullContent.toRgbImage, 1400, true))
     log.p(log.jpg(fullContent.toRgbImage, "Input Content"))
 

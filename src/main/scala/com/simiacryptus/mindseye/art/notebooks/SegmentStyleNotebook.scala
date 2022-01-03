@@ -91,7 +91,7 @@ object SegmentStyleNotebook {
         new GramMatrixEnhancer().setMinMax(-.125, .125),
         new MomentMatcher()
       ).map(_.withMask(foreground)),
-      styleUrl = List(styleUrl_foreground),
+      styleUrls = List(styleUrl_foreground),
       magnification = magnification
     ) + new VisualStyleContentNetwork(
       styleLayers = List(
@@ -104,7 +104,7 @@ object SegmentStyleNotebook {
         new GramMatrixEnhancer().setMinMax(-.5, 5),
         new MomentMatcher()
       ).map(_.withMask(background)),
-      styleUrl = List(styleUrl_background),
+      styleUrls = List(styleUrl_background),
       contentLayers = List(
         VGG16.VGG16_1b2
       ),

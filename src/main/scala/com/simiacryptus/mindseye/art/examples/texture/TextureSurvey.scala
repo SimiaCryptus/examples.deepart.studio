@@ -114,7 +114,7 @@ class TextureSurvey extends ArtSetup[Object, TextureSurvey] {
                           new GramMatrixEnhancer(),
                           new MomentMatcher()
                         ),
-                        styleUrl = List(styleUrl),
+                        styleUrls = List(styleUrl),
                         magnification = magnification
                       ),
                       optimizer = new BasicOptimizer {

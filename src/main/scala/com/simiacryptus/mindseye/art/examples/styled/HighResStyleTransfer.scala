@@ -90,7 +90,7 @@ class HighResStyleTransfer extends ArtSetup[Object, HighResStyleTransfer] {
                 new GramMatrixEnhancer().setMinMax(-5, 5),
                 new MomentMatcher()
               ),
-              styleUrl = List(styleUrl),
+              styleUrls = List(styleUrl),
               contentLayers = List(
                 VGG16.VGG16_1c1
               ),
@@ -106,7 +106,7 @@ class HighResStyleTransfer extends ArtSetup[Object, HighResStyleTransfer] {
                 new GramMatrixEnhancer(),
                 new MomentMatcher()
               ).map(_.scale(1e2)),
-              styleUrl = List(contentUrl),
+              styleUrls = List(contentUrl),
               magnification = Array(9.0)
             ), optimizer = new BasicOptimizer {
               override val trainingMinutes: Int = 60
@@ -140,7 +140,7 @@ class HighResStyleTransfer extends ArtSetup[Object, HighResStyleTransfer] {
                 new GramMatrixEnhancer().setMinMax(-2, 2),
                 new MomentMatcher()
               ),
-              styleUrl = List(styleUrl),
+              styleUrls = List(styleUrl),
               contentLayers = List(
                 VGG16.VGG16_1b2.prependAvgPool(2)
               ),
@@ -156,7 +156,7 @@ class HighResStyleTransfer extends ArtSetup[Object, HighResStyleTransfer] {
                 new GramMatrixEnhancer(),
                 new MomentMatcher()
               ).map(_.scale(1e2)),
-              styleUrl = List(contentUrl),
+              styleUrls = List(contentUrl),
               magnification = Array(4.0)
             ), optimizer = new BasicOptimizer {
               override val trainingMinutes: Int = 60
@@ -192,7 +192,7 @@ class HighResStyleTransfer extends ArtSetup[Object, HighResStyleTransfer] {
                 new ChannelMeanMatcher(),
                 new GramMatrixMatcher()
               ),
-              styleUrl = List(styleUrl),
+              styleUrls = List(styleUrl),
               contentLayers = List(
                 VGG16.VGG16_1b2.prependAvgPool(4)
               ),
@@ -207,7 +207,7 @@ class HighResStyleTransfer extends ArtSetup[Object, HighResStyleTransfer] {
                 new ChannelMeanMatcher(),
                 new GramMatrixMatcher()
               ).map(_.scale(1e2)),
-              styleUrl = List(contentUrl),
+              styleUrls = List(contentUrl),
               magnification = Array(2.0)
             ),
             optimizer = new BasicOptimizer {
@@ -241,7 +241,7 @@ class HighResStyleTransfer extends ArtSetup[Object, HighResStyleTransfer] {
                 new ChannelMeanMatcher(),
                 new GramMatrixMatcher()
               ),
-              styleUrl = List(styleUrl),
+              styleUrls = List(styleUrl),
               contentLayers = List(
                 VGG16.VGG16_1b2.prependAvgPool(8).appendMaxPool(2)
               ),

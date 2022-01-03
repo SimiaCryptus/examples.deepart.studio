@@ -114,7 +114,7 @@ class SegmentStyle extends SegmentingSetup {
             new GramMatrixEnhancer().setMinMax(-.125, .125),
             new MomentMatcher()
           ).map(_.withMask(foreground)),
-          styleUrl = List(styleUrl_foreground),
+          styleUrls = List(styleUrl_foreground),
           magnification = magnification
         ) + new VisualStyleContentNetwork(
           styleLayers = List(
@@ -132,7 +132,7 @@ class SegmentStyle extends SegmentingSetup {
             new GramMatrixEnhancer().setMinMax(-.5, 5),
             new MomentMatcher()
           ).map(_.withMask(background)),
-          styleUrl = List(styleUrl_background),
+          styleUrls = List(styleUrl_background),
           contentLayers = List(
             VGG19.VGG19_1b2
           ),
@@ -168,7 +168,7 @@ class SegmentStyle extends SegmentingSetup {
             new GramMatrixEnhancer().setMinMax(-.125, .125),
             new MomentMatcher()
           ).map(_.withMask(foreground)),
-          styleUrl = List(styleUrl_foreground),
+          styleUrls = List(styleUrl_foreground),
           maxWidth = 2400,
           magnification = magnification
         ) + new VisualStyleContentNetwork(
@@ -187,7 +187,7 @@ class SegmentStyle extends SegmentingSetup {
             new GramMatrixEnhancer().setMinMax(-.5, 5),
             new MomentMatcher()
           ).map(_.withMask(background)),
-          styleUrl = List(styleUrl_background),
+          styleUrls = List(styleUrl_background),
           contentLayers = List(
             VGG19.VGG19_1c3
           ),
@@ -224,7 +224,7 @@ class SegmentStyle extends SegmentingSetup {
             new MomentMatcher()
             //                new ChannelMeanMatcher()
           ).map(_.withMask(foreground)),
-          styleUrl = List(styleUrl_foreground),
+          styleUrls = List(styleUrl_foreground),
           magnification = magnification,
           maxWidth = 4000,
           tileSize = 800
@@ -243,7 +243,7 @@ class SegmentStyle extends SegmentingSetup {
             new MomentMatcher()
             //                new ChannelMeanMatcher()
           ).map(_.withMask(background)),
-          styleUrl = List(styleUrl_background),
+          styleUrls = List(styleUrl_background),
           contentLayers = List(
             //VGG19.VGG19_1b2.prependAvgPool(4),
             VGG19.VGG19_1d1
@@ -253,7 +253,6 @@ class SegmentStyle extends SegmentingSetup {
           ).map(_.withMask(foreground)),
           magnification = magnification,
           maxWidth = 4000,
-          maxPixels = 1e8,
           tileSize = 800
         ),
           new BasicOptimizer {

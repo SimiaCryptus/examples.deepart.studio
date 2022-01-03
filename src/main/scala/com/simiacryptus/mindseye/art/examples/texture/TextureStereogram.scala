@@ -130,7 +130,7 @@ class TextureStereogram extends ArtSetup[Object, TextureStereogram] {
                   new GramMatrixEnhancer(),
                   new MomentMatcher()
                 ),
-                styleUrl = List(styleUrl),
+                styleUrls = List(styleUrl),
                 magnification = magnification,
                 viewLayer = tiled
               ), new BasicOptimizer {

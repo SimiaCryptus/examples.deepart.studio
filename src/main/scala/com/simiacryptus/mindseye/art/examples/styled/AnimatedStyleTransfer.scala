@@ -123,8 +123,7 @@ class AnimatedStyleTransfer extends ArtSetup[Object,AnimatedStyleTransfer] {
             override val min: Double = minResolution
             override val max: Double = maxResolution
             override val steps = AnimatedStyleTransfer.this.steps
-          }.toStream.map(_.round.toDouble),
-          renderingFn = x => new PipelineNetwork(1)
+          }.toStream.map(_.round.toDouble)
         )
         null
       } finally {

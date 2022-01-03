@@ -115,7 +115,7 @@ class TextureGrowth extends ArtSetup[Object, TextureGrowth] {
                           new GramMatrixEnhancer(),
                           new MomentMatcher()
                         ),
-                        styleUrl = List(styleUrl),
+                        styleUrls = List(styleUrl),
                         magnification = magnification
                       ), optimizer = new BasicOptimizer {
                         override val trainingMinutes: Int = 60 / numberOfSteps

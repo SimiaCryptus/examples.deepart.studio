@@ -100,7 +100,7 @@ class StyleTransfer extends ArtSetup[Object, StyleTransfer] {
                 new GramMatrixEnhancer(),
                 new MomentMatcher()
               ),
-              styleUrl = List(styleUrl),
+              styleUrls = List(styleUrl),
               contentLayers = List(
                 // We use fewer layer to be a constraint, since the ContentMatcher operation defines
                 // a stronger operation. Picking a mid-level layer ensures the match is somewhat

@@ -111,7 +111,7 @@ class StyleTransferSweep extends ArtSetup[Object, StyleTransferSweep] {
                 new GramMatrixEnhancer().scale(coeffA),
                 new MomentMatcher().scale(coeffA)
               ),
-              styleUrl = List(styleAUrl),
+              styleUrls = List(styleAUrl),
               magnification = magnification
             ) + new VisualStyleNetwork(
               styleLayers = styleLayers,
@@ -120,7 +120,7 @@ class StyleTransferSweep extends ArtSetup[Object, StyleTransferSweep] {
                 new GramMatrixEnhancer().scale(coeffB),
                 new MomentMatcher().scale(coeffB)
               ),
-              styleUrl = List(styleBUrl),
+              styleUrls = List(styleBUrl),
               magnification = magnification
             ).withContent(
               contentLayers = List(

@@ -137,7 +137,7 @@ class OperatorSurvey extends ArtSetup[Object, OperatorSurvey] {
                         VGG16.VGG16_1c3
                       ),
                       styleModifiers = modifiers.values.toList,
-                      styleUrl = List(styleUrl),
+                      styleUrls = List(styleUrl),
                       magnification = magnification
                     ),
                     optimizer = new BasicOptimizer {

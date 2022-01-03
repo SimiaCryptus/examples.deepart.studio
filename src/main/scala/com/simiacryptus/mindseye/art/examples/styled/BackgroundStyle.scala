@@ -104,7 +104,7 @@ class BackgroundStyle extends SegmentingSetup {
               new GramMatrixEnhancer().setMinMax(-.5, 5),
               new MomentMatcher()
             ).map(_.withMask(foreground)),
-            styleUrl = List(styleUrl),
+            styleUrls = List(styleUrl),
             contentLayers = List(
               VGG16.VGG16_1a
             ),
@@ -144,7 +144,7 @@ class BackgroundStyle extends SegmentingSetup {
               new GramMatrixEnhancer().setMinMax(-.5, 5),
               new GramMatrixMatcher()
             ).map(_.withMask(foreground)),
-            styleUrl = List(styleUrl),
+            styleUrls = List(styleUrl),
             contentLayers = List(
               VGG16.VGG16_0b.prependAvgPool(2),
               VGG16.VGG16_1c3
@@ -179,7 +179,7 @@ class BackgroundStyle extends SegmentingSetup {
               new GramMatrixEnhancer().setMinMax(-.5, 5),
               new GramMatrixMatcher()
             ).map(_.withMask(foreground)),
-            styleUrl = List(styleUrl),
+            styleUrls = List(styleUrl),
             contentLayers = List(
               VGG16.VGG16_0b.prependAvgPool(4)
             ),
@@ -187,8 +187,7 @@ class BackgroundStyle extends SegmentingSetup {
               new ContentMatcher().scale(1e1)
             ).map(_.withMask(background)),
             magnification = Array(1.0),
-            maxWidth = 4000,
-            maxPixels = 1e8
+            maxWidth = 4000
           ),
           optimizer = new BasicOptimizer {
             override val trainingMinutes: Int = 180

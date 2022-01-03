@@ -124,7 +124,7 @@ class SeedImageSurvey extends ArtSetup[Object, SeedImageSurvey] {
                         new GramMatrixEnhancer(),
                         new MomentMatcher()
                       ),
-                      styleUrl = List(styleUrl),
+                      styleUrls = List(styleUrl),
                       magnification = magnification
                     ),
                     optimizer = new BasicOptimizer {
