@@ -7,8 +7,12 @@ import com.simiacryptus.mindseye.art.models.{VGG16, VGG19}
 class VisionLayerListJson(
                           val layers: Array[String]
                         ) {
-  def this(layerList: VisionPipelineLayer*) = {
-    this(layerList.map(_.name()).toArray)
+  def this() = {
+    this(Array.empty[String])
+  }
+
+  def this(layerA: VisionPipelineLayer, layerList: VisionPipelineLayer*) = {
+    this((List(layerA)++layerList).map(_.name()).toArray)
   }
 
   @JsonIgnore

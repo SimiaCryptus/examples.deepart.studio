@@ -49,8 +49,11 @@ class MultiStylized extends ArtSetup[Object, MultiStylized] with ArtworkStyleGal
   //val styleUrls = "http://test.deepartist.org/BigTexture/1d165554-f60e-41b8-ab41-4e730ed17d72/etc/58098b35-0203-40c6-b3c6-c860a882089a.jpg"
 //  val styleUrls = Array("file:///C:/Users/andre/code/all-projects/report/BigTexture/556a080f-5ef7-4c58-bbdd-4bee36486502/etc/shutterstock_87165334.jpg")
   //val styleUrls = "upload:Style"
-  val styleUrls = Array(CubismPortraits.name)
-  val contentUrl = "file:///C:/Users/andre/Pictures/Johns Pics/IMG_20160312_122220887.jpg"
+  val styleUrls = Array(
+    //CubismPortraits.name
+    "file:///C:/Users/andre/Pictures/texture_sources/the-starry-night.jpg"
+  )
+  val contentUrl = "file:///C:/Users/andre/Pictures/Artistry/chimps/son_at_work.jpg"
 
   //val initUrl: String = "file:///C:/Users/andre/code/all-projects/report/BigTexture/7d8f3695-9b29-4c83-b7fd-83ebafd4bb8b/etc/image_4648be07568b7c0f.jpg"
   //val initUrl: String = "file:///C:/Users/andre/code/all-projects/report/BigTexture/faef1a35-a7ee-49a3-9f47-31380da7b5cc/etc/image_2ae03bd5518bf032.jpg"
@@ -58,7 +61,7 @@ class MultiStylized extends ArtSetup[Object, MultiStylized] with ArtworkStyleGal
   val initUrls = Array(
     "50 + noise * 0.5",
     "plasma",
-    "file:///C:/Users/andre/Pictures/Johns Pics/IMG_20160312_122220887_poster.jpg"
+    "file:///C:/Users/andre/Pictures/Artistry/chimps/son_at_work.jpg"
   )
 
   val resolutions = GeometricSequenceJson(min = 256, max = 1024, steps = 3)

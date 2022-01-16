@@ -47,19 +47,20 @@ object BigTextureTiles extends BigTextureTiles with LocalRunner[Object] with Not
 class BigTextureTiles extends ArtSetup[Object, BigTextureTiles] with ImageTileProcessor with ArtworkStyleGalleries {
 
   //val styleUrls = "http://test.deepartist.org/BigTexture/1d165554-f60e-41b8-ab41-4e730ed17d72/etc/58098b35-0203-40c6-b3c6-c860a882089a.jpg"
-  //val styleUrls = "file:///C:/Users/andre/code/all-projects/report/BigTexture/556a080f-5ef7-4c58-bbdd-4bee36486502/etc/shutterstock_87165334.jpg"
+  val styleUrls = Array("file:///C:/Users/andre/Pictures/texture_sources/the-starry-night.jpg")
   //val styleUrls = "upload:Style"
-  val styleUrls = Array(CubismPortraits.name)
+//  val styleUrls = Array(CubismPortraits.name)
 
   //val initUrl: String = "file:///C:/Users/andre/code/all-projects/report/BigTexture/7d8f3695-9b29-4c83-b7fd-83ebafd4bb8b/etc/image_4648be07568b7c0f.jpg"
-  //val initUrl: String = "file:///C:/Users/andre/code/all-projects/report/BigTexture/faef1a35-a7ee-49a3-9f47-31380da7b5cc/etc/image_2ae03bd5518bf032.jpg"
+  val initUrl: String = "file:///C:/Users/andre/code/all-projects/report/MultiStylized/998d64df-85ac-4a01-977e-d6f6c34c64fd/etc/image_724d7c58ec31c48f.jpg"
   //val initUrl: String = "50 + noise * 0.5"
-  val initUrl: String = "plasma"
+//  val initUrl: String = "plasma"
 
   override def inputTimeoutSeconds = 0
   //  override def inputTimeoutSeconds = 3600
 
-  val s3bucket: String = "test.deepartist.org"
+  val s3bucket: String = ""
+//  val s3bucket: String = "test.deepartist.org"
 
   //val aspectRatio = 0.5774 // Hex Tiling
   val aspectRatio = 1 / 0.61803398875 // Golden Ratio
@@ -133,48 +134,48 @@ class BigTextureTiles extends ArtSetup[Object, BigTextureTiles] with ImageTilePr
         tensor.freeRef()
         image
       }).orNull) {
-        paint(
-          contentUrl = initUrl,
-          initUrl = initUrl,
-          canvas = canvas.addRef(),
-          network = new VisualStyleNetwork(
-            styleLayers = List(
-              // We select all the lower-level layers to achieve a good balance between speed and accuracy.
-              VGG19.VGG19_0b,
-              VGG19.VGG19_1a,
-              VGG19.VGG19_1b1,
-              VGG19.VGG19_1b2,
-              VGG19.VGG19_1c1,
-              VGG19.VGG19_1c2,
-              VGG19.VGG19_1c3,
-              VGG19.VGG19_1c4,
-              VGG19.VGG19_1d1,
-              VGG19.VGG19_1d2,
-              VGG19.VGG19_1d3,
-              VGG19.VGG19_1d4
-            ),
-            styleModifiers = List(
-              // These two operators are a good combination for a vivid yet accurate style
-              //new GramMatrixEnhancer().setMinMax(-.05, .05).scale(1e1),
-              new MomentMatcher()
-              //              new GramMatrixMatcher()
-            ),
-            styleUrls = styleGalleries_lowRes(styleUrls),
-            magnification = Array(1.0),
-            viewLayer = viewLayer
-          ),
-          optimizer = new BasicOptimizer {
-            override val trainingMinutes: Int = 120
-            override val trainingIterations: Int = 50
-            override val maxRate = 1e9
-          },
-          aspect = Option(aspectRatio),
-          resolutions = new GeometricSequence {
-            override val min: Double = 128
-            override val max: Double = 1024
-            override val steps = 4
-          }.toStream.map(_.round.toDouble)
-        )
+//        paint(
+//          contentUrl = initUrl,
+//          initUrl = initUrl,
+//          canvas = canvas.addRef(),
+//          network = new VisualStyleNetwork(
+//            styleLayers = List(
+//              // We select all the lower-level layers to achieve a good balance between speed and accuracy.
+//              VGG19.VGG19_0b,
+//              VGG19.VGG19_1a,
+//              VGG19.VGG19_1b1,
+//              VGG19.VGG19_1b2,
+//              VGG19.VGG19_1c1,
+//              VGG19.VGG19_1c2,
+//              VGG19.VGG19_1c3,
+//              VGG19.VGG19_1c4,
+//              VGG19.VGG19_1d1,
+//              VGG19.VGG19_1d2,
+//              VGG19.VGG19_1d3,
+//              VGG19.VGG19_1d4
+//            ),
+//            styleModifiers = List(
+//              // These two operators are a good combination for a vivid yet accurate style
+//              //new GramMatrixEnhancer().setMinMax(-.05, .05).scale(1e1),
+//              new MomentMatcher()
+//              //              new GramMatrixMatcher()
+//            ),
+//            styleUrls = styleGalleries_lowRes(styleUrls),
+//            magnification = Array(1.0),
+//            viewLayer = viewLayer
+//          ),
+//          optimizer = new BasicOptimizer {
+//            override val trainingMinutes: Int = 120
+//            override val trainingIterations: Int = 50
+//            override val maxRate = 1e9
+//          },
+//          aspect = Option(aspectRatio),
+//          resolutions = new GeometricSequence {
+//            override val min: Double = 128
+//            override val max: Double = 1024
+//            override val steps = 4
+//          }.toStream.map(_.round.toDouble)
+//        )
         paintPerTile(
           canvasRef = canvas,
           tile_size = tile_size,
@@ -188,10 +189,10 @@ class BigTextureTiles extends ArtSetup[Object, BigTextureTiles] with ImageTilePr
               VGG19.VGG19_1c2,
               VGG19.VGG19_1c3,
               VGG19.VGG19_1c4,
-              VGG19.VGG19_1d1,
-              VGG19.VGG19_1d2,
-              VGG19.VGG19_1d3,
-              VGG19.VGG19_1d4
+//              VGG19.VGG19_1d1,
+//              VGG19.VGG19_1d2,
+//              VGG19.VGG19_1d3,
+//              VGG19.VGG19_1d4
             ),
             styleModifiers = List(
               //              new GramMatrixEnhancer().setMinMax(-.05, .05).scale(5e1),
@@ -226,7 +227,7 @@ class BigTextureTiles extends ArtSetup[Object, BigTextureTiles] with ImageTilePr
     resolutions.toStream.map(_.round.toInt).foreach(res => {
       log.subreport(s"Resolution $res", (sub: NotebookOutput) => {
 
-        initCanvas(canvasRef, res).freeRef()
+        initCanvas(canvasRef, res)
 
         val cache = new mutable.HashMap[List[Int], (Tensor, Trainable)]()
 
@@ -255,7 +256,7 @@ class BigTextureTiles extends ArtSetup[Object, BigTextureTiles] with ImageTilePr
     })
   }
 
-  def initCanvas(canvasRef: RefAtomicReference[Tensor], res: Int)(implicit log: NotebookOutput): Tensor = {
+  def initCanvas(canvasRef: RefAtomicReference[Tensor], res: Int)(implicit log: NotebookOutput): Unit = {
     val canvas = canvasRef.get()
     if (canvas == null) {
       canvasRef.set(getImageTensors(initUrl, log, res).head)
@@ -263,7 +264,6 @@ class BigTextureTiles extends ArtSetup[Object, BigTextureTiles] with ImageTilePr
       canvasRef.set(Tensor.fromRGB(ImageUtil.resize(canvas.toRgbImage, res, true)))
       canvas.freeRef()
     }
-    canvas
   }
 
 
