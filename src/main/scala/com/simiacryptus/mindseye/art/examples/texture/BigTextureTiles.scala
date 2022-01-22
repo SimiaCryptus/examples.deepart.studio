@@ -47,7 +47,8 @@ object BigTextureTiles extends BigTextureTiles with LocalRunner[Object] with Not
 class BigTextureTiles extends ArtSetup[Object, BigTextureTiles] with ImageTileProcessor with ArtworkStyleGalleries {
 
   //val styleUrls = "http://test.deepartist.org/BigTexture/1d165554-f60e-41b8-ab41-4e730ed17d72/etc/58098b35-0203-40c6-b3c6-c860a882089a.jpg"
-  val styleUrls = Array("file:///C:/Users/andre/Pictures/texture_sources/the-starry-night.jpg")
+  //val styleUrls = Array("file:///C:/Users/andre/Pictures/texture_sources/the-starry-night.jpg")
+  val styleUrls = Array("file:///C:/Users/andre/Pictures/texture_sources/shutterstock_1073629553.jpg")
   //val styleUrls = "upload:Style"
 //  val styleUrls = Array(CubismPortraits.name)
 
@@ -182,26 +183,35 @@ class BigTextureTiles extends ArtSetup[Object, BigTextureTiles] with ImageTilePr
           style = (width: Int) => new VisualStyleNetwork(
             styleLayers = List(
               //VGG19.VGG19_0b,
-              VGG19.VGG19_1a,
+//              VGG19.VGG19_1a,
               VGG19.VGG19_1b1,
               VGG19.VGG19_1b2,
               VGG19.VGG19_1c1,
               VGG19.VGG19_1c2,
-              VGG19.VGG19_1c3,
-              VGG19.VGG19_1c4,
+//              VGG19.VGG19_1c3,
+//              VGG19.VGG19_1c4,
 //              VGG19.VGG19_1d1,
 //              VGG19.VGG19_1d2,
 //              VGG19.VGG19_1d3,
 //              VGG19.VGG19_1d4
             ),
             styleModifiers = List(
-              //              new GramMatrixEnhancer().setMinMax(-.05, .05).scale(5e1),
+              new GramMatrixEnhancer()
+                .setMinMax(-.1, .1),
+//                .setMinMax(-3, 3)
+//                .scale(5e-1)
+//              ,
               //              new MomentMatcher()
               new GramMatrixMatcher(),
-              new ChannelMeanMatcher().scale(1e1)
+//              new ChannelMeanMatcher()
+//                .scale(1e1)
             ),
             styleUrls = styleGalleries_highRes(styleUrls),
-            magnification = Array(width.toDouble / tile_size),
+            magnification = Array(width.toDouble / tile_size).flatMap(x=>new GeometricSequence {
+              override val min: Double = 0.9
+              override val max: Double = 1.1
+              override val steps = 3
+            }.toStream.map(_*x)),
             viewLayer = viewLayer
           ),
           resolutions = new GeometricSequence {
@@ -227,7 +237,7 @@ class BigTextureTiles extends ArtSetup[Object, BigTextureTiles] with ImageTilePr
     resolutions.toStream.map(_.round.toInt).foreach(res => {
       log.subreport(s"Resolution $res", (sub: NotebookOutput) => {
 
-        initCanvas(canvasRef, res)
+        initCanvas(canvasRef, res)(sub)
 
         val cache = new mutable.HashMap[List[Int], (Tensor, Trainable)]()
 
@@ -239,7 +249,7 @@ class BigTextureTiles extends ArtSetup[Object, BigTextureTiles] with ImageTilePr
               network = style(res),
               canvas = tile.addRef(),
               width = tile_size
-            )
+            )(sub)
             (tile, styleTrainable)
           })
           (tile.addRef(), styleTrainable.addRef())
@@ -249,7 +259,7 @@ class BigTextureTiles extends ArtSetup[Object, BigTextureTiles] with ImageTilePr
           val (tileCanvas, styleTrainable) = getTrainer(tileInput.getDimensions.toList)
           tileCanvas.set(tileInput)
           tileCanvasRef.set(tileCanvas.addRef())
-          optimizer.optimize(tileCanvas, styleTrainable)
+          optimizer.optimize(tileCanvas, styleTrainable)(sub)
         })(sub)
 
       }: Unit)
