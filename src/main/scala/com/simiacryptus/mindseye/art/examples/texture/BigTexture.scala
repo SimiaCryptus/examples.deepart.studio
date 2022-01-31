@@ -27,7 +27,7 @@ import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client
 import com.simiacryptus.mindseye.art.util.ImageArtUtil._
-import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
+import com.simiacryptus.mindseye.art.util.{ImageOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.mindseye.layers.java.AffineImgViewLayer
 import com.simiacryptus.notebook.NotebookOutput
@@ -135,7 +135,7 @@ class BigTexture extends ArtSetup[Object, BigTexture] {
             magnification = Array(1.0),
             viewLayer = viewLayer
           ),
-          optimizer = new BasicOptimizer {
+          optimizer = new ImageOptimizer {
             override val trainingMinutes: Int = 60
             override val trainingIterations: Int = 50
             override val maxRate = 1e9
@@ -176,7 +176,7 @@ class BigTexture extends ArtSetup[Object, BigTexture] {
             magnification = Array(1.0),
             viewLayer = viewLayer
           ),
-          optimizer = new BasicOptimizer {
+          optimizer = new ImageOptimizer {
             override val trainingMinutes: Int = 360
             override val trainingIterations: Int = 15
             override val maxRate = 1e9

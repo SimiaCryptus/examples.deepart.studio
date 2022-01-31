@@ -28,7 +28,7 @@ import com.simiacryptus.aws.S3Util
 import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client
-import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
+import com.simiacryptus.mindseye.art.util.{ImageOptimizer, _}
 import com.simiacryptus.mindseye.lang.{Layer, Tensor}
 import com.simiacryptus.mindseye.layers.cudnn.ProductLayer
 import com.simiacryptus.mindseye.opt.region.TrustRegion
@@ -76,9 +76,9 @@ class ZoomingRotor[U <: ZoomingRotor[U]] extends RotorArt[U] with ArtSource[U] {
     "upload:Keyframes"
   )
 
-  def getOptimizer()(implicit log: NotebookOutput): BasicOptimizer = {
+  def getOptimizer()(implicit log: NotebookOutput): ImageOptimizer = {
     log.eval(() => {
-      new BasicOptimizer {
+      new ImageOptimizer {
         override val trainingMinutes: Int = 90
         override val trainingIterations: Int = 10
         override val maxRate = 1e9

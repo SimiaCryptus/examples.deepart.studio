@@ -27,7 +27,7 @@ import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client
 import com.simiacryptus.mindseye.art.util.ImageArtUtil._
-import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
+import com.simiacryptus.mindseye.art.util.{ImageOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.mindseye.layers.java.{AffineImgViewLayer, ImgTileAssemblyLayer}
 import com.simiacryptus.notebook.NotebookOutput
@@ -169,7 +169,7 @@ class TiledTexture extends ArtSetup[Object, TiledTexture] {
                       magnification = magnification,
                       viewLayer = viewLayer
                     ),
-                    optimizer = new BasicOptimizer {
+                    optimizer = new ImageOptimizer {
                       override val trainingMinutes: Int = 60
                       override val trainingIterations: Int = 15
                       override val maxRate = 1e9

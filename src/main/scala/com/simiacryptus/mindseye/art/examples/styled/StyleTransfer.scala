@@ -26,7 +26,7 @@ import com.simiacryptus.aws.S3Util
 import com.simiacryptus.mindseye.art.models.VGG16
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client
-import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
+import com.simiacryptus.mindseye.art.util.{ImageOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.ref.wrappers.RefAtomicReference
@@ -113,7 +113,7 @@ class StyleTransfer extends ArtSetup[Object, StyleTransfer] {
               ),
               magnification = magnification
             ),
-            optimizer = new BasicOptimizer {
+            optimizer = new ImageOptimizer {
               override val trainingMinutes: Int = 60
               override val trainingIterations: Int = 20
               override val maxRate = 1e9

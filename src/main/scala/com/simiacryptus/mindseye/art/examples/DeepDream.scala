@@ -26,7 +26,7 @@ import com.simiacryptus.aws.S3Util
 import com.simiacryptus.mindseye.art.models.VGG16
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client
-import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
+import com.simiacryptus.mindseye.art.util.{ImageOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.ref.wrappers.RefAtomicReference
@@ -91,7 +91,7 @@ class DeepDream extends ArtSetup[Object, DeepDream] {
               ),
               styleUrls = List(contentUrl)
             ),
-            optimizer = new BasicOptimizer {
+            optimizer = new ImageOptimizer {
               override val trainingMinutes: Int = 180
               override val trainingIterations: Int = 200
               override val maxRate = 1e9

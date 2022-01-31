@@ -141,7 +141,7 @@ class SegmentStyle extends SegmentingSetup {
           ).map(_.withMask(foreground)),
           magnification = magnification
         ),
-          new BasicOptimizer {
+          new ImageOptimizer {
             override val trainingMinutes: Int = 60
             override val trainingIterations: Int = 20
             override val maxRate = 1e9
@@ -197,7 +197,7 @@ class SegmentStyle extends SegmentingSetup {
           maxWidth = 2400,
           magnification = magnification
         ),
-          new BasicOptimizer {
+          new ImageOptimizer {
             override val trainingMinutes: Int = 180
             override val trainingIterations: Int = 20
             override val maxRate = 1e9
@@ -255,7 +255,7 @@ class SegmentStyle extends SegmentingSetup {
           maxWidth = 4000,
           tileSize = 800
         ),
-          new BasicOptimizer {
+          new ImageOptimizer {
             override val trainingMinutes: Int = 180
             override val trainingIterations: Int = 10
             override val maxRate = 1e9

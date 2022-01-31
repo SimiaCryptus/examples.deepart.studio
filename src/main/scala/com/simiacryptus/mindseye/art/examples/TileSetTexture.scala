@@ -26,7 +26,7 @@ import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtUtil.load
 import com.simiacryptus.mindseye.art.util.view.{ImageView, RetiledView, RotatedVector, TunnelView}
-import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
+import com.simiacryptus.mindseye.art.util.{ImageOptimizer, _}
 import com.simiacryptus.mindseye.eval.Trainable
 import com.simiacryptus.mindseye.lang.cudnn.{CudaSettings, Precision}
 import com.simiacryptus.mindseye.lang.{Layer, Result, Tensor}
@@ -251,7 +251,7 @@ class TileSetTexture extends ArtSetup[Object, TileSetTexture] with GeometricArt 
             ArtUtil.resetPrecision(trainable.addRef().asInstanceOf[Trainable], style.precision)
             for (canvas <- canvases) {
               trainable.setData(RefArrays.asList(Array(canvas.get())))
-              new BasicOptimizer {
+              new ImageOptimizer {
                 override val trainingMinutes: Int = 180
                 override val trainingIterations: Int = 50
                 override val maxRate = 2e4

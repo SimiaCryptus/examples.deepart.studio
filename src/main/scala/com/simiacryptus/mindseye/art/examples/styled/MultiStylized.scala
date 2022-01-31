@@ -28,7 +28,7 @@ import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client
 import com.simiacryptus.mindseye.art.util.ImageArtUtil._
-import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
+import com.simiacryptus.mindseye.art.util.{ImageOptimizer, _}
 import com.simiacryptus.mindseye.eval.Trainable
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.mindseye.layers.java.AffineImgViewLayer
@@ -65,7 +65,7 @@ class MultiStylized extends ArtSetup[Object, MultiStylized] with ArtworkStyleGal
   )
 
   val resolutions = GeometricSequenceJson(min = 256, max = 1024, steps = 3)
-  val optimizer = BasicOptimizerJson(trainingMinutes = 120, trainingIterations = 50, maxRate = 1e9)
+  val optimizer = ImageOptimizerJson(trainingMinutes = 120, trainingIterations = 50, maxRate = 1e9)
   val styleLayers = new VisionLayerListJson(
     //VGG19.VGG19_0b,
     //VGG19.VGG19_1a,
@@ -188,7 +188,7 @@ class MultiStylized extends ArtSetup[Object, MultiStylized] with ArtworkStyleGal
     }
   }
 
-  def multiPaint(canvasRefs: Seq[RefAtomicReference[Tensor]], style: Int => VisualNetwork, resolutions: GeometricSequence, optimizer: BasicOptimizer, contentImage:BufferedImage)(implicit log: NotebookOutput): Unit = {
+  def multiPaint(canvasRefs: Seq[RefAtomicReference[Tensor]], style: Int => VisualNetwork, resolutions: GeometricSequence, optimizer: ImageOptimizer, contentImage:BufferedImage)(implicit log: NotebookOutput): Unit = {
     resolutions.toStream.map(_.round.toInt).foreach(width => {
       val height = (width.toDouble * contentImage.getHeight.toDouble / contentImage.getWidth.toDouble).floor.toInt
       log.subreport(s"Resolution: $width x $height", (sub: NotebookOutput) => {

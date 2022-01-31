@@ -113,7 +113,7 @@ class BackgroundStyle extends SegmentingSetup {
             ).map(_.withMask(background)),
             magnification = Array(2.0)
           ),
-          optimizer = new BasicOptimizer {
+          optimizer = new ImageOptimizer {
             override val trainingMinutes: Int = 60
             override val trainingIterations: Int = 20
             override val maxRate = 1e9
@@ -155,7 +155,7 @@ class BackgroundStyle extends SegmentingSetup {
             maxWidth = 2400,
             magnification = Array(1.0)
           ),
-          optimizer = new BasicOptimizer {
+          optimizer = new ImageOptimizer {
             override val trainingMinutes: Int = 180
             override val trainingIterations: Int = 20
             override val maxRate = 1e9
@@ -189,7 +189,7 @@ class BackgroundStyle extends SegmentingSetup {
             magnification = Array(1.0),
             maxWidth = 4000
           ),
-          optimizer = new BasicOptimizer {
+          optimizer = new ImageOptimizer {
             override val trainingMinutes: Int = 180
             override val trainingIterations: Int = 10
             override val maxRate = 1e9

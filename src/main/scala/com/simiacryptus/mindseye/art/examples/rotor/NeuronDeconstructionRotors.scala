@@ -29,7 +29,7 @@ import com.simiacryptus.mindseye.art.models.Inception5H
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.registry.JobRegistration
 import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client
-import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
+import com.simiacryptus.mindseye.art.util.{ImageOptimizer, _}
 import com.simiacryptus.mindseye.lang.{Layer, Tensor}
 import com.simiacryptus.mindseye.layers.java.AffineImgViewLayer
 import com.simiacryptus.mindseye.util.ImageUtil
@@ -194,7 +194,7 @@ class NeuronDeconstructionRotors extends RotorArt[NeuronDeconstructionRotors] {
               styleUrls = Seq(""),
               viewLayer = viewLayer
             )(log),
-            optimizer = new BasicOptimizer {
+            optimizer = new ImageOptimizer {
               override val trainingMinutes: Int = 60
               override val trainingIterations: Int = 150
               override val maxRate = 1e9

@@ -29,7 +29,7 @@ import com.simiacryptus.aws.S3Util
 import com.simiacryptus.mindseye.art.models.VGG16
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client
-import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
+import com.simiacryptus.mindseye.art.util.{ImageOptimizer, _}
 import com.simiacryptus.mindseye.lang.{Coordinate, Tensor}
 import com.simiacryptus.mindseye.layers.java.AffineImgViewLayer
 import com.simiacryptus.notebook.NotebookOutput
@@ -133,7 +133,7 @@ class TextureStereogram extends ArtSetup[Object, TextureStereogram] {
                 styleUrls = List(styleUrl),
                 magnification = magnification,
                 viewLayer = tiled
-              ), new BasicOptimizer {
+              ), new ImageOptimizer {
                 override val trainingMinutes: Int = 60
                 override val trainingIterations: Int = 30
                 override val maxRate = 1e9

@@ -29,7 +29,7 @@ import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.TileUtil
 import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client
-import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
+import com.simiacryptus.mindseye.art.util.{ImageOptimizer, _}
 import com.simiacryptus.mindseye.eval.{ArrayTrainable, Trainable}
 import com.simiacryptus.mindseye.lang.cudnn.{CudaSettings, Precision}
 import com.simiacryptus.mindseye.lang.{Layer, Tensor}
@@ -200,7 +200,7 @@ class StyleTransferPainting extends ArtSetup[Object, StyleTransferPainting] {
             ArtUtil.resetPrecision(trainable.addRef().asInstanceOf[Trainable], styleContentNetwork.precision)
             (canvas.addRef(), trainable)
           }
-          new BasicOptimizer {
+          new ImageOptimizer {
             override val trainingMinutes: Int = 90
             override val trainingIterations: Int = 100
             override val maxRate = 1e9
@@ -253,7 +253,7 @@ class StyleTransferPainting extends ArtSetup[Object, StyleTransferPainting] {
             ArtUtil.resetPrecision(trainable.addRef().asInstanceOf[Trainable], styleContentNetwork.precision)
             (canvas.addRef(), trainable)
           }
-          new BasicOptimizer {
+          new ImageOptimizer {
             override val trainingMinutes: Int = 90
             override val trainingIterations: Int = 100
             override val maxRate = 1e9
@@ -306,7 +306,7 @@ class StyleTransferPainting extends ArtSetup[Object, StyleTransferPainting] {
             ArtUtil.resetPrecision(trainable.addRef().asInstanceOf[Trainable], styleContentNetwork.precision)
             (canvas.addRef(), trainable)
           }
-          new BasicOptimizer {
+          new ImageOptimizer {
             override val trainingMinutes: Int = 90
             override val trainingIterations: Int = 100
             override val maxRate = 1e9
@@ -432,7 +432,7 @@ class StyleTransferPainting extends ArtSetup[Object, StyleTransferPainting] {
                 ArtUtil.resetPrecision(trainable.addRef().asInstanceOf[Trainable], styleContentNetwork.precision)
                 trainable
               }
-              new BasicOptimizer {
+              new ImageOptimizer {
                 override val trainingMinutes: Int = 40
                 override val trainingIterations: Int = 20
                 override val maxRate = 1e9

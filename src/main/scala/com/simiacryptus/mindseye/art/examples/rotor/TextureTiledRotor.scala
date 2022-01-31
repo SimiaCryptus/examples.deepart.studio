@@ -27,7 +27,7 @@ import com.simiacryptus.mindseye.art.models.{VGG16, VGG19}
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.HexMask
 import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client
-import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
+import com.simiacryptus.mindseye.art.util.{ImageOptimizer, _}
 import com.simiacryptus.mindseye.lang.{Layer, Result, Tensor}
 import com.simiacryptus.mindseye.layers.java.{AffineImgViewLayer, ImgTileAssemblyLayer}
 import com.simiacryptus.mindseye.network.PipelineNetwork
@@ -296,7 +296,7 @@ abstract class TextureTiledRotor extends RotorArt[TextureTiledRotor] {
           viewLayer = viewLayer
         )
       },
-      optimizer = new BasicOptimizer {
+      optimizer = new ImageOptimizer {
         override val trainingMinutes: Int = TextureTiledRotor.trainingMinutes
         override val trainingIterations: Int = iterations
         override val maxRate = 1e9
@@ -344,7 +344,7 @@ abstract class TextureTiledRotor extends RotorArt[TextureTiledRotor] {
           viewLayer = viewLayer
         )
       },
-      optimizer = new BasicOptimizer {
+      optimizer = new ImageOptimizer {
         override val trainingMinutes: Int = TextureTiledRotor.trainingMinutes
         override val trainingIterations: Int = iterations
         override val maxRate = 1e9

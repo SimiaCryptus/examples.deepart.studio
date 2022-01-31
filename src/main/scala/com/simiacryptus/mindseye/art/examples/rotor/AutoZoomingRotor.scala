@@ -27,7 +27,7 @@ import com.simiacryptus.aws.S3Util
 import com.simiacryptus.mindseye.art.examples.zoomrotor.ZoomingRotor
 import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
-import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
+import com.simiacryptus.mindseye.art.util.{ImageOptimizer, _}
 import com.simiacryptus.mindseye.lang.{Layer, Tensor}
 import com.simiacryptus.mindseye.network.PipelineNetwork
 import com.simiacryptus.mindseye.opt.region.TrustRegion
@@ -101,9 +101,9 @@ abstract class AutoZoomingRotorBase extends RotorArt[AutoZoomingRotorBase] {
 
       override val s3bucket: String = AutoZoomingRotorBase.this.s3bucket
 
-      override def getOptimizer()(implicit log: NotebookOutput): BasicOptimizer = {
+      override def getOptimizer()(implicit log: NotebookOutput): ImageOptimizer = {
         log.eval(() => {
-          new BasicOptimizer {
+          new ImageOptimizer {
             override val trainingMinutes: Int = 90
             override val trainingIterations: Int = 10
             override val maxRate = 1e9

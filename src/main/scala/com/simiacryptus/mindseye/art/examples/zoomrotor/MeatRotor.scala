@@ -2,7 +2,7 @@ package com.simiacryptus.mindseye.art.examples.zoomrotor
 
 import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops.{ContentMatcher, SingleChannelEnhancer}
-import com.simiacryptus.mindseye.art.util.{BasicOptimizer, VisualNetwork, VisualStyleNetwork}
+import com.simiacryptus.mindseye.art.util.{ImageOptimizer, VisualNetwork, VisualStyleNetwork}
 import com.simiacryptus.mindseye.lang.{Layer, Tensor}
 import com.simiacryptus.mindseye.opt.region.TrustRegion
 import com.simiacryptus.notebook.NotebookOutput
@@ -27,9 +27,9 @@ trait MeatRotor[U <: MeatRotor[U]] extends ZoomingRotor[U] {
   override val stepZoom: Double = 0.5
   override val innerCoeff = 0
 
-  override def getOptimizer()(implicit log: NotebookOutput): BasicOptimizer = {
+  override def getOptimizer()(implicit log: NotebookOutput): ImageOptimizer = {
     log.eval(() => {
-      new BasicOptimizer {
+      new ImageOptimizer {
         override val trainingMinutes: Int = 90
         override val trainingIterations: Int = 10
         override val maxRate = 1e9

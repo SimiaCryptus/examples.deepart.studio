@@ -77,7 +77,7 @@ object TileUtil {
       })
       val result = trainer.run()
       output.out(s"Optimization Finished: $result")
-      result
+      result.finalValue
     }
 
     val lowMem = true

@@ -117,7 +117,7 @@ object SegmentStyleNotebook {
     val history = new ArrayBuffer[(Long, Long, Double, Double)]()
     val canvasRef = new AtomicReference[Tensor](null)
 
-    val optimizer = new BasicOptimizer {
+    val optimizer = new ImageOptimizer {
       override val trainingMinutes = 60
       override val trainingIterations = 20
       override val maxRate = 1e9

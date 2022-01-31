@@ -26,7 +26,7 @@ import com.simiacryptus.aws.S3Util
 import com.simiacryptus.mindseye.art.models.VGG16
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client
-import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
+import com.simiacryptus.mindseye.art.util.{ImageOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.ref.wrappers.RefAtomicReference
@@ -108,7 +108,7 @@ class HighResStyleTransfer extends ArtSetup[Object, HighResStyleTransfer] {
               ).map(_.scale(1e2)),
               styleUrls = List(contentUrl),
               magnification = Array(9.0)
-            ), optimizer = new BasicOptimizer {
+            ), optimizer = new ImageOptimizer {
               override val trainingMinutes: Int = 60
               override val trainingIterations: Int = 20
               override val maxRate = 1e9
@@ -158,7 +158,7 @@ class HighResStyleTransfer extends ArtSetup[Object, HighResStyleTransfer] {
               ).map(_.scale(1e2)),
               styleUrls = List(contentUrl),
               magnification = Array(4.0)
-            ), optimizer = new BasicOptimizer {
+            ), optimizer = new ImageOptimizer {
               override val trainingMinutes: Int = 60
               override val trainingIterations: Int = 20
               override val maxRate = 1e9
@@ -210,7 +210,7 @@ class HighResStyleTransfer extends ArtSetup[Object, HighResStyleTransfer] {
               styleUrls = List(contentUrl),
               magnification = Array(2.0)
             ),
-            optimizer = new BasicOptimizer {
+            optimizer = new ImageOptimizer {
               override val trainingMinutes: Int = 90
               override val trainingIterations: Int = 20
               override val maxRate = 1e9
@@ -249,7 +249,7 @@ class HighResStyleTransfer extends ArtSetup[Object, HighResStyleTransfer] {
                 new ContentMatcher().scale(1e1)
               )
             ),
-            optimizer = new BasicOptimizer {
+            optimizer = new ImageOptimizer {
               override val trainingMinutes: Int = 180
               override val trainingIterations: Int = 20
               override val maxRate = 1e9

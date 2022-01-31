@@ -31,7 +31,7 @@ import com.simiacryptus.mindseye.art.photo.affinity.RelativeAffinity
 import com.simiacryptus.mindseye.art.photo.cuda.SmoothSolver_Cuda
 import com.simiacryptus.mindseye.art.photo.topology.SearchRadiusTopology
 import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client
-import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
+import com.simiacryptus.mindseye.art.util.{ImageOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.ref.wrappers.RefAtomicReference
@@ -191,7 +191,7 @@ class SmoothStyle extends ArtSetup[Object, SmoothStyle] {
           initFn = initFn,
           canvas = canvas.addRef(),
           network = style(Array(64.0)),
-          optimizer = new BasicOptimizer {
+          optimizer = new ImageOptimizer {
             override val trainingMinutes: Int = 240
             override val trainingIterations: Int = 20
             override val maxRate = 1e9
@@ -205,7 +205,7 @@ class SmoothStyle extends ArtSetup[Object, SmoothStyle] {
           initFn = initFn,
           canvas = canvas.addRef(),
           network = style(Array(16.0)),
-          optimizer = new BasicOptimizer {
+          optimizer = new ImageOptimizer {
             override val trainingMinutes: Int = 240
             override val trainingIterations: Int = 20
             override val maxRate = 1e9

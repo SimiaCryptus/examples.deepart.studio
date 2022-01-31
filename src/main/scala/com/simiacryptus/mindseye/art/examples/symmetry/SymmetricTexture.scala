@@ -29,7 +29,7 @@ import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client
 import com.simiacryptus.mindseye.art.util.ArtUtil.load
 import com.simiacryptus.mindseye.art.util.view.ImageView
-import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
+import com.simiacryptus.mindseye.art.util.{ImageOptimizer, _}
 import com.simiacryptus.mindseye.eval.Trainable
 import com.simiacryptus.mindseye.lang.cudnn.{CudaSettings, Precision}
 import com.simiacryptus.mindseye.lang.{Layer, Result, Tensor}
@@ -197,7 +197,7 @@ abstract class SymmetricTexture extends ArtSetup[Object, SymmetricTexture] with 
                   for ((canvas,idx) <- canvases.zipWithIndex) {
                     log.p(s"Rendering Canvas $idx")
                     trainable.setData(RefArrays.asList(Array(canvas.get())))
-                    new BasicOptimizer {
+                    new ImageOptimizer {
                       override val trainingMinutes: Int = SymmetricTexture.this.trainingMinutes
                       override val trainingIterations: Int = SymmetricTexture.this.trainingIterations
                       override val maxRate = 1e8

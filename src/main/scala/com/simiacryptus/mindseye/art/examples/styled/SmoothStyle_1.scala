@@ -29,7 +29,7 @@ import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.photo._
 import com.simiacryptus.mindseye.art.photo.cuda.SmoothSolver_Cuda
 import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client
-import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
+import com.simiacryptus.mindseye.art.util.{ImageOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.ref.wrappers.RefAtomicReference
@@ -113,7 +113,7 @@ class SmoothStyle_1 extends ArtSetup[Object, SmoothStyle_1] {
             styleUrls = List(styleUrl),
             magnification = Array(16.0)
           ),
-            new BasicOptimizer {
+            new ImageOptimizer {
               override val trainingMinutes: Int = 60
               override val trainingIterations: Int = 20
               override val maxRate = 1e8
@@ -142,7 +142,7 @@ class SmoothStyle_1 extends ArtSetup[Object, SmoothStyle_1] {
             ),
             styleUrls = List(styleUrl),
             magnification = Array(4.0)
-          ), new BasicOptimizer {
+          ), new ImageOptimizer {
             override val trainingMinutes: Int = 90
             override val trainingIterations: Int = 20
             override val maxRate = 1e9
@@ -169,7 +169,7 @@ class SmoothStyle_1 extends ArtSetup[Object, SmoothStyle_1] {
             magnification = Array(1.0),
             maxWidth = 6000,
             tileSize = 800
-          ), new BasicOptimizer {
+          ), new ImageOptimizer {
             override val trainingMinutes: Int = 90
             override val trainingIterations: Int = 10
             override val maxRate = 1e9

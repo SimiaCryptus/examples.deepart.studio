@@ -27,7 +27,7 @@ import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client
 import com.simiacryptus.mindseye.art.util.ImageArtUtil._
-import com.simiacryptus.mindseye.art.util.{BasicOptimizer, _}
+import com.simiacryptus.mindseye.art.util.{ImageOptimizer, _}
 import com.simiacryptus.mindseye.eval.Trainable
 import com.simiacryptus.mindseye.lang.Tensor
 import com.simiacryptus.mindseye.layers.java.AffineImgViewLayer
@@ -156,7 +156,7 @@ class MultiTexture extends ArtSetup[Object, MultiTexture] with ArtworkStyleGalle
           override val max: Double = 1024
           override val steps = 5
         },
-        optimizer = new BasicOptimizer {
+        optimizer = new ImageOptimizer {
           override val trainingMinutes: Int = 120
           override val trainingIterations: Int = 50
           override val maxRate = 1e9
@@ -172,7 +172,7 @@ class MultiTexture extends ArtSetup[Object, MultiTexture] with ArtworkStyleGalle
     }
   }
 
-  def multiPaint(canvasRefs: Seq[RefAtomicReference[Tensor]], style: Int => VisualStyleNetwork, resolutions: GeometricSequence, optimizer: BasicOptimizer)(implicit log: NotebookOutput): Unit = {
+  def multiPaint(canvasRefs: Seq[RefAtomicReference[Tensor]], style: Int => VisualStyleNetwork, resolutions: GeometricSequence, optimizer: ImageOptimizer)(implicit log: NotebookOutput): Unit = {
     resolutions.toStream.map(_.round.toInt).foreach(res => {
       log.subreport(s"Resolution $res", (sub: NotebookOutput) => {
 
