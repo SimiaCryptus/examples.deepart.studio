@@ -50,18 +50,18 @@ class MultiTexture extends ArtSetup[Object, MultiTexture] with ArtworkStyleGalle
   //val styleUrls = "http://test.deepartist.org/BigTexture/1d165554-f60e-41b8-ab41-4e730ed17d72/etc/58098b35-0203-40c6-b3c6-c860a882089a.jpg"
   //val styleUrls = "file:///C:/Users/andre/code/all-projects/report/BigTexture/556a080f-5ef7-4c58-bbdd-4bee36486502/etc/shutterstock_87165334.jpg"
   //val styleUrls = "upload:Style"
-  val styleUrls = Array(VanGogh.name)
+  val styleUrls = Array(
+//    VanGogh.name,
+    "upload:Style"
+  )
 
   //val initUrl: String = "file:///C:/Users/andre/code/all-projects/report/BigTexture/7d8f3695-9b29-4c83-b7fd-83ebafd4bb8b/etc/image_4648be07568b7c0f.jpg"
   //val initUrl: String = "file:///C:/Users/andre/code/all-projects/report/BigTexture/faef1a35-a7ee-49a3-9f47-31380da7b5cc/etc/image_2ae03bd5518bf032.jpg"
   //val initUrl: String = "50 + noise * 0.5"
   val initUrls = Array(
+    "50 + noise * 0.5",
     "plasma",
-    "plasma",
-    "plasma",
-    "plasma",
-    "plasma",
-    "plasma",
+    "50 + noise * 0.5",
     "plasma"
   )
 
@@ -130,8 +130,8 @@ class MultiTexture extends ArtSetup[Object, MultiTexture] with ArtworkStyleGalle
           styleLayers = List(
             //VGG19.VGG19_0b,
             //VGG19.VGG19_1a,
-            VGG19.VGG19_1b1,
-            VGG19.VGG19_1b2,
+//            VGG19.VGG19_1b1,
+//            VGG19.VGG19_1b2,
             VGG19.VGG19_1c1,
             VGG19.VGG19_1c2,
             VGG19.VGG19_1c3,
@@ -143,9 +143,9 @@ class MultiTexture extends ArtSetup[Object, MultiTexture] with ArtworkStyleGalle
           ),
           styleModifiers = List(
             // These two operators are a good combination for a vivid yet accurate style
-            //new GramMatrixEnhancer().setMinMax(-.05, .05).scale(1e1),
-            new MomentMatcher()
-            //              new GramMatrixMatcher()
+            new GramMatrixEnhancer().setMinMax(-.01, .01).scale(1e1),
+//            new MomentMatcher()
+              new GramMatrixMatcher()
           ),
           styleUrls = styleGalleries_lowRes(styleUrls),
           magnification = Array(1.0),

@@ -58,13 +58,13 @@ class BigTextureTiles extends ArtSetup[Object, BigTextureTiles] with ImageTilePr
   //val initUrl: String = "50 + noise * 0.5"
 //  val initUrl: String = "plasma"
 //  val initUrl = "file:///C:/Users/andre/Pictures/Artistry/Owned/IMG_20170924_145214.jpg"
-  val initUrl = "file:///C:/Users/andre/code/all-projects/report/BigTextureTiles/9e785f37-346f-4c11-a5ef-806c51f7245f/etc/image_e03de39a5014785e.jpg"
+  val initUrl = "file:///C:/Users/andre/code/all-projects/report/MultiStylized/02628b7c-2fde-45d2-97e5-34510cf525cd/etc/image_521b8a90ad89b260.jpg"
 
   override def inputTimeoutSeconds = 0
   //  override def inputTimeoutSeconds = 3600
 
-//  val s3bucket: String = ""
-  val s3bucket: String = "test.deepartist.org"
+  val s3bucket: String = ""
+//  val s3bucket: String = "test.deepartist.org"
 
   //val aspectRatio = 0.5774 // Hex Tiling
 //  val aspectRatio = 1 / 0.61803398875 // Golden Ratio
@@ -142,59 +142,61 @@ class BigTextureTiles extends ArtSetup[Object, BigTextureTiles] with ImageTilePr
         tensor.freeRef()
         image
       }).orNull) {
-//        paint(
-//          contentUrl = initUrl,
-//          initUrl = initUrl,
-//          canvas = canvas.addRef(),
-//          network = new VisualStyleNetwork(
-//            styleLayers = List(
-//              VGG19.VGG19_1b1,
-//              VGG19.VGG19_1b2,
-//              VGG19.VGG19_1c1,
-//              VGG19.VGG19_1c2,
-//              VGG19.VGG19_1c3,
-//              VGG19.VGG19_1c4,
-//              VGG19.VGG19_1d1,
-//              VGG19.VGG19_1d2,
-//              VGG19.VGG19_1d3,
-//              VGG19.VGG19_1d4
-//            ),
-//            styleModifiers = List(
-//              new GramMatrixEnhancer().setMinMax(-.1, .1).scale(1e0),
-////              new MomentMatcher()
-//              new GramMatrixMatcher()
-//            ),
-//            styleUrls = styleGalleries_lowRes(styleUrls),
-//            magnification = Array(1.0).flatMap(x=>new GeometricSequence {
-//              override val min: Double = 0.9
-//              override val max: Double = 1.1
-//              override val steps = 4
-//            }.toStream.map(_*x)),
-//            viewLayer = viewLayer
-//          ),
-//          optimizer = new BasicOptimizer {
-//            override val trainingMinutes: Int = 120
-//            override val trainingIterations: Int = 50
-//            override val maxRate = 1e9
-//          },
-//          aspect = Option(aspectRatio).filter(_>0),
-//          resolutions = new GeometricSequence {
-//            override val min: Double = 512
-//            override val max: Double = 1024
-//            override val steps = 2
-//          }.toStream.map(_.round.toDouble)
-//        )
-        paintPerTile(
-          canvasRef = canvas,
-          style = (width: Int) => new VisualStyleNetwork(
+        paint(
+          contentUrl = initUrl,
+          initUrl = initUrl,
+          canvas = canvas.addRef(),
+          network = new VisualStyleNetwork(
             styleLayers = List(
               VGG19.VGG19_1b1,
               VGG19.VGG19_1b2,
               VGG19.VGG19_1c1,
-              VGG19.VGG19_1c2
+              VGG19.VGG19_1c2,
+              VGG19.VGG19_1c3,
+              VGG19.VGG19_1c4,
+              VGG19.VGG19_1d1,
+              VGG19.VGG19_1d2,
+              VGG19.VGG19_1d3,
+              VGG19.VGG19_1d4
             ),
             styleModifiers = List(
-              new GramMatrixEnhancer().setMinMax(-.1, .1).scale(1e2),
+              new GramMatrixEnhancer().setMinMax(-.1, .1).scale(1e0),
+//              new MomentMatcher()
+              new GramMatrixMatcher()
+            ),
+            styleUrls = styleGalleries_lowRes(styleUrls),
+            magnification = Array(1.0).flatMap(x=>new GeometricSequence {
+              override val min: Double = 0.9
+              override val max: Double = 1.1
+              override val steps = 4
+            }.toStream.map(_*x)),
+            viewLayer = viewLayer
+          ),
+          optimizer = new ImageOptimizer {
+            override val trainingMinutes: Int = 120
+            override val trainingIterations: Int = 50
+            override val maxRate = 1e9
+          },
+          aspect = Option(aspectRatio).filter(_>0),
+          resolutions = new GeometricSequence {
+            override val min: Double = 512
+            override val max: Double = 1024
+            override val steps = 2
+          }.toStream.map(_.round.toDouble)
+        )
+        paintPerTile(
+          canvasRef = canvas,
+          style = (width: Int) => new VisualStyleNetwork(
+            styleLayers = List(
+//              VGG19.VGG19_1b1,
+//              VGG19.VGG19_1b2,
+              VGG19.VGG19_1c1,
+              VGG19.VGG19_1c2,
+              VGG19.VGG19_1c3,
+              VGG19.VGG19_1c4
+            ),
+            styleModifiers = List(
+              new GramMatrixEnhancer().setMinMax(-.01, .01).scale(1e1),
               new GramMatrixMatcher()
             ),
             styleUrls = styleGalleries_highRes(styleUrls),
@@ -206,10 +208,10 @@ class BigTextureTiles extends ArtSetup[Object, BigTextureTiles] with ImageTilePr
             viewLayer = viewLayer
           ),
           resolutions = new GeometricSequence {
-//            override val min: Double = 1600
-            override val min: Double = 6400
-            override val max: Double = 6400
-            override val steps = 1
+            override val min: Double = 1800
+//            override val min: Double = 6400
+            override val max: Double = 4200
+            override val steps = 3
             //            override val steps = 2
           },
           optimizer = new ImageOptimizer {

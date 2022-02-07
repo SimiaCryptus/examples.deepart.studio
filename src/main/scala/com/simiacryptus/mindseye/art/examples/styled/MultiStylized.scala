@@ -50,10 +50,13 @@ class MultiStylized extends ArtSetup[Object, MultiStylized] with ArtworkStyleGal
 //  val styleUrls = Array("file:///C:/Users/andre/code/all-projects/report/BigTexture/556a080f-5ef7-4c58-bbdd-4bee36486502/etc/shutterstock_87165334.jpg")
   //val styleUrls = "upload:Style"
   val styleUrls = Array(
-    //CubismPortraits.name
-    "file:///C:/Users/andre/Pictures/texture_sources/the-starry-night.jpg"
+    CubismPortraits.name
+//    RealismLandscapes.name
+//    "file:///C:/Users/andre/Pictures/texture_sources/the-starry-night.jpg"
   )
-  val contentUrl = "file:///C:/Users/andre/Pictures/Artistry/chimps/son_at_work.jpg"
+
+//  val contentUrl = "file:///C:/Users/andre/Pictures/Artistry/chimps/son_at_work.jpg"
+  val contentUrl = "file:///C:/Users/andre/Downloads/20211010_124416_02.jpg"
 
   //val initUrl: String = "file:///C:/Users/andre/code/all-projects/report/BigTexture/7d8f3695-9b29-4c83-b7fd-83ebafd4bb8b/etc/image_4648be07568b7c0f.jpg"
   //val initUrl: String = "file:///C:/Users/andre/code/all-projects/report/BigTexture/faef1a35-a7ee-49a3-9f47-31380da7b5cc/etc/image_2ae03bd5518bf032.jpg"
@@ -61,7 +64,8 @@ class MultiStylized extends ArtSetup[Object, MultiStylized] with ArtworkStyleGal
   val initUrls = Array(
     "50 + noise * 0.5",
     "plasma",
-    "file:///C:/Users/andre/Pictures/Artistry/chimps/son_at_work.jpg"
+    "50 + noise * 0.5",
+    "plasma"
   )
 
   val resolutions = GeometricSequenceJson(min = 256, max = 1024, steps = 3)
@@ -72,7 +76,7 @@ class MultiStylized extends ArtSetup[Object, MultiStylized] with ArtworkStyleGal
     VGG19.VGG19_1b1,
     VGG19.VGG19_1b2,
     VGG19.VGG19_1c1,
-    VGG19.VGG19_1c2,
+//    VGG19.VGG19_1c2,
     VGG19.VGG19_1c3,
     VGG19.VGG19_1c4,
     VGG19.VGG19_1d1,
@@ -82,18 +86,18 @@ class MultiStylized extends ArtSetup[Object, MultiStylized] with ArtworkStyleGal
   )
 
   val contentLayers = new VisionLayerListJson(
-    //VGG19.VGG19_0b,
-    VGG19.VGG19_1a,
-    VGG19.VGG19_1b1,
-    VGG19.VGG19_1b2,
+//    VGG19.VGG19_0b,
+//    VGG19.VGG19_1a,
+//    VGG19.VGG19_1b1,
+//    VGG19.VGG19_1b2,
 //    VGG19.VGG19_1c1,
     VGG19.VGG19_1c2,
-    //VGG19.VGG19_1c3,
-    VGG19.VGG19_1c4,
+//    VGG19.VGG19_1c3,
+//    VGG19.VGG19_1c4,
 //    VGG19.VGG19_1d1,
-    VGG19.VGG19_1d2,
+//    VGG19.VGG19_1d2,
 //    VGG19.VGG19_1d3,
-    VGG19.VGG19_1d4
+//    VGG19.VGG19_1d4
   )
 
   override def inputTimeoutSeconds = 0
@@ -102,7 +106,7 @@ class MultiStylized extends ArtSetup[Object, MultiStylized] with ArtworkStyleGal
   //val s3bucket: String = "test.deepartist.org"
   val s3bucket: String = ""
 
-  val contentCoeff = 1e0
+  val contentCoeff = 1e1
   val min_padding = 0
   val max_padding = 128
   val border_factor = 0.0
