@@ -135,6 +135,13 @@
             <artifactId>spark-core_${scala.mjversion}</artifactId>
             <scope>compile</scope>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.scalameta/scalameta -->
+        <dependency>
+            <groupId>org.scalameta</groupId>
+            <artifactId>scalameta_${scala.mjversion}</artifactId>
+            <version>4.5.2</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_${scala.mjversion}</artifactId>

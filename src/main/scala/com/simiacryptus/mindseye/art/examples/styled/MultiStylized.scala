@@ -24,6 +24,7 @@ import java.net.URI
 
 import com.amazonaws.services.s3.AmazonS3
 import com.simiacryptus.aws.S3Util
+import com.simiacryptus.mindseye.art.libs.LibraryNotebook
 import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client

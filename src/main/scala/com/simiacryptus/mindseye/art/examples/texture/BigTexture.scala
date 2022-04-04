@@ -54,6 +54,7 @@ class BigTexture extends ArtSetup[Object, BigTexture] {
   //  override def inputTimeoutSeconds = 3600
   val s3bucket: String = "test.deepartist.org"
   val aspectRatio = 0.5774
+  val minRes = 200
 
   override def indexStr = "201"
 
@@ -67,7 +68,6 @@ class BigTexture extends ArtSetup[Object, BigTexture] {
       <li>View layer to enforce tiling</li>
     </ol>
   </div>.toString.trim
-
 
   override def postConfigure(log: NotebookOutput) = {
     implicit val implicitLog = log
@@ -105,7 +105,7 @@ class BigTexture extends ArtSetup[Object, BigTexture] {
         tensor.freeRef()
         image
       }).orNull) {
-        paint(
+        if(minRes < 800) paint(
           contentUrl = initUrl,
           initUrl = initUrl,
           canvas = canvas.addRef(),
@@ -142,7 +142,7 @@ class BigTexture extends ArtSetup[Object, BigTexture] {
           },
           aspect = Option(aspectRatio),
           resolutions = new GeometricSequence {
-            override val min: Double = 200
+            override val min: Double = minRes
             override val max: Double = 800
             override val steps = 3
           }.toStream.map(_.round.toDouble)
@@ -183,7 +183,7 @@ class BigTexture extends ArtSetup[Object, BigTexture] {
           },
           aspect = Option(aspectRatio),
           resolutions = new GeometricSequence {
-            override val min: Double = 1200
+            override val min: Double = Math.max(1200, minRes)
             override val max: Double = 4800
             override val steps = 3
           }.toStream.map(_.round.toDouble)

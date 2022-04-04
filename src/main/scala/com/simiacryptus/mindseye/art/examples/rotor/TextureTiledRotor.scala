@@ -48,7 +48,9 @@ abstract class TextureTiledRotor extends RotorArt[TextureTiledRotor] {
   override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
   //  val styleUrl = "http://test.deepartist.org/TextureTiledRotor/124780fc-7d79-4698-985e-86ff3e8a6b4f/etc/1f5487ba-0d98-4602-8e3e-ac62f9740d53.jpg"
   //  val styleUrl = "http://test.deepartist.org/TextureTiledRotor/4662f8b9-9014-438d-9d11-c4684ea0d061/etc/a9ebe021-0319-44e4-9e0f-27cce3375547.jpg"
-  val styleUrl = "upload:Style"
+  //val styleUrl = "upload:Style"
+  val styleUrl = "file:///C:/Users/andre/Pictures/texture_sources/shutterstock_542903440.jpg"
+
   val initUrls = Array(
     "plasma", "plasma", "50 + noise * 0.5", "50 + noise * 0.5"
     //    "http://test.deepartist.org/TextureTiledRotor/4662f8b9-9014-438d-9d11-c4684ea0d061/etc/image_7a53f141e1451361.jpg"

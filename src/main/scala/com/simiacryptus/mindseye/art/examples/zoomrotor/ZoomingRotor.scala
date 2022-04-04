@@ -254,17 +254,18 @@ class ZoomingRotor[U <: ZoomingRotor[U]] extends RotorArt[U] with ArtSource[U] {
     val repeat: Int = log.eval(() => {
       (Math.log(totalZoom) / Math.log(zoomFactor)).ceil.toInt
     })
-    var finalZoom = Math.pow(zoomFactor, -(repeat + 1))
+    var currentZoom = 1.0;
     var innerMask: Tensor = null
     var initUrl: String = null
 
     def zoomInner() = {
-      finalZoom *= zoomFactor
+      currentZoom /= zoomFactor
+      val progress = currentZoom / totalZoom
       val width = innerImage.getWidth()
       val height = innerImage.getHeight()
-      val zoomedImage = zoom(Tensor.fromRGB(innerImage), finalZoom)
+      val zoomedImage = zoom(Tensor.fromRGB(innerImage), 1 / progress)
       Option(innerMask).foreach(_.freeRef())
-      innerMask = zoomMask(Array(width, height, 3), finalZoom, (width * border).toInt)
+      innerMask = zoomMask(Array(width, height, 3), 1 / progress, (width * border).toInt)
       zoomedImage
     }
 

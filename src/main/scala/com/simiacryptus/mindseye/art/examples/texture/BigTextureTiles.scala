@@ -49,7 +49,7 @@ class BigTextureTiles extends ArtSetup[Object, BigTextureTiles] with ImageTilePr
 
   //val styleUrls = "http://test.deepartist.org/BigTexture/1d165554-f60e-41b8-ab41-4e730ed17d72/etc/58098b35-0203-40c6-b3c6-c860a882089a.jpg"
   //val styleUrls = Array("file:///C:/Users/andre/Pictures/texture_sources/the-starry-night.jpg")
-  val styleUrls = Array("file:///C:/Users/andre/Pictures/texture_sources/shutterstock_1073629553.jpg")
+  val styleUrls = Array("file:///C:/Users/andre/Pictures/texture_sources/shutterstock_1065730331.jpg")
   //val styleUrls = "upload:Style"
 //  val styleUrls = Array(CubismPortraits.name)
 
@@ -58,13 +58,14 @@ class BigTextureTiles extends ArtSetup[Object, BigTextureTiles] with ImageTilePr
   //val initUrl: String = "50 + noise * 0.5"
 //  val initUrl: String = "plasma"
 //  val initUrl = "file:///C:/Users/andre/Pictures/Artistry/Owned/IMG_20170924_145214.jpg"
-  val initUrl = "file:///C:/Users/andre/code/all-projects/report/MultiStylized/02628b7c-2fde-45d2-97e5-34510cf525cd/etc/image_521b8a90ad89b260.jpg"
+  //  val initUrl = "file:///E:/AI_Reports/ColorTransfer/d4af6e02-72d0-47a5-aa2c-db09481496fd/etc/df168685-64f3-42d4-9d1d-aecf8bc4e83a.jpg"
+  val initUrl = "file:///C:/Users/andre/code/all-projects/report/ColorTransfer/d4af6e02-72d0-47a5-aa2c-db09481496fd/etc/df168685-64f3-42d4-9d1d-aecf8bc4e83a.jpg"
 
   override def inputTimeoutSeconds = 0
   //  override def inputTimeoutSeconds = 3600
 
-  val s3bucket: String = ""
-//  val s3bucket: String = "test.deepartist.org"
+//  val s3bucket: String = ""
+  val s3bucket: String = "test.deepartist.org"
 
   //val aspectRatio = 0.5774 // Hex Tiling
 //  val aspectRatio = 1 / 0.61803398875 // Golden Ratio
@@ -142,48 +143,48 @@ class BigTextureTiles extends ArtSetup[Object, BigTextureTiles] with ImageTilePr
         tensor.freeRef()
         image
       }).orNull) {
-        paint(
-          contentUrl = initUrl,
-          initUrl = initUrl,
-          canvas = canvas.addRef(),
-          network = new VisualStyleNetwork(
-            styleLayers = List(
-              VGG19.VGG19_1b1,
-              VGG19.VGG19_1b2,
-              VGG19.VGG19_1c1,
-              VGG19.VGG19_1c2,
-              VGG19.VGG19_1c3,
-              VGG19.VGG19_1c4,
-              VGG19.VGG19_1d1,
-              VGG19.VGG19_1d2,
-              VGG19.VGG19_1d3,
-              VGG19.VGG19_1d4
-            ),
-            styleModifiers = List(
-              new GramMatrixEnhancer().setMinMax(-.1, .1).scale(1e0),
-//              new MomentMatcher()
-              new GramMatrixMatcher()
-            ),
-            styleUrls = styleGalleries_lowRes(styleUrls),
-            magnification = Array(1.0).flatMap(x=>new GeometricSequence {
-              override val min: Double = 0.9
-              override val max: Double = 1.1
-              override val steps = 4
-            }.toStream.map(_*x)),
-            viewLayer = viewLayer
-          ),
-          optimizer = new ImageOptimizer {
-            override val trainingMinutes: Int = 120
-            override val trainingIterations: Int = 50
-            override val maxRate = 1e9
-          },
-          aspect = Option(aspectRatio).filter(_>0),
-          resolutions = new GeometricSequence {
-            override val min: Double = 512
-            override val max: Double = 1024
-            override val steps = 2
-          }.toStream.map(_.round.toDouble)
-        )
+//        paint(
+//          contentUrl = initUrl,
+//          initUrl = initUrl,
+//          canvas = canvas.addRef(),
+//          network = new VisualStyleNetwork(
+//            styleLayers = List(
+//              VGG19.VGG19_1b1,
+//              VGG19.VGG19_1b2,
+//              VGG19.VGG19_1c1,
+//              VGG19.VGG19_1c2,
+//              VGG19.VGG19_1c3,
+//              VGG19.VGG19_1c4,
+//              VGG19.VGG19_1d1,
+//              VGG19.VGG19_1d2,
+//              VGG19.VGG19_1d3,
+//              VGG19.VGG19_1d4
+//            ),
+//            styleModifiers = List(
+//              new GramMatrixEnhancer().setMinMax(-.1, .1).scale(1e0),
+////              new MomentMatcher()
+//              new GramMatrixMatcher()
+//            ),
+//            styleUrls = styleGalleries_lowRes(styleUrls),
+//            magnification = Array(1.0).flatMap(x=>new GeometricSequence {
+//              override val min: Double = 0.9
+//              override val max: Double = 1.1
+//              override val steps = 4
+//            }.toStream.map(_*x)),
+//            viewLayer = viewLayer
+//          ),
+//          optimizer = new ImageOptimizer {
+//            override val trainingMinutes: Int = 120
+//            override val trainingIterations: Int = 50
+//            override val maxRate = 1e9
+//          },
+//          aspect = Option(aspectRatio).filter(_>0),
+//          resolutions = new GeometricSequence {
+//            override val min: Double = 512
+//            override val max: Double = 1024
+//            override val steps = 2
+//          }.toStream.map(_.round.toDouble)
+//        )
         paintPerTile(
           canvasRef = canvas,
           style = (width: Int) => new VisualStyleNetwork(

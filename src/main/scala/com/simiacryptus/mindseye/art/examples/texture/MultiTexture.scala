@@ -23,6 +23,8 @@ import java.net.URI
 
 import com.amazonaws.services.s3.AmazonS3
 import com.simiacryptus.aws.S3Util
+import com.simiacryptus.mindseye.art.examples.styled.MultiStylized
+import com.simiacryptus.mindseye.art.libs.LibraryNotebook
 import com.simiacryptus.mindseye.art.models.VGG19
 import com.simiacryptus.mindseye.art.ops._
 import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client
@@ -53,23 +55,27 @@ class MultiTexture extends ArtSetup[Object, MultiTexture] with ArtworkStyleGalle
   val styleUrls = Array(
 //    VanGogh.name,
     "upload:Style"
+//    "file:///C:/Users/andre/Pictures/texture_sources/shutterstock_240121861.jpg"
   )
 
   //val initUrl: String = "file:///C:/Users/andre/code/all-projects/report/BigTexture/7d8f3695-9b29-4c83-b7fd-83ebafd4bb8b/etc/image_4648be07568b7c0f.jpg"
   //val initUrl: String = "file:///C:/Users/andre/code/all-projects/report/BigTexture/faef1a35-a7ee-49a3-9f47-31380da7b5cc/etc/image_2ae03bd5518bf032.jpg"
   //val initUrl: String = "50 + noise * 0.5"
   val initUrls = Array(
-    "50 + noise * 0.5",
-    "plasma",
-    "50 + noise * 0.5",
-    "plasma"
+    "file:///C:/Users/andre/code/all-projects/report/PosterizeColors/2c8aa05a-0fee-47aa-b8dc-1131c3d4b88d/etc/7a0a806e-7edf-4769-97d7-cc6dad95cf81.jpg",
+    "file:///C:/Users/andre/code/all-projects/report/PosterizeColors/2c8aa05a-0fee-47aa-b8dc-1131c3d4b88d/etc/1b7ab35c-5d59-4d85-984a-3307f73e7e8a.jpg"
+//    "50 + noise * 0.5",
+//    "plasma",
+//    "50 + noise * 0.5",
+//    "plasma"
   )
 
   override def inputTimeoutSeconds = 0
 
   //  override def inputTimeoutSeconds = 3600
 
-  val s3bucket: String = "test.deepartist.org"
+//  val s3bucket: String = "test.deepartist.org"
+  val s3bucket: String = ""
 
   //val aspectRatio = 0.5774 // Hex Tiling
   val aspectRatio = 0.61803398875 // Golden Ratio
@@ -152,13 +158,13 @@ class MultiTexture extends ArtSetup[Object, MultiTexture] with ArtworkStyleGalle
           viewLayer = viewLayer
         ),
         resolutions = new GeometricSequence {
-          override val min: Double = 64
+          override val min: Double = 512
           override val max: Double = 1024
-          override val steps = 5
+          override val steps = 3
         },
         optimizer = new ImageOptimizer {
           override val trainingMinutes: Int = 120
-          override val trainingIterations: Int = 50
+          override val trainingIterations: Int = 100
           override val maxRate = 1e9
         })
       null

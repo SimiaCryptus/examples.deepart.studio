@@ -38,8 +38,8 @@ object ColorTransfer extends ColorTransfer with LocalRunner[Object] with Noteboo
 
 class ColorTransfer extends ArtSetup[Object, ColorTransfer] with ArtworkStyleGalleries {
 
-  val input = "http://test.deepartist.org/img/d77c3414-5313-4d17-a3eb-0084364286fb.jpg"
-  val example = "file:///C:/Users/andre/code/all-projects/report/MultiTexture/96aaa414-3275-48d7-9956-747cab1918e5/etc/84098c65-9f5b-4f47-bc0a-162a71b321e4.jpg"
+  val input = "file:///C:/Users/andre/Pictures/texture_sources/shutterstock_248374732_centered.jpg"
+  val example = "file:///C:/Users/andre/Pictures/texture_sources/shutterstock_1060865300.jpg"
 
   override def inputTimeoutSeconds = 0
 
