@@ -13,13 +13,12 @@ object TestOpenAIScaladoc {
     for (file <- files.take(1)) {
       val data = FileUtils.readFileToString(file, "UTF-8")
 
-      import scala.meta._
-      val tree: Source = data.parse[Source].get
-      println(tree)
-
-      val newTree = tree.transform({
-        case x => x
-      })
+//      import scala.meta._
+//      val tree: Source = data.parse[Source].get
+//      println(tree)
+//      val newTree = tree.transform({
+//        case x => x
+//      })
 
     }
   }

@@ -458,17 +458,6 @@
     <orderEntry type="library" name="Maven: org.apache.spark:spark-tags_2.12:3.0.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.commons:commons-crypto:1.0.0" level="project" />
     <orderEntry type="library" name="Maven: org.spark-project.spark:unused:1.0.0" level="project" />
-    <orderEntry type="library" name="Maven: org.scalameta:scalameta_2.12:4.5.2" level="project" />
-    <orderEntry type="library" name="Maven: org.scalameta:parsers_2.12:4.5.2" level="project" />
-    <orderEntry type="library" name="Maven: org.scalameta:trees_2.12:4.5.2" level="project" />
-    <orderEntry type="library" name="Maven: org.scalameta:common_2.12:4.5.2" level="project" />
-    <orderEntry type="library" name="Maven: com.lihaoyi:sourcecode_2.12:0.2.7" level="project" />
-    <orderEntry type="library" name="Maven: com.thesamet.scalapb:scalapb-runtime_2.12:0.11.10" level="project" />
-    <orderEntry type="library" name="Maven: com.thesamet.scalapb:lenses_2.12:0.11.10" level="project" />
-    <orderEntry type="library" name="Maven: org.scala-lang.modules:scala-collection-compat_2.12:2.6.0" level="project" />
-    <orderEntry type="library" name="Maven: org.scalameta:fastparse-v2_2.12:2.3.1" level="project" />
-    <orderEntry type="library" name="Maven: com.lihaoyi:geny_2.12:0.6.5" level="project" />
-    <orderEntry type="library" name="Maven: org.scala-lang:scalap:2.12.15" level="project" />
     <orderEntry type="library" name="Maven: org.apache.spark:spark-sql_2.12:3.0.1" level="project" />
     <orderEntry type="library" name="Maven: com.univocity:univocity-parsers:2.9.0" level="project" />
     <orderEntry type="library" name="Maven: org.apache.spark:spark-sketch_2.12:3.0.1" level="project" />
