@@ -311,7 +311,7 @@
     <orderEntry type="module" module-name="deepartist.org" />
     <orderEntry type="module" module-name="sparkbook" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.module:jackson-module-scala_2.12:2.12.0" level="project" />
-    <orderEntry type="library" name="Maven: org.scala-lang:scala-reflect:2.12.12" level="project" />
+    <orderEntry type="library" name="Maven: org.scala-lang:scala-reflect:2.12.15" level="project" />
     <orderEntry type="library" name="Maven: org.lz4:lz4-java:1.7.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.spark:spark-hive_2.12:3.0.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.hive:hive-common:2.3.7" level="project" />
@@ -368,8 +368,8 @@
     <orderEntry type="library" scope="TEST" name="Maven: org.scalatest:scalatest-matchers-core_2.12:3.3.0-SNAP3" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.scalatest:scalatest-shouldmatchers_2.12:3.3.0-SNAP3" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.scalatest:scalatest-mustmatchers_2.12:3.3.0-SNAP3" level="project" />
-    <orderEntry type="library" name="Maven: org.scala-lang:scala-library:2.12.12" level="project" />
-    <orderEntry type="library" name="Maven: org.scala-lang:scala-compiler:2.12.12" level="project" />
+    <orderEntry type="library" name="Maven: org.scala-lang:scala-library:2.12.15" level="project" />
+    <orderEntry type="library" name="Maven: org.scala-lang:scala-compiler:2.12.15" level="project" />
     <orderEntry type="library" name="Maven: org.scala-lang.modules:scala-xml_2.12:2.0.0-M3" level="project" />
     <orderEntry type="library" name="Maven: com.google.code.gson:gson:2.8.6" level="project" />
     <orderEntry type="library" name="Maven: commons-io:commons-io:2.8.0" level="project" />
@@ -458,6 +458,17 @@
     <orderEntry type="library" name="Maven: org.apache.spark:spark-tags_2.12:3.0.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.commons:commons-crypto:1.0.0" level="project" />
     <orderEntry type="library" name="Maven: org.spark-project.spark:unused:1.0.0" level="project" />
+    <orderEntry type="library" name="Maven: org.scalameta:scalameta_2.12:4.5.2" level="project" />
+    <orderEntry type="library" name="Maven: org.scalameta:parsers_2.12:4.5.2" level="project" />
+    <orderEntry type="library" name="Maven: org.scalameta:trees_2.12:4.5.2" level="project" />
+    <orderEntry type="library" name="Maven: org.scalameta:common_2.12:4.5.2" level="project" />
+    <orderEntry type="library" name="Maven: com.lihaoyi:sourcecode_2.12:0.2.7" level="project" />
+    <orderEntry type="library" name="Maven: com.thesamet.scalapb:scalapb-runtime_2.12:0.11.10" level="project" />
+    <orderEntry type="library" name="Maven: com.thesamet.scalapb:lenses_2.12:0.11.10" level="project" />
+    <orderEntry type="library" name="Maven: org.scala-lang.modules:scala-collection-compat_2.12:2.6.0" level="project" />
+    <orderEntry type="library" name="Maven: org.scalameta:fastparse-v2_2.12:2.3.1" level="project" />
+    <orderEntry type="library" name="Maven: com.lihaoyi:geny_2.12:0.6.5" level="project" />
+    <orderEntry type="library" name="Maven: org.scala-lang:scalap:2.12.15" level="project" />
     <orderEntry type="library" name="Maven: org.apache.spark:spark-sql_2.12:3.0.1" level="project" />
     <orderEntry type="library" name="Maven: com.univocity:univocity-parsers:2.9.0" level="project" />
     <orderEntry type="library" name="Maven: org.apache.spark:spark-sketch_2.12:3.0.1" level="project" />
