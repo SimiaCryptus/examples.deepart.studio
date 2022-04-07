@@ -170,7 +170,7 @@ object TestOpenAIScaladoc {
   }
 
   def authorize(request: HttpRequestBase) = {
-    request.addHeader("Authorization", "Bearer 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")
+    request.addHeader("Authorization", "Bearer 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")
   }
 
   def getRequest(url: String): String = {
