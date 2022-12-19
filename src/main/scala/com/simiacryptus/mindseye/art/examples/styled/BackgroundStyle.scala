@@ -42,7 +42,6 @@ object BackgroundStyle extends BackgroundStyle with LocalRunner[Object] with Not
 
 class BackgroundStyle extends SegmentingSetup {
 
-  val s3bucket: String = ""
   val contentUrl = "upload:Content"
   val maskUrl = "mask:Content"
   val styleUrl = "upload:Style"

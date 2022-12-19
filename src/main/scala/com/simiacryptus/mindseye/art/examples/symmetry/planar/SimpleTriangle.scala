@@ -3,18 +3,20 @@ package com.simiacryptus.mindseye.art.examples.symmetry.planar
 import com.simiacryptus.mindseye.art.examples.symmetry.SymmetricTexture
 import com.simiacryptus.mindseye.art.util.Permutation
 import com.simiacryptus.mindseye.art.util.view.{ImageView, RotatedVector, TransformVector}
-import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.notebook.{Jsonable, NotebookOutput}
 import com.simiacryptus.sparkbook.aws.P3_2XL
 
+import java.net.URI
+import java.util.UUID
 
-object SimpleTriangle extends SimpleTriangle
-  with P3_2XL
+
+object SimpleTriangleEC2 extends SimpleTriangleEC2; class SimpleTriangleEC2 extends SimpleTriangle[SimpleTriangleEC2] with P3_2XL[Object, SimpleTriangleEC2] with Jsonable[SimpleTriangleEC2]
   //  with NotebookRunner[Object] with LocalRunner[Object]
 {
-  override val s3bucket: String = "symmetry.deepartist.org"
+
 }
 
-class SimpleTriangle extends SymmetricTexture {
+class SimpleTriangle[T<:SimpleTriangle[T]] extends SymmetricTexture[T] {
 
   override def name: String = "Simple 3-fold rotational symmetry"
 

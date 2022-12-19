@@ -1,11 +1,15 @@
 package com.simiacryptus.mindseye.art.examples.survey
 
 import com.simiacryptus.aws.exe.EC2NodeSettings
+import com.simiacryptus.mindseye.art.examples.styled.SegmentStyleEC2
 import com.simiacryptus.mindseye.lang.cudnn.CudaMemory
+import com.simiacryptus.notebook.Jsonable
 import com.simiacryptus.sparkbook.{AWSNotebookRunner, EC2Runner}
 
-object ContentReconstructionSurveyEC2 extends ContentReconstructionSurvey with EC2Runner[Object] with AWSNotebookRunner[Object] {
-  override val s3bucket: String = "test.deepartist.org"
+import java.net.URI
+import java.util.UUID
+
+object ContentReconstructionSurveyEC2 extends ContentReconstructionSurveyEC2; class ContentReconstructionSurveyEC2 extends ContentReconstructionSurvey[ContentReconstructionSurveyEC2] with EC2Runner[Object] with AWSNotebookRunner[Object, ContentReconstructionSurveyEC2] with Jsonable[ContentReconstructionSurveyEC2] {
 
   override def nodeSettings: EC2NodeSettings = EC2NodeSettings.P3_2XL
 

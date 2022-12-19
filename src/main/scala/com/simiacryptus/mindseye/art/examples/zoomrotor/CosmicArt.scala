@@ -1,6 +1,6 @@
 package com.simiacryptus.mindseye.art.examples.zoomrotor
 
-trait CosmicArt[U <: CosmicArt[U]] extends ArtSource[U] {
+trait CosmicArt[U <: ArtSource[U]] extends ArtSource[U] {
   override val border: Double = 0.15
   override val magnification: Array[Double] = Array(4.0)
   override val rotationalSegments = 1

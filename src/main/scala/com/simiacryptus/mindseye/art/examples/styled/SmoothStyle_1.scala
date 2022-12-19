@@ -44,7 +44,6 @@ object SmoothStyle_1 extends SmoothStyle_1 with LocalRunner[Object] with Noteboo
 class SmoothStyle_1 extends ArtSetup[Object, SmoothStyle_1] {
 
   val styleUrl = "upload:Style"
-  val s3bucket: String = ""
   val initUrl = "50 + noise * 0.5"
 
   override def indexStr = "306"

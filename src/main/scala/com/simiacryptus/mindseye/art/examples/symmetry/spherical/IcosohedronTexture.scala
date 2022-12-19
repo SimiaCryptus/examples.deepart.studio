@@ -10,7 +10,6 @@ import scala.concurrent.duration.{FiniteDuration, _}
 object IcosohedronTexture extends IcosohedronTexture
   //  with P3_2XL
   with NotebookRunner[Object] with LocalRunner[Object] {
-  override val s3bucket: String = "symmetry.deepartist.org"
 
   override def name: String = IcosohedronTexture.super.name
 

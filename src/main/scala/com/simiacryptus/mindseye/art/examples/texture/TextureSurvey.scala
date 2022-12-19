@@ -47,7 +47,6 @@ class TextureSurvey extends ArtSetup[Object, TextureSurvey] {
 
   val styleUrl = "upload:Style"
   val initUrl: String = "50 + noise * 0.5"
-  val s3bucket: String = "test.deepartist.org"
   val resolution = 400
   val animationDelay = 1000
   val magnification = Array(4.0)

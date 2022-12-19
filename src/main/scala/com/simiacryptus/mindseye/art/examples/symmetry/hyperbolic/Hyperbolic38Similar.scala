@@ -10,7 +10,6 @@ import com.simiacryptus.sparkbook.util.LocalRunner
 object Hyperbolic38Similar extends Hyperbolic38Similar
   //  with P3_2XL
   with NotebookRunner[Object] with LocalRunner[Object] {
-  override val s3bucket: String = "symmetry.deepartist.org"
 
   override def name: String = Hyperbolic38Similar.super.name
 }

@@ -19,15 +19,9 @@
 
 package com.simiacryptus.mindseye.art.libs
 
-import java.net.URI
-import java.util.UUID
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.{Executors, Semaphore}
-
 import com.amazonaws.services.s3.AmazonS3
 import com.fasterxml.jackson.databind.{MapperFeature, ObjectMapper, SerializationFeature}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import com.google.common.html.HtmlEscapers
 import com.simiacryptus.aws.LinuxUtil.installCurrentAppAsStartupDaemon
 import com.simiacryptus.aws.S3Util
 import com.simiacryptus.mindseye.art.util._
@@ -35,17 +29,15 @@ import com.simiacryptus.notebook.NotebookOutput.AdmonitionStyle
 import com.simiacryptus.notebook.{NanoHTTPD, NotebookOutput, StreamNanoHTTPD}
 import com.simiacryptus.sparkbook.InteractiveSetup
 
-abstract class LibraryNotebook extends ArtSetup[Object, LibraryNotebook] with ArtworkStyleGalleries {
-  val s3bucket: String = ""
-  override def indexStr = "999"
-  override def inputTimeoutSeconds = 0
-  override def description = <div>Application Launcher</div>.toString.trim
+import java.net.{URI, URLEncoder}
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.{Executors, Semaphore}
 
-  case class ApplicationInfo[T]
-  (
-    name: String,
-    templates: Map[String, () => T]
-  )
+abstract class LibraryNotebook[T <: LibraryNotebook[T]] extends ArtSetup[Object, T] with ArtworkStyleGalleries {
+
+  override def indexStr = "999"
+  override def description = <div>Application Launcher</div>.toString.trim
   def applications: Map[String, List[ApplicationInfo[_ <: InteractiveSetup[_, _]]]]
 
   def install: Boolean = true
@@ -60,7 +52,13 @@ abstract class LibraryNotebook extends ArtSetup[Object, LibraryNotebook] with Ar
     log.eval(()=>{
       System.getProperties.asScala.map(t=>t._1 + " = " + t._2).foreach(println)
     })
-    if(install) installCurrentAppAsStartupDaemon()
+    if(install) {
+      log.code(()=>{
+        installCurrentAppAsStartupDaemon()
+      })
+    } else {
+      log.p("Launcher installation is disabled")
+    }
 
     log.subreport("Launch...", (sub: NotebookOutput) => {
       val handlerPool = Executors.newFixedThreadPool(1)
@@ -73,28 +71,30 @@ abstract class LibraryNotebook extends ArtSetup[Object, LibraryNotebook] with Ar
         .activateDefaultTyping(objectMapper.getPolymorphicTypeValidator())
       for ((familyName, applications) <- applications) {
         sub.h1(familyName)
-        sub.p(applications.head.templates.head._2.apply().description)
+        sub.p(applications.head.templates(applications.head.templates.head._1).newInstance().description)
         for (application <- applications) {
           sub.h2(application.name)
           val currentlyRunning = new AtomicInteger(0)
           for (template <- application.templates) {
             val templateName = template._1
-            val link = s"${application.name}/$templateName"
-
+            val encoded = URLEncoder.encode(application.name, "UTF-8")
+            val rawlink = s"${application.name}/$templateName"
+            val link = s"$encoded/$templateName"
+            val instance = application.get(template._1)
             sub.collapsable(false, AdmonitionStyle.Info, templateName,
               s"""
                  |[Launch](/$link)
                  |
-                 |<pre>${objectMapper.writeValueAsString(template._2())}</pre>
+                 |<pre>${objectMapper.writeValueAsString(instance)}</pre>
                  |""".stripMargin.trim)
             sub.getHttpd.addGET(
-              link,
+              rawlink,
               StreamNanoHTTPD.asyncHandler(
                 handlerPool,
                 NanoHTTPD.MIME_HTML,
                 out => {
                   val runID = UUID.randomUUID()
-                  val name = s"/${application.name}/$templateName/${runID.toString}"
+                  val name = s"/$encoded/$templateName/${runID.toString}"
                   val onStart = new Semaphore(0)
                   val thread = new Thread(() => {
                     try {
@@ -107,7 +107,11 @@ abstract class LibraryNotebook extends ArtSetup[Object, LibraryNotebook] with Ar
                             </body>
                           </html>.toString.getBytes("UTF-8"))
                           onStart.release()
-                          template._2().apply(job)
+                          try {
+                            instance.apply(job)
+                          } finally {
+                            job.close()
+                          }
                         })
                       } else {
                         out.write(<html>

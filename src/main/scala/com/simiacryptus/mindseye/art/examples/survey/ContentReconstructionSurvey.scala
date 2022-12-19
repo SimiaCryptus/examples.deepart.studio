@@ -44,11 +44,10 @@ import scala.util.Try
 
 object ContentReconstructionSurvey extends ContentReconstructionSurvey with LocalRunner[Object] with NotebookRunner[Object]
 
-class ContentReconstructionSurvey extends ArtSetup[Object, ContentReconstructionSurvey] {
+class ContentReconstructionSurvey[T<:ContentReconstructionSurvey[T]] extends ArtSetup[Object, T] {
 
   val contentUrl = "upload:Content"
   val initUrl = "50 + noise * 0.05"
-  val s3bucket: String = "test.deepartist.org"
   val resolution = 800
   val animationDelay = 1000
 

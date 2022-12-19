@@ -41,7 +41,6 @@ object AutoZoomingRotor extends AutoZoomingRotorBase with LocalRunner[Object] wi
 
 abstract class AutoZoomingRotorBase extends RotorArt[AutoZoomingRotorBase] {
 
-  override val s3bucket: String = "test.deepartist.org"
   override val rotationalChannelPermutation: Array[Int] = Array(2, 3, 1)
   override val rotationalSegments = 6
   val resolution: Int = 1024
@@ -94,12 +93,9 @@ abstract class AutoZoomingRotorBase extends RotorArt[AutoZoomingRotorBase] {
       override val keyframes = keyFrame_files.map(_.toURI.toString).toArray
       override val resolution: Int = AutoZoomingRotorBase.this.resolution
       override val totalZoom: Double = 0.01
-      override val stepZoom: Double = 0.5
       override val innerCoeff: Double = 0
 
       override def className: String = AutoZoomingRotorBase.this.className
-
-      override val s3bucket: String = AutoZoomingRotorBase.this.s3bucket
 
       override def getOptimizer()(implicit log: NotebookOutput): ImageOptimizer = {
         log.eval(() => {
@@ -162,8 +158,6 @@ abstract class AutoZoomingRotorBase extends RotorArt[AutoZoomingRotorBase] {
       //override val magnification = Array(2.0)
       override val rotationalSegments = AutoZoomingRotorBase.this.rotationalSegments
       override val rotationalChannelPermutation: Array[Int] = AutoZoomingRotorBase.this.rotationalChannelPermutation
-
-      override val s3bucket: String = AutoZoomingRotorBase.this.s3bucket
 
       override def className: String = AutoZoomingRotorBase.this.className
 

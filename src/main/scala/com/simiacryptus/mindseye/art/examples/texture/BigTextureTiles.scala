@@ -64,8 +64,6 @@ class BigTextureTiles extends ArtSetup[Object, BigTextureTiles] with ImageTilePr
   override def inputTimeoutSeconds = 0
   //  override def inputTimeoutSeconds = 3600
 
-//  val s3bucket: String = ""
-  val s3bucket: String = "test.deepartist.org"
 
   //val aspectRatio = 0.5774 // Hex Tiling
 //  val aspectRatio = 1 / 0.61803398875 // Golden Ratio

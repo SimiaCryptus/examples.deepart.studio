@@ -43,7 +43,6 @@ class ColorTransfer extends ArtSetup[Object, ColorTransfer] with ArtworkStyleGal
 
   override def inputTimeoutSeconds = 0
 
-  val s3bucket: String = ""
   override def indexStr = "201"
 
   override def description = <div>

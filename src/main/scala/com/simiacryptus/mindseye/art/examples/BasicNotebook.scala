@@ -35,6 +35,7 @@ import scala.collection.JavaConverters.seqAsJavaListConverter
 
 object BasicNotebook extends BasicNotebook with LocalRunner[Object] with NotebookRunner[Object] {
   override def http_port: Int = 1081
+
 }
 
 class BasicNotebook extends ArtSetup[Object, BasicNotebook] with ArtworkStyleGalleries {
@@ -43,7 +44,6 @@ class BasicNotebook extends ArtSetup[Object, BasicNotebook] with ArtworkStyleGal
     //"upload:Image"
     "cubism_portraits"
   )
-  val s3bucket: String = "test.deepartist.org"
   val message = ""
   val resolution = -1
 
@@ -79,4 +79,5 @@ class BasicNotebook extends ArtSetup[Object, BasicNotebook] with ArtworkStyleGal
     registerWithIndexJPG(() => Tensor.fromRGB(canvas)).foreach(_.stop()(s3client, ArtSetup.ec2client))
     null
   }
+
 }

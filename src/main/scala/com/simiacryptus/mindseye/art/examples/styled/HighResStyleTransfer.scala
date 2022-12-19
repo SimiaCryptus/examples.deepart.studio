@@ -42,7 +42,6 @@ class HighResStyleTransfer extends ArtSetup[Object, HighResStyleTransfer] {
   val contentUrl = "upload:Content"
   val styleUrl = "upload:Style"
   val initUrl: String = "50 + noise * 0.5"
-  val s3bucket: String = "test.deepartist.org"
 
   override def indexStr = "301"
 

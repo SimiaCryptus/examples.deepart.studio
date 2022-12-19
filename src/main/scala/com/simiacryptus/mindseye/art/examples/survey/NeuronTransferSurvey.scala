@@ -46,7 +46,6 @@ object NeuronTransferSurvey extends NeuronTransferSurvey with LocalRunner[Object
 class NeuronTransferSurvey extends ArtSetup[Object, NeuronTransferSurvey] {
   val initUrl: String = "upload:Content"
   val contentUrl: String = "upload:Content"
-  val s3bucket: String = "test.deepartist.org"
   val minResolution = 512
   val maxResolution = 512
   val steps = 1

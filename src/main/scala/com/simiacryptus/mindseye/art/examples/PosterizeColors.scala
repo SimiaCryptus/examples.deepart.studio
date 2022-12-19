@@ -43,13 +43,13 @@ object PosterizeColors extends PosterizeColors with LocalRunner[Object] with Not
 
 class PosterizeColors extends ArtSetup[Object, PosterizeColors] {
 
+
 //  val contentUrl = "upload:Image"
   val contentUrl = "file:///C:/Users/andre/code/all-projects/report/ColorTransfer/d4af6e02-72d0-47a5-aa2c-db09481496fd/etc/424ae4ec-0e7e-4725-b1ef-6fb3849a9d1f.jpg"
 
   val useCuda = true
   val size = 320
 
-  val s3bucket: String = ""
   override def inputTimeoutSeconds = 0
   //override def inputTimeoutSeconds = 600
   override def indexStr = "301"

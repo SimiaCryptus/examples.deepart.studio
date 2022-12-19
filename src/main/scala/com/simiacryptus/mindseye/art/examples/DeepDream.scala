@@ -40,8 +40,8 @@ object DeepDream extends DeepDream with LocalRunner[Object] with NotebookRunner[
 
 class DeepDream extends ArtSetup[Object, DeepDream] {
 
+
   val contentUrl = "upload:Content"
-  val s3bucket: String = "test.deepartist.org"
   val resolution = 800
 
   override def indexStr = "204"

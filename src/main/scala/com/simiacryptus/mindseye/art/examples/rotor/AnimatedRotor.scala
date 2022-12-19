@@ -37,14 +37,13 @@ import com.simiacryptus.sparkbook.util.LocalRunner
 
 object AnimatedRotor extends AnimatedRotor with LocalRunner[Object] with NotebookRunner[Object]
 
-class AnimatedRotor extends RotorArt[AnimatedRotor] {
+class AnimatedRotor[T <: AnimatedRotor[T]] extends RotorArt[T] {
 
   override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
   override val rotationalSegments: Int = 6
   val contentUrl = "upload:Content"
   val styleUrl = "upload:Style"
   val initUrl: String = "50 + noise * 0.5"
-  val s3bucket: String = "test.deepartist.org"
   val minResolution = 200
   val maxResolution = 512
   val magnification = Array(2.0)

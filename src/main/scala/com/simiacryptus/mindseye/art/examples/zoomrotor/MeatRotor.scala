@@ -7,7 +7,7 @@ import com.simiacryptus.mindseye.lang.{Layer, Tensor}
 import com.simiacryptus.mindseye.opt.region.TrustRegion
 import com.simiacryptus.notebook.NotebookOutput
 
-trait MeatRotor[U <: MeatRotor[U]] extends ZoomingRotor[U] {
+trait MeatRotor extends ZoomingRotor {
   override val border: Double = 0.0
   override val magnification = Array(2.0)
   override val rotationalSegments = 6
@@ -21,10 +21,9 @@ trait MeatRotor[U <: MeatRotor[U]] extends ZoomingRotor[U] {
     "file:///H:/SimiaCryptus/all-projects/report/TextureTiledRotor/06880563-cbda-4ef3-ac52-62fe89a748f7/etc/image_7535f03cd247d629.jpg"
   )
 
-  override val s3bucket: String = "test.deepartist.org"
   override val resolution: Int = 800
   override val totalZoom: Double = 0.01
-  override val stepZoom: Double = 0.5
+//  override val stepZoom: Double = 0.5
   override val innerCoeff = 0
 
   override def getOptimizer()(implicit log: NotebookOutput): ImageOptimizer = {

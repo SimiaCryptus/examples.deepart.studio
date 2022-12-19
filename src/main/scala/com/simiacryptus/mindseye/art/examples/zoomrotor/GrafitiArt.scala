@@ -1,6 +1,6 @@
 package com.simiacryptus.mindseye.art.examples.zoomrotor
 
-trait GrafitiArt[U <: GrafitiArt[U]] extends ArtSource[U] {
+trait GrafitiArt[U <: ArtSource[U]] extends ArtSource[U] {
   override val border: Double = 0.0
   override val magnification: Array[Double] = Array(2)
   override val rotationalSegments = 5

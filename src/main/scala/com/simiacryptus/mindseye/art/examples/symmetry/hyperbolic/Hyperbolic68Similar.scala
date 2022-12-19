@@ -1,21 +1,22 @@
 package com.simiacryptus.mindseye.art.examples.symmetry.hyperbolic
 
+import com.simiacryptus.mindseye.art.examples.styled.SegmentStyleEC2
 import com.simiacryptus.mindseye.art.examples.symmetry.SymmetricTexture
 import com.simiacryptus.mindseye.art.util.view.{HyperbolicTileView, ImageView, RotatedVector}
 import com.simiacryptus.mindseye.art.util.{GeometricSequence, Permutation}
-import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.notebook.{Jsonable, NotebookOutput}
 import com.simiacryptus.sparkbook.aws.P2_XL
 
-object Hyperbolic68Similar extends Hyperbolic68Similar
-  with P2_XL
+import java.net.URI
+import java.util.UUID
+
+object Hyperbolic68SimilarEC2 extends Hyperbolic68SimilarEC2; class Hyperbolic68SimilarEC2 extends Hyperbolic68Similar[Hyperbolic68SimilarEC2] with P2_XL[Object, Hyperbolic68SimilarEC2] with Jsonable[Hyperbolic68SimilarEC2]
 //    with NotebookRunner[Object] with LocalRunner[Object]
 {
-  override val s3bucket: String = "symmetry.deepartist.org"
-  override def name: String = Hyperbolic68Similar.super.name
-
+  override def name: String = Hyperbolic68SimilarEC2.super.name
 }
 
-class Hyperbolic68Similar extends SymmetricTexture {
+class Hyperbolic68Similar[T<:Hyperbolic68Similar[T]] extends SymmetricTexture[T] {
 
   override def name: String = "6/8 Hyperbolic Rotationally Similar"
 

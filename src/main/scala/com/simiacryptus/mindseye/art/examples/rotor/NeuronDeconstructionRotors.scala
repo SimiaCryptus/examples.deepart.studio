@@ -42,15 +42,16 @@ import com.simiacryptus.sparkbook.util.LocalRunner
 import scala.collection.mutable.ArrayBuffer
 
 
-object NeuronDeconstructionRotors extends NeuronDeconstructionRotors with LocalRunner[Object] with NotebookRunner[Object]
+object NeuronDeconstructionRotors extends NeuronDeconstructionRotors with LocalRunner[Object] with NotebookRunner[Object]{
+}
 
 class NeuronDeconstructionRotors extends RotorArt[NeuronDeconstructionRotors] {
+
   type pipelineType = Inception5H
   override val rotationalSegments = 6
   override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
   val sourceUrl: String = "upload:Source"
   val initUrl: String = "50 + noise * 0.5"
-  val s3bucket: String = ""
   val srcResolution = 1800
   val aspectRatio = 0.5774
   val repeat = 1

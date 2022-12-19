@@ -1,8 +1,9 @@
 package com.simiacryptus.mindseye.art.examples.zoomrotor
 
 import com.simiacryptus.mindseye.art.util.RotorArt
+import com.simiacryptus.sparkbook.InteractiveSetup
 
-trait ArtSource[U <: ArtSource[U]] extends RotorArt[U] {
+trait ArtSource[U <: InteractiveSetup[Object, U]] extends RotorArt[U] {
 
   def border: Double
 

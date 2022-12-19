@@ -47,7 +47,6 @@ class NeuronTiledRotor extends RotorArt[NeuronTiledRotor] {
   override val rotationalSegments = 6
   override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
   val initUrl: String = "50 + plasma * 0.5"
-  val s3bucket: String = "test.deepartist.org"
   val minResolution = 128
   val maxResolution = 512
   val rowsAndCols = 2

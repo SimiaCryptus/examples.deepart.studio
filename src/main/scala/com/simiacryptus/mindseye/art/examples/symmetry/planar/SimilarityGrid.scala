@@ -11,7 +11,6 @@ object SimilarityGrid extends SimilarityGrid
 //  with P2_XL
   with NotebookRunner[Object] with LocalRunner[Object]
 {
-  override val s3bucket: String = "symmetry.deepartist.org"
 
   override def name: String = SimilarityGrid.super.name
 }

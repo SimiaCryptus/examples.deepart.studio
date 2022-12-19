@@ -1,24 +1,26 @@
 package com.simiacryptus.mindseye.art.examples.symmetry
 
+import com.simiacryptus.mindseye.art.examples.styled.SegmentStyleEC2
 import com.simiacryptus.mindseye.art.util.Permutation
 import com.simiacryptus.mindseye.art.util.view.{ImageView, RotatedVector, TunnelView, WhirlpoolView}
-import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.notebook.{Jsonable, NotebookOutput}
 import com.simiacryptus.sparkbook.NotebookRunner
 import com.simiacryptus.sparkbook.aws.P2_XL
 import com.simiacryptus.sparkbook.util.LocalRunner
 
+import java.net.URI
+import java.util.UUID
 
-object Whirlpool extends Whirlpool
-  with P2_XL
+
+object WhirlpoolEC2 extends WhirlpoolEC2; class WhirlpoolEC2 extends Whirlpool[WhirlpoolEC2] with P2_XL[Object, WhirlpoolEC2] with Jsonable[WhirlpoolEC2]
   //  with P3_2XL
 //  with NotebookRunner[Object] with LocalRunner[Object]
 {
-  override val s3bucket: String = "symmetry.deepartist.org"
 
-  override def name: String = Whirlpool.super.name
+  override def name: String = WhirlpoolEC2.super.name
 }
 
-class Whirlpool extends SymmetricTexture {
+class Whirlpool[T<:Whirlpool[T]] extends SymmetricTexture[T] {
 
   override def name: String = "Tunnel Texture with 3-way symmetry (single degeneracy)"
 

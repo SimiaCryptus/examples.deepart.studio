@@ -12,7 +12,6 @@ object Hyperbolic320 extends Hyperbolic320
 //  with P3_2XL
     with NotebookRunner[Object] with LocalRunner[Object]
 {
-  override val s3bucket: String = "symmetry.deepartist.org"
 
   override def name: String = Hyperbolic320.super.name
 }

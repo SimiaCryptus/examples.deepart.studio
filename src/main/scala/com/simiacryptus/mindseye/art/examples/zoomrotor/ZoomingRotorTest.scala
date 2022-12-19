@@ -7,11 +7,9 @@ import com.simiacryptus.mindseye.lang.{Layer, Tensor}
 import com.simiacryptus.mindseye.opt.region.TrustRegion
 import com.simiacryptus.notebook.NotebookOutput
 
-class ZoomingRotorTest extends ZoomingRotor[ZoomingRotorTest] with CosmicArt[ZoomingRotorTest] {
-  override val s3bucket: String = null
+class ZoomingRotorTest extends ZoomingRotor with CosmicArt[ZoomingRotor] {
   override val resolution = 320
   override val totalZoom = 0.25
-  override val stepZoom = 1.0
   override val border: Double = 0.125
   override val innerCoeff = 0
   override val enhancementCoeff: Double = 0

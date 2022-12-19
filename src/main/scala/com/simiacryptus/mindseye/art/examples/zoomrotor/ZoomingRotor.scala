@@ -22,7 +22,6 @@ package com.simiacryptus.mindseye.art.examples.zoomrotor
 import java.awt.image.BufferedImage
 import java.io.File
 import java.net.URI
-
 import com.amazonaws.services.s3.AmazonS3
 import com.simiacryptus.aws.S3Util
 import com.simiacryptus.mindseye.art.models.VGG19
@@ -34,12 +33,12 @@ import com.simiacryptus.mindseye.layers.cudnn.ProductLayer
 import com.simiacryptus.mindseye.opt.region.TrustRegion
 import com.simiacryptus.notebook.NotebookOutput
 import com.simiacryptus.ref.wrappers.RefAtomicReference
-import com.simiacryptus.sparkbook.NotebookRunner
+import com.simiacryptus.sparkbook.{InteractiveSetup, NotebookRunner}
 import com.simiacryptus.sparkbook.NotebookRunner._
 import com.simiacryptus.sparkbook.util.LocalRunner
 import com.simiacryptus.util.Util
-import javax.imageio.ImageIO
 
+import javax.imageio.ImageIO
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
@@ -47,21 +46,18 @@ object ZoomingRotor extends DebugZoomingRotor
   with LocalRunner[Object]
   with NotebookRunner[Object] {
   override def http_port: Int = 1080
-  override val s3bucket: String = reportingBucket
 }
 
-class ZoomingRotor[U <: ZoomingRotor[U]] extends RotorArt[U] with ArtSource[U] {
+class ZoomingRotor extends RotorArt[ZoomingRotor] with ArtSource[ZoomingRotor] {
 
   override val rotationalSegments = 6
   override val rotationalChannelPermutation: Array[Int] = Array(1, 2, 3)
   val border = 0.0
   val magnification = Array(4.0)
   val innerCoeff = 1e1
-  val reportingBucket: String = "examples.deepartist.org"
-  def s3bucket: String = reportingBucket
   val resolution: Int = 640
   val totalZoom: Double = 0.01
-  val stepZoom: Double = 0.5
+  val zoomSteps: Int = 8
   val enhancementCoeff: Double = 0
   val splitLayers = true
   override def inputTimeoutSeconds = 3600
@@ -205,9 +201,15 @@ class ZoomingRotor[U <: ZoomingRotor[U]] extends RotorArt[U] with ArtSource[U] {
     try {
       val result = withMonitoredGif(() => flipbook.map(_.addRef()).map(toRGB(_)).toList, 1000) {
         renderTransitionLinearSeq(flipbook, keyframes ++ List(keyframes.head)).map(file => {
-          Util.pathTo(log.getRoot, file).toString
+          Util.pathTo(log.getRoot, file)
         }).toArray
       }
+      log.subreport("Animation Frames", (sub: NotebookOutput) => {
+        result.zipWithIndex.map(t => {
+            val (img, idx) = t
+            sub.p(s"![Image $idx]($img)")
+          })
+      })
       log.subreport("Animation", (sub: NotebookOutput) => {
         animate(result)(sub)
         null
@@ -215,6 +217,8 @@ class ZoomingRotor[U <: ZoomingRotor[U]] extends RotorArt[U] with ArtSource[U] {
       log.json(result)
       result
     } finally {
+      log.write()
+      upload(log)
       indexRegistration.foreach(_.stop()(s3client, ec2client))
     }
   }
@@ -223,52 +227,71 @@ class ZoomingRotor[U <: ZoomingRotor[U]] extends RotorArt[U] with ArtSource[U] {
     val image = ImageIO.read(new File(log.getRoot, result.head))
     val width = image.getWidth()
     val height = image.getHeight()
+    val zoomFactor = (1.0 / Math.exp(Math.log(totalZoom) / zoomSteps)) - 1.0
+
     val canvasId = "canvas_" + java.lang.Long.toHexString((Math.random() * 10000).toLong)
     log.addHeaderHtml("<script type=\"text/javascript\" src=\"https://simiacryptus.s3.us-west-2.amazonaws.com/descent-animator-opt.js\"></script>")
     log.out(<div>
       <canvas style="display: block" id={canvasId} width={width.toString} height={height.toString}></canvas>
       <script>
         {s"""var descent = new Descent($width, $height);
-            |descent.stepZoom = ${stepZoom};
+            |descent.stepZoom = ${zoomFactor};
             |descent.animate(document.getElementById('$canvasId'),${result.map("'" + _ + "'").reduce(_ + "," + _)});""".stripMargin}
       </script>
     </div>.toString())
   }
 
   def renderTransitionLinearSeq(flipbook: ArrayBuffer[Tensor], imageUrls: Seq[String])(implicit log: NotebookOutput): Seq[File] = {
-    if (imageUrls.size > 2) {
-      renderTransitionLinearSeq(flipbook, imageUrls.take(2)) ++ renderTransitionLinearSeq(flipbook, imageUrls.drop(1))
-    } else {
-      val outerImage: BufferedImage = ImageArtUtil.loadImage(log, imageUrls(0), resolution)
-      val innerImage: BufferedImage = ImageArtUtil.loadImage(log, imageUrls(1), resolution)
-      log.p(log.jpg(outerImage, "Outer Image"))
-      log.p(log.jpg(innerImage, "Inner Image"))
-      log.subreport("Single Transition", (sub: NotebookOutput) => {
-        renderTransitionAB(flipbook, outerImage, innerImage)(sub)
-      })
+    var transitionNumber = 1
+    def _renderTransitionLinearSeq(flipbook: ArrayBuffer[Tensor], imageUrls: Seq[String]): Seq[File] = {
+      if (imageUrls.size > 2) {
+        _renderTransitionLinearSeq(flipbook, imageUrls.take(2)) ++ _renderTransitionLinearSeq(flipbook, imageUrls.drop(1))
+      } else {
+        log.h2(s"Transition $transitionNumber")
+        val outerImage: BufferedImage = ImageArtUtil.loadImage(log, imageUrls(0), resolution)
+        val innerImage: BufferedImage = ImageArtUtil.loadImage(log, imageUrls(1), resolution)
+        log.p("Outer Image")
+        log.p(log.jpg(outerImage, "Outer Image"))
+        log.p("Inner Image")
+        log.p(log.jpg(innerImage, "Inner Image"))
+        val seq = log.subreport(s"Single Transition ($transitionNumber)", (sub: NotebookOutput) => {
+          renderTransitionAB(flipbook, outerImage, innerImage)(sub)
+        })
+        transitionNumber = transitionNumber+1
+        seq
+      }
     }
+      _renderTransitionLinearSeq(flipbook, imageUrls)
   }
 
   def renderTransitionAB(flipbook: ArrayBuffer[Tensor], outerImage: BufferedImage, innerImage: BufferedImage)(implicit log: NotebookOutput): Seq[File] = {
-    val zoomFactor = 1.0 / (1.0 + stepZoom)
-    val repeat: Int = log.eval(() => {
-      (Math.log(totalZoom) / Math.log(zoomFactor)).ceil.toInt
-    })
-    var currentZoom = 1.0;
+    val zoomFactor = Math.exp(Math.log(totalZoom) / zoomSteps)
+    var currentZoom = 1.0
     var innerMask: Tensor = null
     var initUrl: String = null
 
+    /**
+     * Zooms in on the inner image.
+     */
     def zoomInner() = {
-      currentZoom /= zoomFactor
+      currentZoom *= zoomFactor
       val progress = currentZoom / totalZoom
       val width = innerImage.getWidth()
       val height = innerImage.getHeight()
-      val zoomedImage = zoom(Tensor.fromRGB(innerImage), 1 / progress)
+      val zoomedImage = zoom(Tensor.fromRGB(innerImage), progress)
       Option(innerMask).foreach(_.freeRef())
-      innerMask = zoomMask(Array(width, height, 3), 1 / progress, (width * border).toInt)
+      innerMask = zoomMask(Array(width, height, 3), progress, (width * border).toInt)
+      log.p(f"Zoomed Inner (zoom=$currentZoom%.3f; progress=$progress%.3f)")
+      log.p(log.jpg(zoomedImage.toRgbImage, "Zoomed Inner")); // Show the zoomed inner image
       zoomedImage
     }
 
+    /**
+     * This function zooms out the outer image and combines it with the zoomed inner image.
+     * @param previousOuterImage the outer image to be zoomed
+     * @param zoomedInner the zoomed inner image
+     * @return the combined image
+     */
     def zoomOuter(previousOuterImage: BufferedImage, zoomedInner: Tensor) = {
       val zoomedOuter = zoom(Tensor.fromRGB(previousOuterImage), zoomFactor)
       val tensor = zoomedInner.mapCoords(c => {
@@ -281,22 +304,34 @@ class ZoomingRotor[U <: ZoomingRotor[U]] extends RotorArt[U] with ArtSource[U] {
       tensor
     }
 
+    log.h2(s"Input")
+    log.p(log.jpg(innerImage, "innerImage"));
+    log.p(log.jpg(outerImage, "outerImage"));
+    log.p(s"$zoomSteps zoom steps")
     flipbook += Tensor.fromRGB(outerImage)
-    var zoomedInner = zoomInner()
-    var currentImageTensor = zoomOuter(outerImage, zoomedInner.addRef())
+    log.h2(s"Output")
+    var currentImageTensor: Tensor = null
     withMonitoredGif(() => (flipbook.map(_.addRef()) ++ Option(currentImageTensor).map(x => rotatedCanvas(x.addRef())).toList).map(toRGB(_)).toList, 1000) {
+      log.h2(s"Step 0")
+      var zoomedInner = zoomInner()
+      currentImageTensor = zoomOuter(outerImage, zoomedInner.addRef())
       try {
-        List(
-          log.jpgFile(outerImage)
-        ) ++ (1 to repeat).map(_ => {
-          log.p(log.jpg(toRGB(zoomedInner.mapCoords(c => zoomedInner.get(c) * innerMask.get(c))), "Zoomed Inner"));
-          val finalCanvas = paint(currentImageTensor, innerMask.addRef())
-          val url = log.jpgFile(finalCanvas.toRgbImage)
-          zoomedInner.freeRef()
-          zoomedInner = zoomInner()
-          currentImageTensor = zoomOuter(finalCanvas.toRgbImage, zoomedInner.addRef())
-          flipbook += finalCanvas
-          url
+        (1 to zoomSteps).map(stepNumber => {
+//          log.p("Zoomed Masked Inner")
+//          log.p(log.jpg(toRGB(zoomedInner.mapCoords(c => zoomedInner.get(c) * innerMask.get(c))), "Zoomed Masked Inner")); // Show the zoomed inner mask
+          log.p("Composite Base Image")
+          log.p(log.jpg(currentImageTensor.toRgbImage, "currentImageTensor"));
+          log.p("Painting")
+          val finalCanvas = paint(currentImageTensor, innerMask.addRef()) // Optimize the current tensor subject to the inner-region mask
+//          log.p("Result Image")
+//          log.p(log.jpg(finalCanvas.toRgbImage, "currentImageTensor"));
+          val url = log.jpgFile(finalCanvas.toRgbImage) // Save the final image
+          zoomedInner.freeRef() // Free the zoomed inner mask
+          log.h2(s"Step $stepNumber")
+          zoomedInner = zoomInner() // Zoom the inner mask
+          currentImageTensor = zoomOuter(finalCanvas.toRgbImage, zoomedInner.addRef()) // Zoom the final image
+          flipbook += finalCanvas // Add the final image to the flipbook
+          url // Return the url of the final image
         }).toList
       } finally {
         currentImageTensor = null

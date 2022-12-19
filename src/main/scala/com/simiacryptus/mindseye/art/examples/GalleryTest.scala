@@ -38,11 +38,11 @@ object GalleryTest extends GalleryTest with LocalRunner[Object] with NotebookRun
 
 class GalleryTest extends ArtSetup[Object, GalleryTest] with ArtworkStyleGalleries {
 
+
   val styleUrls = Array(
     //"upload:Image"
     "cubism_portraits"
   )
-  val s3bucket: String = "test.deepartist.org"
   val message = ""
   val resolution = -1
 

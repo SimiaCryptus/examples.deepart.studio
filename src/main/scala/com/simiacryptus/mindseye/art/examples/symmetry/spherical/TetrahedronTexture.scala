@@ -1,19 +1,21 @@
 package com.simiacryptus.mindseye.art.examples.symmetry.spherical
 
 import com.simiacryptus.mindseye.art.util.view.RotationalGroupView.TETRAHEDRON
+import com.simiacryptus.notebook.Jsonable
 import com.simiacryptus.sparkbook.aws.P2_XL
 
+import java.net.URI
+import java.util.UUID
 import scala.concurrent.duration.{FiniteDuration, _}
 
 
-object TetrahedronTexture extends TetrahedronTexture
-  with P2_XL
+object TetrahedronTextureEC2 extends TetrahedronTextureEC2; class TetrahedronTextureEC2 extends TetrahedronTexture[TetrahedronTextureEC2] with P2_XL[Object, TetrahedronTextureEC2] with Jsonable[TetrahedronTextureEC2]
   //  with NotebookRunner[Object] with LocalRunner[Object]
 {
-  override val s3bucket: String = "symmetry.deepartist.org"
+
 }
 
-class TetrahedronTexture extends PolyhedralTexture {
+class TetrahedronTexture[T<:TetrahedronTexture[T]] extends PolyhedralTexture[T] {
 
   override def name: String = "Spherical Texture Map"
   override def indexStr = "202"

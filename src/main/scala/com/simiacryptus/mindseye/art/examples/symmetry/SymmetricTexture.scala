@@ -45,10 +45,9 @@ import com.simiacryptus.util.FastRandom
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 
-abstract class SymmetricTexture extends ArtSetup[Object, SymmetricTexture] with GeometricArt {
+abstract class SymmetricTexture[T <: SymmetricTexture[T]] extends ArtSetup[Object, T] with GeometricArt {
   val styleUrl = "upload:Style"
   val initUrl: String = "10 + noise * 0.2"
-  val s3bucket: String = "symmetry.deepartist.org"
   val count = 2
   val rowsAndCols = 3
   val trainingMinutes = 90

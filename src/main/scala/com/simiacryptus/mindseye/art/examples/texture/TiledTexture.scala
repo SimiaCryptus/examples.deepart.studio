@@ -44,7 +44,6 @@ class TiledTexture extends ArtSetup[Object, TiledTexture] {
 
   val styleUrl = "upload:Style"
   val initUrl: String = "50 + noise * 0.5"
-  val s3bucket: String = "test.deepartist.org"
   val minResolution = 120
   val maxResolution = 400
   val magnification = Array(3.0)

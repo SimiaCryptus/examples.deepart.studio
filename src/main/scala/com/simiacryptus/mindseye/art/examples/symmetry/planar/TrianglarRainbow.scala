@@ -3,17 +3,18 @@ package com.simiacryptus.mindseye.art.examples.symmetry.planar
 import com.simiacryptus.mindseye.art.examples.symmetry.SymmetricTexture
 import com.simiacryptus.mindseye.art.util.view.{ImageView, RotatedVector, TransformVector}
 import com.simiacryptus.mindseye.art.util.{GeometricSequence, Permutation}
-import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.notebook.{Jsonable, NotebookOutput}
 import com.simiacryptus.sparkbook.aws.P2_XL
 
-object TrianglarRainbow extends TrianglarRainbow
-  with P2_XL
+import java.net.URI
+import java.util.UUID
+
+object TrianglarRainbowEC2 extends TrianglarRainbowEC2; class TrianglarRainbowEC2 extends TrianglarRainbow[TrianglarRainbowEC2] with P2_XL[Object, TrianglarRainbowEC2] with Jsonable[TrianglarRainbowEC2]
   //with LocalRunner[Object] with NotebookRunner[Object]
 {
-  override val s3bucket: String = "symmetry.deepartist.org"
 }
 
-class TrianglarRainbow extends SymmetricTexture {
+class TrianglarRainbow[T<:TrianglarRainbow[T]] extends SymmetricTexture[T] {
 
   def aspectRatio = 1.732
   override def name: String = "Triangle Rainbow"

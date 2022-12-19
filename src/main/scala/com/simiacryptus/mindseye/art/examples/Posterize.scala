@@ -42,9 +42,9 @@ object Posterize extends Posterize with LocalRunner[Object] with NotebookRunner[
 
 class Posterize extends ArtSetup[Object, Posterize] {
 
+
 //  val contentUrl = "upload:Image"
   val contentUrl = "file:///C:/Users/andre/Pictures/Johns Pics/IMG_20160312_122220887.jpg"
-  val s3bucket: String = ""
   val useCuda = true
   val tile_size = 400
   val tile_padding = 64

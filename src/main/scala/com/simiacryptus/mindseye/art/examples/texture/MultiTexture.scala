@@ -75,7 +75,6 @@ class MultiTexture extends ArtSetup[Object, MultiTexture] with ArtworkStyleGalle
   //  override def inputTimeoutSeconds = 3600
 
 //  val s3bucket: String = "test.deepartist.org"
-  val s3bucket: String = ""
 
   //val aspectRatio = 0.5774 // Hex Tiling
   val aspectRatio = 0.61803398875 // Golden Ratio

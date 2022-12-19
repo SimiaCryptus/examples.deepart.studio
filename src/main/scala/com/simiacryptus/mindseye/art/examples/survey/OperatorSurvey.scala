@@ -47,7 +47,6 @@ class OperatorSurvey extends ArtSetup[Object, OperatorSurvey] {
 
   val styleUrl = "upload:Style"
   val initUrl: String = "50 + noise * 0.5"
-  val s3bucket: String = "test.deepartist.org"
   val resolution = 800
   val animationDelay = 1000
   val magnification = Array(4.0)

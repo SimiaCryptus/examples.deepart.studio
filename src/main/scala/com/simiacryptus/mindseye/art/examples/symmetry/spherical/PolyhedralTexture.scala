@@ -11,7 +11,7 @@ import com.simiacryptus.ref.wrappers.RefAtomicReference
 
 import scala.util.Random
 
-abstract class PolyhedralTexture extends SymmetricTexture {
+abstract class PolyhedralTexture[T<:PolyhedralTexture[T]] extends SymmetricTexture[T] {
 
   def group: Int
 

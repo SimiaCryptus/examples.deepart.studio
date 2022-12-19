@@ -39,9 +39,8 @@ import com.simiacryptus.sparkbook.util.LocalRunner
 
 object SegmentStyle extends SegmentStyle with LocalRunner[Object] with NotebookRunner[Object]
 
-class SegmentStyle extends SegmentingSetup {
+class SegmentStyle[T <: SegmentStyle[T]] extends SegmentingSetup[T] {
 
-  val s3bucket: String = ""
   val contentUrl = "upload:Content"
   val maskUrl = "upload"
   val styleUrl_background = "upload:BackgroundStyle"

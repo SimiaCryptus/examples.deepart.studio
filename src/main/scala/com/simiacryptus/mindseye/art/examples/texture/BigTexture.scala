@@ -52,7 +52,6 @@ class BigTexture extends ArtSetup[Object, BigTexture] {
   val initUrl: String = "plasma"
 //  val initUrl: String = "50 + noise * 0.5"
   //  override def inputTimeoutSeconds = 3600
-  val s3bucket: String = "test.deepartist.org"
   val aspectRatio = 0.5774
   val minRes = 200
 
@@ -195,4 +194,5 @@ class BigTexture extends ArtSetup[Object, BigTexture] {
       canvas.freeRef()
     }
   }
+
 }

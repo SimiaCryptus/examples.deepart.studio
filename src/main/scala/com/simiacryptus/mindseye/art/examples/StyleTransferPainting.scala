@@ -61,7 +61,6 @@ class StyleTransferPainting extends ArtSetup[Object, StyleTransferPainting] {
   val initUrl: String = "file:///C:/Users/andre/code/all-projects/report/SmoothStyle/9b306f00-011a-4fdb-ab2a-61e24d00c946/etc/image_9c1dd89160abcaba.jpg"
 //val initUrl: String = "10 + noise * 0.2 "
 //  val initUrl: String = "plasma + noise * 0.2 "
-  val s3bucket: String = "www.tigglegickle.com"
   val contentWeight = 1e1
   val adjustColors = false
   val skipResolution = 1600

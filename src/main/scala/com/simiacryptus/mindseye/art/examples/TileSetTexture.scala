@@ -64,6 +64,7 @@ object TileSetTexture extends TileSetTexture with LocalRunner[Object] with Noteb
 }
 
 class TileSetTexture extends ArtSetup[Object, TileSetTexture] with GeometricArt {
+
   val styleUrl = "upload:Style"
   //  val styleUrl = "file:///C:/Users/andre/code/all-projects/report/HyperbolicTexture/72299ff9-9e6b-4c4d-88be-f537737b1434/etc/shutterstock_87165334.jpg"
   //  val styleUrl = "file:///C:/Users/andre/code/all-projects/report/HyperbolicTexture/9288abca-8e6c-446d-9d95-ba1941f20fb7/etc/the-starry-night.jpg"
@@ -74,7 +75,6 @@ class TileSetTexture extends ArtSetup[Object, TileSetTexture] with GeometricArt 
   //  val initUrl: String = "file:///C:/Users/andre/code/all-projects/report/HyperbolicTexture/9288abca-8e6c-446d-9d95-ba1941f20fb7/etc/image_3055f3f6cff4e0ff.jpg"
 //    val initUrl: String = "plasma"
   //  val s3bucket: String = "test.deepartist.org"
-  val s3bucket: String = ""
   val count = 4
   val baseMagnification = 6
 

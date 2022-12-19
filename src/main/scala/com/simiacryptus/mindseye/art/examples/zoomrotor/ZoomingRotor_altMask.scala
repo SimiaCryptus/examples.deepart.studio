@@ -8,11 +8,9 @@ import com.simiacryptus.mindseye.opt.line.LineSearchStrategy
 import com.simiacryptus.mindseye.opt.region.TrustRegion
 import com.simiacryptus.notebook.NotebookOutput
 
-class ZoomingRotor_altMask extends ZoomingRotor[ZoomingRotor_altMask] with GrafitiArt[ZoomingRotor_altMask] {
-  override val s3bucket: String = "test.deepartist.org"
+class ZoomingRotor_altMask extends ZoomingRotor with GrafitiArt[ZoomingRotor] {
   override val resolution: Int = 800
   override val totalZoom: Double = 0.01
-  override val stepZoom: Double = 0.5
   override val border: Double = 0.0
   override val innerCoeff = 0
   override val enhancementCoeff: Double = 0

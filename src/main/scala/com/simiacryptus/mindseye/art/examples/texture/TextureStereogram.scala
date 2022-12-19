@@ -48,7 +48,6 @@ class TextureStereogram extends ArtSetup[Object, TextureStereogram] {
       |DeepArtist
     """.stripMargin.trim
   val initUrl: String = "50 + plasma * 0.5"
-  val s3bucket: String = "test.deepartist.org"
   val minWidth = 50
   val maxWidth = 100
   val maxHeight = 1200

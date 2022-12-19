@@ -105,7 +105,6 @@ class MultiStylized extends ArtSetup[Object, MultiStylized] with ArtworkStyleGal
 //    override def inputTimeoutSeconds = 3600
 
   //val s3bucket: String = "test.deepartist.org"
-  val s3bucket: String = ""
 
   val contentCoeff = 1e1
   val min_padding = 0

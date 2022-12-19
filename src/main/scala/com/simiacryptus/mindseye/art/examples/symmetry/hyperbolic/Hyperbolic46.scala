@@ -1,19 +1,22 @@
 package com.simiacryptus.mindseye.art.examples.symmetry.hyperbolic
 
-import com.simiacryptus.mindseye.art.examples.symmetry.SymmetricTexture
+import com.simiacryptus.mindseye.art.examples.styled.SegmentStyleEC2
+import com.simiacryptus.mindseye.art.examples.symmetry.{SymmetricTexture, WhirlpoolEC2}
 import com.simiacryptus.mindseye.art.util.view.{HyperbolicTileView, ImageView, RotatedVector}
 import com.simiacryptus.mindseye.art.util.{GeometricSequence, Permutation}
-import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.notebook.{Jsonable, NotebookOutput}
 import com.simiacryptus.sparkbook.aws.P2_XL
 
-object Hyperbolic46 extends Hyperbolic46
-  with P2_XL
+import java.net.URI
+import java.util.UUID
+
+object Hyperbolic46EC2 extends Hyperbolic46EC2; class Hyperbolic46EC2 extends Hyperbolic46[Hyperbolic46EC2] with P2_XL[Object, Hyperbolic46EC2] with Jsonable[Hyperbolic46EC2]
   //  with NotebookRunner[Object] with LocalRunner[Object]
 {
-  override val s3bucket: String = "symmetry.deepartist.org"
+
 }
 
-class Hyperbolic46 extends SymmetricTexture {
+class Hyperbolic46[T<:Hyperbolic46[T]] extends SymmetricTexture[T] {
 
   override def name: String = "4/6 Hyperbolic"
   override def indexStr = "202"

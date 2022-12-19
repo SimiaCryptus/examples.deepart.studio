@@ -11,7 +11,6 @@ object RainbowTriangle extends RainbowTriangle
   //  with P3_2XL
   with NotebookRunner[Object] with LocalRunner[Object]
 {
-  override val s3bucket: String = "symmetry.deepartist.org"
 
   override def name: String = RainbowTriangle.super.name
 }

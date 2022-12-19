@@ -55,9 +55,6 @@ abstract class TextureTiledRotor extends RotorArt[TextureTiledRotor] {
     "plasma", "plasma", "50 + noise * 0.5", "50 + noise * 0.5"
     //    "http://test.deepartist.org/TextureTiledRotor/4662f8b9-9014-438d-9d11-c4684ea0d061/etc/image_7a53f141e1451361.jpg"
   )
-  val reportingBucket = "examples.deepartist.org"
-
-  def s3bucket: String = reportingBucket
 
   val minResolution = 100
   val midResolution = 320

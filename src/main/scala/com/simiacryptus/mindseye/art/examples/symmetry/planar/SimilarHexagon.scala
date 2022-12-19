@@ -1,23 +1,25 @@
 package com.simiacryptus.mindseye.art.examples.symmetry.planar
 
+import com.simiacryptus.mindseye.art.examples.styled.SegmentStyleEC2
 import com.simiacryptus.mindseye.art.examples.symmetry.SymmetricTexture
 import com.simiacryptus.mindseye.art.util.view.{ImageView, RotatedVector}
 import com.simiacryptus.mindseye.art.util.{GeometricSequence, Permutation}
-import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.notebook.{Jsonable, NotebookOutput}
 import com.simiacryptus.sparkbook.aws.P2_XL
 
+import java.net.URI
+import java.util.UUID
 
-object SimilarHexagon extends SimilarHexagon
-  //  with P3_2XL
-  with P2_XL
+
+object SimilarHexagonEC2 extends SimilarHexagonEC2; class SimilarHexagonEC2 extends SimilarHexagon[SimilarHexagonEC2] with P2_XL[Object, SimilarHexagonEC2] with Jsonable[SimilarHexagonEC2]
   //with NotebookRunner[Object] with LocalRunner[Object]
 {
-  override val s3bucket: String = "symmetry.deepartist.org"
 
-  override def name: String = SimilarHexagon.super.name
+
+  override def name: String = SimilarHexagonEC2.super.name
 }
 
-class SimilarHexagon extends SymmetricTexture {
+class SimilarHexagon[T<:SimilarHexagon[T]] extends SymmetricTexture[T] {
 
   override def name: String = "6-way rotational similarity"
 

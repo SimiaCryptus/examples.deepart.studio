@@ -19,29 +19,13 @@
 
 package com.simiacryptus.mindseye.art.libs
 
-import com.simiacryptus.aws.exe.EC2NodeSettings
-import com.simiacryptus.mindseye.art.libs.StandardLibraryNotebookLocal._main
-import com.simiacryptus.notebook.Jsonable
-import com.simiacryptus.sparkbook.aws.P2_XL
 
-
-object StandardLibraryNotebookEC2 extends StandardLibraryNotebookEC2 {
-  def main(args: Array[String]): Unit = _main(args)
+case class ApplicationInfo[T]
+(
+  name: String,
+  templates: Map[String, Class[_<:T]]
+) {
+  def get(name: String) : T = {
+    templates(name).newInstance()
+  }
 }
-
-class StandardLibraryNotebookEC2
-  extends StandardLibraryNotebook[StandardLibraryNotebookEC2]
-    with P2_XL[Object, StandardLibraryNotebookEC2]
-    with Jsonable[StandardLibraryNotebookEC2] {
-  override def nodeSettings: EC2NodeSettings = EC2NodeSettings.M5_XL_DL
-
-  override def install: Boolean = super.install
-}
-
-
-
-
-
-
-
-

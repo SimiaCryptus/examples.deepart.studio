@@ -59,7 +59,6 @@ object NeuralPainting extends NeuralPainting with LocalRunner[Object] with Noteb
 //    override def inputTimeoutSeconds = 3600
 
   //val s3bucket: String = "test.deepartist.org"
-  val s3bucket: String = ""
   val models = 16
 
   override def indexStr = "201"

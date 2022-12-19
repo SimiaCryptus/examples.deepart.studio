@@ -21,7 +21,6 @@ package com.simiacryptus.mindseye.art.examples.styled
 
 import java.net.URI
 import java.util.zip.ZipFile
-
 import com.amazonaws.services.s3.AmazonS3
 import com.simiacryptus.aws.S3Util
 import com.simiacryptus.mindseye.art.models.VGG19
@@ -33,9 +32,9 @@ import com.simiacryptus.mindseye.art.photo.topology.SearchRadiusTopology
 import com.simiacryptus.mindseye.art.util.ArtSetup.ec2client
 import com.simiacryptus.mindseye.art.util.{ImageOptimizer, _}
 import com.simiacryptus.mindseye.lang.Tensor
-import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.notebook.{Jsonable, NotebookOutput}
 import com.simiacryptus.ref.wrappers.RefAtomicReference
-import com.simiacryptus.sparkbook.NotebookRunner
+import com.simiacryptus.sparkbook.{InteractiveSetup, NotebookRunner}
 import com.simiacryptus.sparkbook.NotebookRunner._
 import com.simiacryptus.sparkbook.util.LocalRunner
 import com.simiacryptus.util.Util
@@ -45,9 +44,8 @@ import jcuda.runtime.JCuda
 
 object SmoothStyle extends SmoothStyle with LocalRunner[Object] with NotebookRunner[Object]
 
-class SmoothStyle extends ArtSetup[Object, SmoothStyle] {
+class SmoothStyle[T <: SmoothStyle[T]] extends ArtSetup[Object, T] with Jsonable[T] {
 
-  override val s3bucket: String = "www.tigglegickle.com"
   val contentUrl = "file:///C:/Users/andre/code/all-projects/report/SmoothStyle/0d41239e-17b5-4102-8cc6-150ab19cfa56/etc/Cavour_flight_deck.jpg"
   val styleUrl = List(
 //    "upload:Style"

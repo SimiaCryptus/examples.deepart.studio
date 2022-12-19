@@ -1,30 +1,29 @@
 package com.simiacryptus.mindseye.art.examples.symmetry.spherical
 
 import java.awt.image.BufferedImage
-
 import com.simiacryptus.mindseye.art.examples.symmetry.SymmetricTexture
 import com.simiacryptus.mindseye.art.util.GeometricSequence
 import com.simiacryptus.mindseye.art.util.view.{ImageView, SphericalView}
 import com.simiacryptus.mindseye.lang.Tensor
-import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.notebook.{Jsonable, NotebookOutput}
 import com.simiacryptus.ref.wrappers.RefAtomicReference
 import com.simiacryptus.sparkbook.aws.P2_XL
 
+import java.net.URI
+import java.util.UUID
 import scala.concurrent.duration.{FiniteDuration, _}
 import scala.util.Random
 
 
-object SphericalTexture extends SphericalTexture
-  with P2_XL
+object SphericalTextureEC2 extends SphericalTextureEC2; class SphericalTextureEC2 extends SphericalTexture[SphericalTextureEC2] with P2_XL[Object, SphericalTextureEC2] with Jsonable[SphericalTextureEC2]
 //  with P3_2XL
 //    with NotebookRunner[Object] with LocalRunner[Object]
 {
-  override val s3bucket: String = "symmetry.deepartist.org"
 
-  override def name: String = SphericalTexture.super.name
+  override def name: String = SphericalTextureEC2.super.name
 }
 
-class SphericalTexture extends SymmetricTexture {
+class SphericalTexture[T<:SphericalTexture[T]] extends SymmetricTexture[T] {
 
   override def name: String = "Spherical Texture Map"
 

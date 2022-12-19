@@ -1,20 +1,22 @@
 package com.simiacryptus.mindseye.art.examples.symmetry.hyperbolic
 
+import com.simiacryptus.mindseye.art.examples.styled.SegmentStyleEC2
 import com.simiacryptus.mindseye.art.examples.symmetry.SymmetricTexture
 import com.simiacryptus.mindseye.art.util.view.{HyperbolicTileView, ImageView, RotatedVector}
 import com.simiacryptus.mindseye.art.util.{GeometricSequence, Permutation}
-import com.simiacryptus.notebook.NotebookOutput
+import com.simiacryptus.notebook.{Jsonable, NotebookOutput}
 import com.simiacryptus.sparkbook.aws.P2_XL
 
+import java.net.URI
+import java.util.UUID
 
-object Hyperbolic46Compliment extends Hyperbolic46Compliment
-  with P2_XL
+
+object Hyperbolic46ComplimentEC2 extends Hyperbolic46ComplimentEC2; class Hyperbolic46ComplimentEC2 extends Hyperbolic46Compliment[Hyperbolic46ComplimentEC2] with P2_XL[Object, Hyperbolic46ComplimentEC2] with Jsonable[Hyperbolic46ComplimentEC2]
   //  with NotebookRunner[Object] with LocalRunner[Object]
 {
-  override val s3bucket: String = "symmetry.deepartist.org"
 }
 
-class Hyperbolic46Compliment extends SymmetricTexture {
+class Hyperbolic46Compliment[T<:Hyperbolic46Compliment[T]] extends SymmetricTexture[T] {
 
   override def name: String = "4/6 Hyperbolic Complimentary Colors"
 
